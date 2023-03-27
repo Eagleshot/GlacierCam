@@ -7,7 +7,7 @@ sudo apt-get upgrade -y
 sudo apt-get install -y $PACKAGES 
 
 # Download python script to /home/pi
-exec wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/main/master/main.py
+exec wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/main.py
 
 # Enable python script to run on boot
 sudo chmod +x /home/pi/main.py # Execution permissions
