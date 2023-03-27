@@ -1,15 +1,15 @@
 #!/bin/sh
 
 # Install packages
-PACKAGES="python3-picamera2 minicom p7zip-full"
-sudo apt-get update
-sudo apt-get upgrade -y
-sudo apt-get install -y $PACKAGES 
+# PACKAGES="python3-picamera2 minicom p7zip-full"
+# sudo apt-get update
+# sudo apt-get upgrade -y
+# sudo apt-get install -y $PACKAGES 
 
 
-# Waveshare SIM7600G-H 4G/LTE HAT
-sudo raspi-config nonint do_serial 2 # Enable serial port communication
-exec wget https://www.waveshare.com/w/upload/2/29/SIM7600X-4G-HAT-Demo.7z # Download SIm-7600G-H code
+# # Waveshare SIM7600G-H 4G/LTE HAT
+# sudo raspi-config nonint do_serial 2 # Enable serial port communication
+# exec wget https://www.waveshare.com/w/upload/2/29/SIM7600X-4G-HAT-Demo.7z # Download SIm-7600G-H code
 7z x /home/pi/SIM7600X-4G-HAT-Demo.7z -r -o/home/pi # Unzip code
 sudo chmod 777 -R /home/pi/SIM7600X-4G-HAT-Demo # Make code executable
 sudo sed -i -e '$i sh /home/pi/SIM7600X-4G-HAT-Demo/Raspberry/c/sim7600_4G_hat_init &' /etc/rc.local
