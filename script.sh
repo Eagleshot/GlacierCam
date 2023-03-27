@@ -6,21 +6,22 @@ sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y $PACKAGES 
 
-# Download python script to /home/pi
-exec wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/main.py
-
-# Enable python script to run on boot
-sudo chmod +x /home/pi/main.py # Execution permissions
-sudo sed -i '$i/home/pi/main.py &' /etc/rc.local
 
 # Waveshare SIM7600G-H 4G/LTE HAT
 sudo raspi-config nonint do_serial 2 # Enable serial port communication
-exec wget https://www.waveshare.com/w/upload/2/29/SIM7600X-4G-HAT-Demo.7z
-7z x SIM7600X-4G-HAT-Demo.7z -r -o/home/pi
-sudo chmod 777 -R /home/pi/SIM7600X-4G-HAT-Demo
-sudo sed -i '$i sh /home/pi/SIM7600X-4G-HAT-Demo/Raspberry/c/sim7600_4G_hat_init &' /etc/rc.local
+exec wget https://www.waveshare.com/w/upload/2/29/SIM7600X-4G-HAT-Demo.7z # Download SIm-7600G-H code
+exec 7z x SIM7600X-4G-HAT-Demo.7z -r -o/home/pi # Unzip code
+sudo chmod 777 -R /home/pi/SIM7600X-4G-HAT-Demo # Make code executable
+sudo sed -i -e '$i sh /home/pi/SIM7600X-4G-HAT-Demo/Raspberry/c/sim7600_4G_hat_init &' /etc/rc.local
 cd /home/pi/SIM7600X-4G-HAT-Demo/Raspberry/c/bcm2835
 chmod +x configure && ./configure && sudo make && sudo make install
+
+# Download python script to /home/pi
+exec wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/main.py
+sudo chmod +x /home/pi/main.py # Execution permissions
+sudo sed -i -e '$i/home/pi/main.py &' /etc/rc.local # Enable python script to run on boot
+
+
 
 # Enable camera and other hardware interfaces
 sudo raspi-config nonint do_camera 0
