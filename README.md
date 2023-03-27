@@ -16,5 +16,5 @@ Required hardware: Raspberry Pi Zero WH (or other), monitor, HDMI to microHDMI a
 Insert the microSD card and connect the Raspberry Pi to the monitor, keyboard, mouse and power supply. Boot up the Raspberry Pi and write the following command in the terminal:
 
 ```bash
-wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | bash
+sudo wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sh
 ```
