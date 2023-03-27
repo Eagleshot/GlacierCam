@@ -17,10 +17,10 @@ sudo sed -i '$i/home/pi/main.py &' /etc/rc.local
 
 # Enable camera and other hardware interfaces
 sudo raspi-config nonint do_camera 0
+sudo raspi-config nonint do_i2c 0
 
 # Disable LED and other unused hardware
 sudo raspi-config nonint do_led 1
-sudo raspi-config nonint do_i2c 1
 sudo raspi-config nonint do_spi 1
 sudo raspi-config nonint do_serial 1
 
