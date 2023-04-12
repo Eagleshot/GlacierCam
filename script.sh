@@ -7,6 +7,8 @@ sudo apt-get upgrade -y
 sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
 
+# TODO Install wittyPi software
+
 # # Waveshare SIM7600G-H 4G/LTE HAT
 # sudo raspi-config nonint do_serial 2 # Enable serial port communication
 # exec wget "https://www.waveshare.com/w/upload/4/4e/SIM7600X-4G-HAT(B)-Demo.7z" # Download SIm-7600G-H code
@@ -27,6 +29,8 @@ sudo chmod +x /home/pi/main.py # Execution permissions
 # Download config.py
 exec wget -O /home/pi/config.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/config.py
 sudo chmod +x /home/pi/config.py # Execution permissions TODO needed?
+
+# Add python "/home/pi/main.py" wittyPi afterStartup.sh
 
 # Enable camera and other hardware interfaces
 sudo raspi-config nonint do_camera 0

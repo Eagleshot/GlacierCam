@@ -37,8 +37,12 @@ error = ""
 # SIM7600X
 ###########################
 # See Waveshare documentation
-ser = serial.Serial('/dev/ttyUSB2',115200) # USB connection
-ser.flushInput()
+try:
+	ser = serial.Serial('/dev/ttyUSB2',115200) # USB connection
+	ser.flushInput()
+except:
+	error += "Could not open serial port."
+	print("Could not open serial port.")
 
 power_key = 6
 rec_buff = ''
