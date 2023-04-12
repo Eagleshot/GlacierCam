@@ -19,7 +19,7 @@ import io
 # TODO Automatic station name if name is already in use (maybe with lock file/hardware id?)
 cameraName = "station1"
 imgFileName =  datetime.today().strftime('%d%m%Y_%H%M_') + cameraName + ".jpg"
-imgFilePath = "/home/pi/Pictures/" # Path where image is saved
+imgFilePath = "/home/pi/" # Path where image is saved
 
 ###########################
 # Readings
