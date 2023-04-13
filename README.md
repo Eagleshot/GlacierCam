@@ -18,3 +18,16 @@ Insert the microSD card and connect the Raspberry Pi to the monitor, keyboard, m
 ```bash
 sudo wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sh
 ```
+
+
+## Update the software 
+To update the main.py file only, run the following command in the terminal:
+
+```bash
+sudo wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/main.py
+```
+
+# TODOs
+- [ ] Witty Pi timing script
+- [ ] Get data like voltage and temperature from witty pi
+- [ ] Get real error messages from the camera

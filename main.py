@@ -15,11 +15,8 @@ import io
 ###########################
 # Filenames
 ###########################
-
 # Get unique hardware id of Raspberry Pi
 # See: https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
-
-
 def getserial():
     # Extract serial from cpuinfo file
     cpuserial = "0000000000000000"
@@ -112,12 +109,12 @@ def send_at(command, back, timeout):
             Lat = Cleaned[:2]
             SmallLat = Cleaned[2:11]
             NorthOrSouth = Cleaned[12]
-            #print(Lat, SmallLat, NorthOrSouth)
+            # print(Lat, SmallLat, NorthOrSouth)
 
             Long = Cleaned[14:17]
             SmallLong = Cleaned[17:26]
             EastOrWest = Cleaned[27]
-            #print(Long, SmallLong, EastOrWest)
+            # print(Long, SmallLong, EastOrWest)
 
             FinalLat = float(Lat) + (float(SmallLat)/60)
             FinalLong = float(Long) + (float(SmallLong)/60)
@@ -260,18 +257,23 @@ with io.StringIO() as csvBuffer:
     ftp.storbinary(f"APPE {csvFileName}", io.BytesIO(csvData))
 
 ###########################
-# Download and read config file
+# Download and read config file -> TODO work with read only file system
 ###########################
 try:
-    with open('/home/pi/config.txt', 'wb') as fp:  # Download
-        ftp.retrbinary('RETR config.txt', fp.write)
+    with open('/home/pi/settings.py', 'wb') as fp:  # Download
+        ftp.retrbinary('RETR settings.py', fp.write)
 except:
-    print("Could not find config file!")
+    print('No config file found. Creating new config file with default settings.')
+
+    # Upload config file if none exists
+    with open('/home/pi/settings.py', 'wb') as fp:  # Download
+        ftp.storbinary('STOR settings.py', fp)
 
 ftp.quit()
 
-with open('/home/pi/config.txt', 'r') as fp:  # Read
+import settings
 
-    if 'shutdown = true' in fp.read():  # Shutdown computer if defined in loop
-        print('shutting down')
-        os.system("sudo shutdown -h now")
+# Shutdown computer if defined in loop
+if settings.shutdown == True:  
+    print('Shutting down now.')
+    os.system("sudo shutdown -h now")

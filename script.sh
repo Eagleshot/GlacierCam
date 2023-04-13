@@ -41,7 +41,9 @@ sudo chmod +x /home/pi/main.py # Execution permissions
 
 # Download config.py
 exec wget -O /home/pi/config.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/config.py
-sudo chmod +x /home/pi/config.py # Execution permissions TODO needed?
+
+# Download settings.py
+exec wget -O /home/pi/settings.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.py
 
 # Add python "/home/pi/main.py" wittyPi afterStartup.sh
 # Enable camera and other hardware interfaces
