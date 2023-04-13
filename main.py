@@ -59,7 +59,7 @@ try:
     ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
     ser.flushInput()
 except:
-    error += "Could not open serial port."
+    error += "Could not open serial port. "
     print("Could not open serial port.")
 
 power_key = 6
@@ -155,8 +155,8 @@ try:
     camera.start_and_capture_file(
         imgFilePath + imgFileName, capture_mode=cameraConfig, delay=3, show_preview=False)
 except:
-    error += "Could not start camera and capture image."
-    print("Could not start camera and capture image.")
+    error += "Could not start camera and capture image. "
+    print("Could not start camera and capture image. ")
 
 ###########################
 # Stop camera
@@ -164,7 +164,7 @@ except:
 try:
     camera.stop()
 except:
-    error += "Camera already stopped."
+    error += "Camera already stopped. "
     print("Camera already stopped.")
 
 ###########################
@@ -201,8 +201,8 @@ try:
     os.remove(imgFilePath + imgFileName)
 
 except:
-    error += "Could not open image."
-    print("Could not open image.")
+    error += "Could not open image. "
+    print("Could not open image. ")
 
 ###########################
 # Upload main.py (this file)
@@ -235,16 +235,16 @@ try:
             send_at('AT+CGPS=0', 'OK', 1)
             time.sleep(1.5)
 except:
-    error += "Failed to get GPS coordinates"
-    print("Failed to get GPS coordinates")
+    error += "Failed to get GPS coordinates. "
+    print("Failed to get GPS coordinates.")
 
 # Get cell signal quality
 try:
     currentSignalQuality = send_at2('AT+CSQ', 'OK', 1)[8:13]
     print("Cell signal quality: " + currentSignalQuality)
 except:
-    error += "Failed to get cell signal quality"
-    print("Failed to get cell signal quality")
+    error += "Failed to get cell signal quality. "
+    print("Failed to get cell signal quality.")
 # Upload data to server
 newRow = [currentTime, currentBatteryLevel, currentTemperature,
           currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
@@ -266,7 +266,7 @@ except:
     print('No config file found. Creating new config file with default settings.')
 
     # Upload config file if none exists
-    with open('/home/pi/settings.py', 'r') as fp:  # Download
+    with open('/home/pi/settings.py', 'rb') as fp:  # Download
         ftp.storbinary('STOR settings.py', fp)
 
 ftp.quit()
