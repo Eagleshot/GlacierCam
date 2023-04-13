@@ -1,5 +1,17 @@
 #!/bin/sh
 
+# Check if sudo is used
+if [ "$(id -u)" != 0 ]; then
+  echo 'This script must be run as sudo!'
+  exit 1
+fi
+
+echo '================================================================================'
+echo '|                                                                              |'
+echo '|                   Glacier Camera Software Installation Script                |'
+echo '|                                                                              |'
+echo '================================================================================'
+
 # Install packages
 PACKAGES="minicom p7zip-full" # picamera2 is preinstalled
 sudo apt-get update
