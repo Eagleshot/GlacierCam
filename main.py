@@ -266,7 +266,7 @@ except:
     print('No config file found. Creating new config file with default settings.')
 
     # Upload config file if none exists
-    with open('/home/pi/settings.py', 'wb') as fp:  # Download
+    with open('/home/pi/settings.py', 'r') as fp:  # Download
         ftp.storbinary('STOR settings.py', fp)
 
 ftp.quit()
