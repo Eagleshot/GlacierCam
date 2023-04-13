@@ -8,6 +8,7 @@ sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
 
 # TODO Install wittyPi software
+exec sudo wget -O - https://www.uugear.com/repo/WittyPi4/install.sh | sh
 
 # # Waveshare SIM7600G-H 4G/LTE HAT
 # sudo raspi-config nonint do_serial 2 # Enable serial port communication
@@ -31,7 +32,6 @@ exec wget -O /home/pi/config.py https://raw.githubusercontent.com/Eagleshot/Glac
 sudo chmod +x /home/pi/config.py # Execution permissions TODO needed?
 
 # Add python "/home/pi/main.py" wittyPi afterStartup.sh
-
 # Enable camera and other hardware interfaces
 sudo raspi-config nonint do_camera 0
 
