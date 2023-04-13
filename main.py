@@ -16,7 +16,7 @@ import io
 # Filenames
 ###########################
 # TODO Automatic station name if name is already in use (maybe with lock file/hardware id?)
-cameraName = "station1"
+cameraName = config.cameraName
 imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + cameraName + ".jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
 
@@ -164,11 +164,16 @@ ftp.login(user=username, passwd=password)
 ftp.cwd("private")  # Go to folder "private"
 
 ###########################
-# Upload last image
+# Upload to ftp server and then delete last image
 ###########################
 try:
     with open(imgFilePath + imgFileName, 'rb') as file:
         ftp.storbinary(f"STOR {imgFileName}", file)
+        print(f"Successfully uploaded {imgFileName}")
+
+    # Delete last image
+    os.remove(imgFilePath + imgFileName)
+
 except:
     error += "Could not open image."
     print("Could not open image.")
@@ -177,8 +182,8 @@ except:
 # Upload main.py (this file)
 ###########################
 # TODO remove after development
-with open("/home/pi/main.py", 'rb') as file:
-    ftp.storbinary(f"STOR {'main.py'}", file)
+# with open("/home/pi/main.py", 'rb') as file:
+#     ftp.storbinary(f"STOR {'main.py'}", file)
 
 ###########################
 # Uploading sensor data to CSV
