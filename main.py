@@ -15,7 +15,28 @@ import io
 ###########################
 # Filenames
 ###########################
-# TODO Automatic station name if name is already in use (maybe with lock file/hardware id?)
+
+# Get unique hardware id of Raspberry Pi
+# See: https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
+
+
+def getserial():
+    # Extract serial from cpuinfo file
+    cpuserial = "0000000000000000"
+    try:
+        f = open('/proc/cpuinfo', 'r')
+        for line in f:
+            if line[0:6] == 'Serial':
+                cpuserial = line[10:26]
+        f.close()
+    except:
+        cpuserial = "ERROR000000000"
+
+    return cpuserial
+
+
+cpuSerial = getserial()
+
 cameraName = config.cameraName
 imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + cameraName + ".jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
@@ -161,7 +182,15 @@ ftp = FTP(ftpServerAddress, timeout=180)
 ftp.login(user=username, passwd=password)
 
 # ftp.dir() # Directory listing
-ftp.cwd("private")  # Go to folder "private"
+ftp.cwd("private")  # Go to folder "private" TODO remove?
+
+# Go to folder with camera name + unique hardware serial number or create it
+folderName = cameraName + "_" + cpuSerial
+try:
+    ftp.cwd(folderName)
+except:
+    ftp.mkd(folderName)
+    ftp.cwd(folderName)
 
 ###########################
 # Upload to ftp server and then delete last image
