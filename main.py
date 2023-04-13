@@ -9,7 +9,6 @@ import time
 import config
 import csv
 import RPi.GPIO as GPIO
-import serial
 import os
 import io
 
@@ -38,6 +37,7 @@ error = ""
 ###########################
 # See Waveshare documentation
 try:
+    import serial
 	ser = serial.Serial('/dev/ttyUSB2',115200) # USB connection
 	ser.flushInput()
 except:

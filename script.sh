@@ -20,7 +20,7 @@ sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
 
 # TODO Install wittyPi software
-exec sudo wget -O - https://www.uugear.com/repo/WittyPi4/install.sh | sh
+exec wget https://www.uugear.com/repo/WittyPi4/install.sh && sudo sh install.sh
 
 # # Waveshare SIM7600G-H 4G/LTE HAT
 # sudo raspi-config nonint do_serial 2 # Enable serial port communication
