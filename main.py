@@ -2,7 +2,9 @@
 # -*- coding:utf-8 -*-
 
 # Import required libraries
+import settings
 from picamera2 import Picamera2
+from libcamera import controls
 from ftplib import FTP
 from datetime import datetime
 import time
@@ -17,6 +19,8 @@ import io
 ###########################
 # Get unique hardware id of Raspberry Pi
 # See: https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
+
+
 def getserial():
     # Extract serial from cpuinfo file
     cpuserial = "0000000000000000"
@@ -148,6 +152,13 @@ camera = Picamera2()
 cameraConfig = camera.create_still_configuration(
     {"size": (4608, 2592)})  # TODO
 
+try:
+    camera.set_controls({"AfMode": controls.AfModeEnum.Manual,
+                        "LensPosition": settings.lensPosition})
+except:
+    error += "Could not set lens position. "
+    print("Could not set lens position. ")
+
 ###########################
 # Capture image
 ###########################
@@ -271,9 +282,8 @@ except:
 
 ftp.quit()
 
-import settings
 
 # Shutdown computer if defined in loop
-if settings.shutdown == True:  
+if settings.shutdown == True:
     print('Shutting down now.')
     os.system("sudo shutdown -h now")

@@ -1,3 +1,4 @@
+lensPosition = 0.0 # min = 0.0, max = 32.0, default = 1.0
 recordingInterval = 20 # min
 startRecording = 5
 stopRecording = 22
