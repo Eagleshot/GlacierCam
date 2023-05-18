@@ -17,11 +17,24 @@ import subprocess
 
 import subprocess
 
+# TODO Add try except and add data to csv
+# https://www.baeldung.com/linux/run-function-in-script
 # Run the command
 command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
 output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
-print(output)
+print("Temperautre: " + output)
 
+command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
+output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
+print("Input voltage: " + output)
+
+command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
+output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
+print("Output voltage: " + output)
+
+command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
+output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
+print("Output current: " + output)
 ###########################
 # Filenames
 ###########################
