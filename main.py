@@ -13,6 +13,12 @@ import csv
 import RPi.GPIO as GPIO
 import os
 import io
+import subprocess
+
+# Command: . ./utilities.sh && get_temperature
+result = subprocess.run('cd /home/pi/wittypi && . ./utilities.sh && get_temperature', stdout=subprocess.PIPE, shell=True)
+print("Temperature: ")
+print(result.stdout.decode('utf-8'))
 
 ###########################
 # Filenames
