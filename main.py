@@ -15,10 +15,16 @@ import os
 import io
 import subprocess
 
-# Command: . ./utilities.sh && get_temperature
-result = subprocess.check_output(["cd",  "/home/pi/wittypi/",  "&&", ".", "./utilities.sh", "&&", "get_temperature"])
-print("Temperature: ")
-print(result)
+import subprocess
+
+# Run the command
+command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
+process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+output, _ = process.communicate()
+
+# Decode and print the output
+output = output.decode("utf-8")
+print("Temperature:", output)
 
 ###########################
 # Filenames
