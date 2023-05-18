@@ -16,9 +16,9 @@ import io
 import subprocess
 
 # Command: . ./utilities.sh && get_temperature
-result = subprocess.run('cd /home/pi/wittypi/ && . ./utilities.sh && get_temperature', stdout=subprocess.PIPE, shell=True)
+result = subprocess.check_output(["cd",  "/home/pi/wittypi/",  "&&", ".", "./utilities.sh", "&&", "get_temperature"])
 print("Temperature: ")
-print(result.stdout.decode('utf-8'))
+print(result)
 
 ###########################
 # Filenames
