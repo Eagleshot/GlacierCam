@@ -19,12 +19,8 @@ import subprocess
 
 # Run the command
 command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
-process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-output, _ = process.communicate()
-
-# Decode and print the output
-output = output.decode("utf-8")
-print("Temperature:", output)
+output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
+print(output)
 
 ###########################
 # Filenames
