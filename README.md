@@ -28,6 +28,10 @@ sudo wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/Glacie
 ```
 
 # TODOs
-- [ ] Witty Pi timing script
+- [ ] Witty Pi timing script -> replace /wittypi/script.sh
+- [ ] Set focus in settings.py
 - [ ] Get data like voltage and temperature from witty pi
+- [ ] Do software loop with station without witty pi and set autostart 
+
+- [ ] Sync time with NTP server / witty pi
 - [ ] Get real error messages from the camera
