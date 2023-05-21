@@ -15,26 +15,6 @@ import os
 import io
 import subprocess
 
-import subprocess
-
-# TODO Add try except and add data to csv
-# https://www.baeldung.com/linux/run-function-in-script
-# Run the command
-command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
-output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
-print("Temperautre: " + output)
-
-command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
-output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
-print("Input voltage: " + output)
-
-command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
-output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
-print("Output voltage: " + output)
-
-command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-output = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
-print("Output current: " + output)
 ###########################
 # Filenames
 ###########################
@@ -68,12 +48,34 @@ imgFilePath = "/home/pi/"  # Path where image is saved
 ###########################
 csvFileName = "diagnostics.csv"
 currentTime = datetime.today().strftime('%d-%m-%Y %H:%M')
-currentBatteryLevel = "80"  # TODO
-currentTemperature = "25.5"  # TODO
-currentSignalQuality = ""  # TODO
+
+# TODO Add try except
+# https://www.baeldung.com/linux/run-function-in-script
+
+# Temperature
+command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
+currentTemperature = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
+print("Temperature: " + output + "°C")
+
+# Battery voltage
+command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
+currentBatteryVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
+print("Battery voltage: " + currentBatteryVoltage)
+
+# Raspberry Pi voltage
+command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
+raspberryPiVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
+print("Output voltage: " + raspberryPiVoltage)
+
+# Current Power Draw (@ 5V)
+command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
+currentPowerDraw = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "A"
+print("Output current: " + currentPowerDraw)
+
+currentSignalQuality = ""
 currentGPSPosLat = ""
 currentGPSPosLong = ""
-error = ""
+error = "" #TODO Real error messages
 
 ###########################
 # SIM7600X
@@ -211,7 +213,7 @@ ftp = FTP(ftpServerAddress, timeout=180)
 ftp.login(user=username, passwd=password)
 
 # ftp.dir() # Directory listing
-ftp.cwd("private")  # Go to folder "private" TODO remove?
+# ftp.cwd("private")  # Go to folder "private" TODO remove?
 
 # Go to folder with camera name + unique hardware serial number or create it
 folderName = cameraName + "_" + cpuSerial
@@ -277,9 +279,9 @@ try:
 except:
     error += "Failed to get cell signal quality. "
     print("Failed to get cell signal quality.")
+
 # Upload data to server
-newRow = [currentTime, currentBatteryLevel, currentTemperature,
-          currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
+newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
 
 # Append new measurements to log CSV or create new CSV file if none exists
 with io.StringIO() as csvBuffer:
