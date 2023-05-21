@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 
+# TODO Fix upload settings.py
+
 # Import required libraries
 import settings
 from picamera2 import Picamera2
@@ -55,7 +57,7 @@ currentTime = datetime.today().strftime('%d-%m-%Y %H:%M')
 # Temperature
 command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
 currentTemperature = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
-print("Temperature: " + output + "°C")
+print("Temperature: " + currentTemperature + "°C")
 
 # Battery voltage
 command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
