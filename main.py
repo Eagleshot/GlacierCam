@@ -50,30 +50,10 @@ imgFilePath = "/home/pi/"  # Path where image is saved
 ###########################
 csvFileName = "diagnostics.csv"
 currentTime = datetime.today().strftime('%d-%m-%Y %H:%M')
-
-# TODO Add try except
-# https://www.baeldung.com/linux/run-function-in-script
-
-# Temperature
-command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
-currentTemperature = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
-print("Temperature: " + currentTemperature + "°C")
-
-# Battery voltage
-command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
-currentBatteryVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
-print("Battery voltage: " + currentBatteryVoltage)
-
-# Raspberry Pi voltage
-command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
-raspberryPiVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
-print("Output voltage: " + raspberryPiVoltage)
-
-# Current Power Draw (@ 5V)
-command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-currentPowerDraw = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "A"
-print("Output current: " + currentPowerDraw)
-
+currentTemperature = ""
+currentBatteryVoltage = "" 
+raspberryPiVoltage = ""
+currentPowerDraw = ""
 currentSignalQuality = ""
 currentGPSPosLat = ""
 currentGPSPosLong = ""
@@ -88,14 +68,13 @@ try:
     ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
     ser.flushInput()
 except:
-    error += "Could not open serial port. "
-    print("Could not open serial port.")
+    error += "Could not open serial connection with 4G module. "
+    print("Could not open serial connection with 4G module.")
 
 power_key = 6
 rec_buff = ''
 rec_buff2 = ''
 time_count = 0
-
 
 def send_at2(command, back, timeout):
     rec_buff = ''
@@ -250,6 +229,35 @@ except:
 ###########################
 # Uploading sensor data to CSV
 ###########################
+
+# Get WittyPi readings
+try:
+    # https://www.baeldung.com/linux/run-function-in-script
+
+    # Temperature
+    command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
+    currentTemperature = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
+    currentTemperature = currentTemperature.replace("\n", "")
+    currentTemperature = currentTemperature.split(" / ")[0]
+    print("Temperature: " + currentTemperature)
+
+    # Battery voltage
+    command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
+    currentBatteryVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
+    print("Battery voltage: " + currentBatteryVoltage)
+
+    # Raspberry Pi voltage
+    command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
+    raspberryPiVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
+    print("Output voltage: " + raspberryPiVoltage)
+
+    # Current Power Draw (@ 5V)
+    command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
+    currentPowerDraw = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "A"
+    print("Output current: " + currentPowerDraw)
+except:
+    error += "Failed to get WittyPi readings. "
+    print("Failed to get WittyPi readings.")
 
 # Get GPS position
 # SIM7600X-Module is already turned on
