@@ -22,8 +22,6 @@ import subprocess
 ###########################
 # Get unique hardware id of Raspberry Pi
 # See: https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
-
-
 def getserial():
     # Extract serial from cpuinfo file
     cpuserial = "0000000000000000"
@@ -55,8 +53,8 @@ currentBatteryVoltage = ""
 raspberryPiVoltage = ""
 currentPowerDraw = ""
 currentSignalQuality = ""
-currentGPSPosLat = ""
-currentGPSPosLong = ""
+currentGPSPosLat = "-"
+currentGPSPosLong = "-"
 error = "" #TODO Real error messages
 
 ###########################
@@ -220,13 +218,6 @@ except:
     print("Could not open image. ")
 
 ###########################
-# Upload main.py (this file)
-###########################
-# TODO remove after development
-# with open("/home/pi/main.py", 'rb') as file:
-#     ftp.storbinary(f"STOR {'main.py'}", file)
-
-###########################
 # Uploading sensor data to CSV
 ###########################
 
@@ -262,22 +253,23 @@ except:
 # Get GPS position
 # SIM7600X-Module is already turned on
 try:
-    answer = 0
-    print('Start GPS session.')
-    rec_buff = ''
-    send_at('AT+CGPS=1,1', 'OK', 1)
-    time.sleep(2)
-    maxAttempts = 0
+    if settings.enableGPS  == True:
+        answer = 0
+        print('Start GPS session.')
+        rec_buff = ''
+        send_at('AT+CGPS=1,1', 'OK', 1)
+        time.sleep(2)
+        maxAttempts = 0
 
-    while (maxAttempts <= 35):
-        maxAttempts += 1
-        answer = send_at('AT+CGPSINFO', '+CGPSINFO: ', 1)
-        if answer == 1:  # Success
-            break
-        else:
-            print('error %d' % answer)
-            send_at('AT+CGPS=0', 'OK', 1)
-            time.sleep(1.5)
+        while (maxAttempts <= 35):
+            maxAttempts += 1
+            answer = send_at('AT+CGPSINFO', '+CGPSINFO: ', 1)
+            if answer == 1:  # Success
+                break
+            else:
+                print('error %d' % answer)
+                send_at('AT+CGPS=0', 'OK', 1)
+                time.sleep(1.5)
 except:
     error += "Failed to get GPS coordinates. "
     print("Failed to get GPS coordinates.")
