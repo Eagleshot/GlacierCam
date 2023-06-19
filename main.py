@@ -147,9 +147,9 @@ def send_at(command, back, timeout):
 # Setup camera
 ###########################
 camera = Picamera2()
-cameraConfig = camera.create_still_configuration(
-    {"size": (4608, 2592)})  # TODO
+cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
 
+# TODO If -1 set to autofocus
 try:
     camera.set_controls({"AfMode": controls.AfModeEnum.Manual,
                         "LensPosition": settings.lensPosition})
@@ -294,8 +294,8 @@ with io.StringIO() as csvBuffer:
 try:
     with open('/home/pi/settings.py', 'wb') as fp:  # Download
         ftp.retrbinary('RETR settings.py', fp.write)
-except:
-    print('No config file found. Creating new config file with default settings.')
+except Exception as e:
+    print('No config file found. Creating new config file with default settings: ' + str(e))
 
     # Upload config file if none exists
     with open('/home/pi/settings.py', 'rb') as fp:  # Download

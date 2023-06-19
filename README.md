@@ -19,9 +19,33 @@ Insert the microSD card and connect the Raspberry Pi to the monitor, keyboard, m
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
 ```
+# TODO Sudo reboot
+
+### Install the camera
+# TODO
+
+### Install the sim module
+# TODO
+aufpassen usb pins -> löten?
+
+### Setup rndis
+https://www.waveshare.com/wiki/Raspberry_Pi_networked_via_RNDIS
+
+# Edit config.py file
+sudo nano config.py
+
+### Install the wittypi hardware
+# TODO
+-> only connect the power to the witty pi, not the raspberry pi!
+
+### Set up the witty pi
 
 
-## Update the software 
+### Activate read-only mode
+
+
+## Update the software
+# TODO disable read only
 To update the main.py file only, run the following command in the terminal:
 
 ```bash
