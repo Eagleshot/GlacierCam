@@ -17,12 +17,15 @@ echo '==========================================================================
 echo ''
 
 # Install required packages
-PACKAGES="minicom p7zip-full pyserial ufw" # picamera2 is preinstalled
+PACKAGES="minicom p7zip-full python3-pip ufw" # picamera2 is preinstalled
 
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
+
+# Install pyserial with pip
+sudo pip3 install pyserial
 
 echo ''
 echo '================================================================================'
