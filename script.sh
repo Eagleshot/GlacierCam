@@ -90,6 +90,9 @@ echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
 echo "dtoverlay=disable-bt" | sudo tee -a /boot/config.txt
 echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 
+# Add quiet flag to cmdline.txt
+sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
+
 # Enable the firewall
 sudo ufw enable
 
