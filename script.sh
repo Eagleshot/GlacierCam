@@ -20,7 +20,7 @@ echo ''
 PACKAGES="minicom p7zip-full pyserial ufw" # picamera2 is preinstalled
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y "$PACKAGES"
+sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
 
 echo ''
@@ -30,16 +30,16 @@ echo '|       Step 2: Install WittyPi Software                                  
 echo '|                                                                              |'
 echo '================================================================================'
 # Install WittyPi Software 
-wget -O - https://www.uugear.com/repo/WittyPi4/install.sh | sudo sh
+wget https://www.uugear.com/repo/WittyPi4/install.sh && sudo sh install.sh
 
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
-echo '|       Step 3: Install Waveshare SIM7600G-H 4G/LTE HAT driver                  |'
+echo '|       Step 3: Install Waveshare SIM7600G-H 4G/LTE HAT driver                 |'
 echo '|                                                                              |'
 echo '================================================================================'
+echo ''
 # Install Waveshare SIM7600G-H 4G/LTE HAT driver
-sudo apt-get install -y bcm2835
 sudo raspi-config nonint do_serial 2 # Enable serial port communication
 
 wget "https://www.waveshare.com/w/upload/4/4e/SIM7600X-4G-HAT(B)-Demo.7z" -P /tmp # Download SIm-7600G-H code
