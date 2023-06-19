@@ -6,18 +6,24 @@ if [ "$(id -u)" != 0 ]; then
   exit 1
 fi
 
+echo ''
 echo '================================================================================'
 echo '|                                                                              |'
 echo '|                   Glacier Camera Software Installation Script                |'
 echo '|                                                                              |'
 echo '================================================================================'
+echo ''
 
-# Install packages
-PACKAGES="minicom p7zip-full" # picamera2 is preinstalled
+# Install required packages
+PACKAGES="minicom p7zip-full pyserial ufw" # picamera2 is preinstalled
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
+
+# TODO: Sudo ufw enable?
+# The firewall automatically blocks all incoming connections!
+# https://www.raspberrypi.com/documentation/computers/configuration.html#install-a-firewall
 
 # TODO Install wittyPi software
 exec wget https://www.uugear.com/repo/WittyPi4/install.sh && sudo sh install.sh

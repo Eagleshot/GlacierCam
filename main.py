@@ -279,6 +279,7 @@ except:
 # Get cell signal quality
 try:
     currentSignalQuality = send_at2('AT+CSQ', 'OK', 1)[8:13]
+    currentSignalQuality = currentSignalQuality.replace("\n", "")
     print("Cell signal quality: " + currentSignalQuality)
 except:
     error += "Failed to get cell signal quality. "
