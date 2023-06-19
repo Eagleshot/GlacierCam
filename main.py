@@ -12,7 +12,6 @@ from datetime import datetime
 import time
 import config
 import csv
-import RPi.GPIO as GPIO
 import os
 import io
 import subprocess
@@ -21,22 +20,22 @@ import subprocess
 # Filenames
 ###########################
 # Get unique hardware id of Raspberry Pi
-# See: https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
+# See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
+# and https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
 def getserial():
     # Extract serial from cpuinfo file
     cpuserial = "0000000000000000"
     try:
-        f = open('/proc/cpuinfo', 'r')
-        for line in f:
-            if line[0:6] == 'Serial':
-                cpuserial = line[10:26]
-        f.close()
+        with open('/proc/cpuinfo', 'r') as f:
+            for line in f:
+                if line[0:6] == 'Serial':
+                    cpuserial = line[10:26]
+                    break
     except:
         cpuserial = "ERROR000000000"
 
     return cpuserial
-
-
+ 
 cpuSerial = getserial()
 
 cameraName = config.cameraName
@@ -229,22 +228,25 @@ try:
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
     currentTemperature = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
     currentTemperature = currentTemperature.replace("\n", "")
-    currentTemperature = currentTemperature.split(" / ")[0]
+    currentTemperature = currentTemperature.split(" / ")[0] # Remove the Farenheit reading
     print("Temperature: " + currentTemperature)
 
     # Battery voltage
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
     currentBatteryVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
+    currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
     print("Battery voltage: " + currentBatteryVoltage)
 
     # Raspberry Pi voltage
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
     raspberryPiVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
+    raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
     print("Output voltage: " + raspberryPiVoltage)
 
     # Current Power Draw (@ 5V)
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
     currentPowerDraw = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "A"
+    currentPowerDraw = currentPowerDraw.replace("\n", "")
     print("Output current: " + currentPowerDraw)
 except:
     error += "Failed to get WittyPi readings. "
