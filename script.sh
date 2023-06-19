@@ -70,7 +70,7 @@ wget -O /home/pi/config.py https://raw.githubusercontent.com/Eagleshot/GlacierCa
 wget -O /home/pi/settings.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.py
 
 # Add main.py to wittyPi afterStartup.sh
-echo "/usr/bin/python3 /home/pi/main.py" >> /home/pi/wittyPi/afterStartup.sh
+echo "/usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
 
 echo ''
 echo '================================================================================'

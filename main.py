@@ -22,7 +22,7 @@ import subprocess
 # Get unique hardware id of Raspberry Pi
 # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
 # and https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
-def getserial():
+def getCPUSerial():
     # Extract serial from cpuinfo file
     cpuserial = "0000000000000000"
     try:
@@ -36,9 +36,9 @@ def getserial():
 
     return cpuserial
  
-cpuSerial = getserial()
+cpuSerial = getCPUSerial()
 
-cameraName = config.cameraName
+folderName = config.cameraName + "_" + cpuSerial # Camera folder with camera name + unique hardware serial
 imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + cameraName + ".jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
 
@@ -64,9 +64,9 @@ try:
     import serial
     ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
     ser.flushInput()
-except:
-    error += "Could not open serial connection with 4G module. "
-    print("Could not open serial connection with 4G module.")
+except Exception as e:
+    error += "Could not open serial connection with 4G module: " + str(e)
+    print ("Could not open serial connection with 4G module: " + str(e))
 
 power_key = 6
 rec_buff = ''
@@ -88,8 +88,6 @@ def send_at2(command, back, timeout):
         return rec_buff.decode()
 
 # Get GPS Position
-
-
 def send_at(command, back, timeout):
     rec_buff = ''
     ser.write((command+'\r\n').encode())
@@ -145,7 +143,6 @@ def send_at(command, back, timeout):
         print('GPS is not ready')
         return 0
 
-
 ###########################
 # Setup camera
 ###########################
@@ -156,9 +153,9 @@ cameraConfig = camera.create_still_configuration(
 try:
     camera.set_controls({"AfMode": controls.AfModeEnum.Manual,
                         "LensPosition": settings.lensPosition})
-except:
-    error += "Could not set lens position. "
-    print("Could not set lens position. ")
+except Exception as e:
+    error += "Could not set lens position: " + str(e)
+    print("Could not set lens position: " + str(e))
 
 ###########################
 # Capture image
@@ -166,16 +163,16 @@ except:
 try:
     camera.start_and_capture_file(
         imgFilePath + imgFileName, capture_mode=cameraConfig, delay=3, show_preview=False)
-except:
-    error += "Could not start camera and capture image. "
-    print("Could not start camera and capture image. ")
+except Exception as e:
+    error += "Could not start camera and capture image: " + str(e)
+    print("Could not start camera and capture image: " + str(e))
 
 ###########################
 # Stop camera
 ###########################
 try:
     camera.stop()
-except:
+except Exception as e:
     error += "Camera already stopped. "
     print("Camera already stopped.")
 
@@ -190,11 +187,7 @@ password = config.password
 ftp = FTP(ftpServerAddress, timeout=180)
 ftp.login(user=username, passwd=password)
 
-# ftp.dir() # Directory listing
-# ftp.cwd("private")  # Go to folder "private" TODO remove?
-
 # Go to folder with camera name + unique hardware serial number or create it
-folderName = cameraName + "_" + cpuSerial
 try:
     ftp.cwd(folderName)
 except:
@@ -243,7 +236,7 @@ try:
     raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
     print("Output voltage: " + raspberryPiVoltage)
 
-    # Current Power Draw (@ 5V)
+    # Current Power Draw (@5V)
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
     currentPowerDraw = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "A"
     currentPowerDraw = currentPowerDraw.replace("\n", "")
@@ -308,8 +301,10 @@ except:
     with open('/home/pi/settings.py', 'rb') as fp:  # Download
         ftp.storbinary('STOR settings.py', fp)
 
-ftp.quit()
-
+try:
+    ftp.quit
+except:
+    print('Could not quit FTP session.')
 
 # Shutdown computer if defined in loop
 if settings.shutdown == True:
