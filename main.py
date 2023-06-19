@@ -39,7 +39,7 @@ def getCPUSerial():
 cpuSerial = getCPUSerial()
 
 folderName = config.cameraName + "_" + cpuSerial # Camera folder with camera name + unique hardware serial
-imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + cameraName + ".jpg"
+imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + config.cameraName + ".jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
 
 ###########################

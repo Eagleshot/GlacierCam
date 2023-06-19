@@ -49,7 +49,7 @@ sudo raspi-config nonint do_serial 2 # Enable serial port communication
 wget "https://www.waveshare.com/w/upload/4/4e/SIM7600X-4G-HAT(B)-Demo.7z" -P /tmp # Download SIm-7600G-H code
 7z x /tmp/SIM7600X-4G-HAT\(B\)-Demo.7z -o/home/pi/ # Unzip code
 sudo chmod 777 -R /home/pi/SIM7600X-4G-HAT\(B\)-Demo # Make code executable
-sudo sed -i '$i sh /home/pi/SIM7600X-4G-HAT\(B\)-Demo/Raspberry/c/sim7600_4G_hat_init &' /etc/rc.local
+sudo sed -i '$i sh "/home/pi/SIM7600X-4G-HAT(B)-Demo/Raspberry/c/sim7600_4G_hat_init" &' /etc/rc.local
 cd /home/pi/SIM7600X-4G-HAT\(B\)-Demo/Raspberry/c/bcm2835
 chmod +x configure && ./configure && make && sudo make install
 
