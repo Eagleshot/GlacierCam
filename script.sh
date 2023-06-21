@@ -54,6 +54,7 @@ echo '|                                                                         
 echo '================================================================================'
 # Install WittyPi Software
 # See: https://www.uugear.com/product/witty-pi-4-mini/
+cd /home/pi
 wget https://www.uugear.com/repo/WittyPi4/install.sh
 sudo sh install.sh
 

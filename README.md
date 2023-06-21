@@ -19,8 +19,12 @@ Insert the microSD card and connect the Raspberry Pi to the monitor, keyboard, m
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
 ```
-# TODO Sudo reboot
+After the script has finished, the Raspberry Pi will automatically reboot to apply the changes.
 
+## TODO Alternative take preconfigured sd card and flash it with balena etcher
+In order to save time you can also use a preconfigured image and flash it to the sd card using win32 disk imager.
+
+## Setup the software
 ### Install the camera
 # TODO
 
@@ -33,6 +37,8 @@ https://www.waveshare.com/wiki/Raspberry_Pi_networked_via_RNDIS
 
 # Edit config.py file
 sudo nano config.py
+
+# Edit username and password
 
 ### Install the wittypi hardware
 # TODO
