@@ -30,20 +30,12 @@ sudo pip3 install pyserial
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
-echo '|       Step 2: Install WittyPi Software                                       |'
-echo '|                                                                              |'
-echo '================================================================================'
-# Install WittyPi Software 
-wget https://www.uugear.com/repo/WittyPi4/install.sh && sudo sh install.sh
-
-echo ''
-echo '================================================================================'
-echo '|                                                                              |'
-echo '|       Step 3: Install Waveshare SIM7600G-H 4G/LTE HAT driver                 |'
+echo '|         Step 2: Install Waveshare SIM7600G-H 4G/LTE HAT driver               |'
 echo '|                                                                              |'
 echo '================================================================================'
 echo ''
 # Install Waveshare SIM7600G-H 4G/LTE HAT driver
+# See: https://core-electronics.com.au/guides/raspberry-pi/raspberry-pi-4g-gps-hat/ (slightly modified to work with the (B) version)
 sudo raspi-config nonint do_serial 2 # Enable serial port communication
 
 wget "https://www.waveshare.com/w/upload/4/4e/SIM7600X-4G-HAT(B)-Demo.7z" -P /tmp # Download SIm-7600G-H code
@@ -57,12 +49,23 @@ chmod +x configure && ./configure && make && sudo make install
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
-echo '|       Step 4: Install Python script                                          |'
+echo '|                    Step 3: Install WittyPi Software                          |'
+echo '|                                                                              |'
+echo '================================================================================'
+# Install WittyPi Software
+# See: https://www.uugear.com/product/witty-pi-4-mini/
+wget https://www.uugear.com/repo/WittyPi4/install.sh
+sudo sh install.sh
+
+echo ''
+echo '================================================================================'
+echo '|                                                                              |'
+echo '|                       Step 4: Install Python script                          |'
 echo '|                                                                              |'
 echo '================================================================================'
 # Download python script to /home/pi
 wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/main.py
-sudo chmod +x /home/pi/main.py # Execution permissions
+sudo chmod 777 /home/pi/main.py # Execution permissions
 
 # Download config.py
 wget -O /home/pi/config.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/config.py
@@ -76,13 +79,20 @@ echo "/usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
-echo '|       Step 5: Configure Raspberry Pi                                         |'
+echo '|                     Step 5: Configure Raspberry Pi                           |'
 echo '|                                                                              |'
 echo '================================================================================'
 echo ''
 
+# See: https://www.raspberrypi.com/documentation/computers/configuration.html
 # Enable camera and other hardware interfaces
 sudo raspi-config nonint do_camera 0
+
+# Disable 1-wire interface
+sudo raspi-config nonint do_onewire 1
+
+# Enable I2C interface
+sudo raspi-config nonint do_i2c 0
 
 # Disable LED and other unused hardware
 echo "boot_delay=0" | sudo tee -a /boot/config.txt
@@ -103,6 +113,12 @@ echo '|                                                                         
 echo '|              Glacier Camera Software Installation Completed!  :)             |'
 echo '|                                                                              |'
 echo '================================================================================'
+echo ''
 
+# Reboot to apply changes
+echo 'Rebooting in 5 seconds...'
+sleep 5
+sudo reboot
 
+# TODO: Verify the changes/error handling
 # TODO: Maybe add some nice ascii art

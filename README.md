@@ -42,7 +42,9 @@ sudo nano config.py
 
 
 ### Activate read-only mode
+https://www.youtube.com/watch?v=Nuww3UicTsI
 
+### Finished?!?
 
 ## Update the software
 # TODO disable read only
