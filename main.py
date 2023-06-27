@@ -1,20 +1,19 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 
-# TODO Fix upload settings.py
+# TODO Fix upload settings.yaml
 
 # Import required libraries
-import settings
 from picamera2 import Picamera2
 from libcamera import controls
 from ftplib import FTP
 from datetime import datetime
-import time
-import config
+from time import sleep
 import csv
 import os
-import io
-import subprocess
+from io import BytesIO, StringIO
+from subprocess import check_output, STDOUT
+import yaml
 
 ###########################
 # Filenames
@@ -38,8 +37,12 @@ def getCPUSerial():
  
 cpuSerial = getCPUSerial()
 
-folderName = config.cameraName + "_" + cpuSerial # Camera folder with camera name + unique hardware serial
-imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + config.cameraName + ".jpg"
+with open("config.yaml", 'r') as stream:
+    config = yaml.safe_load(stream)
+
+cameraName = config["cameraName"] # Camera name
+folderName = cameraName + "_" + cpuSerial # Camera folder with camera name + unique hardware serial
+imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + cameraName + "_" + cpuSerial + ".jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
 
 ###########################
@@ -76,9 +79,9 @@ time_count = 0
 def send_at2(command, back, timeout):
     rec_buff = ''
     ser.write((command+'\r\n').encode())
-    time.sleep(timeout)
+    sleep(timeout)
     if ser.inWaiting():
-        time.sleep(0.01)
+        sleep(0.01)
         rec_buff = ser.read(ser.inWaiting())
     if back not in rec_buff.decode():
         print(command + ' ERROR')
@@ -91,9 +94,9 @@ def send_at2(command, back, timeout):
 def send_at(command, back, timeout):
     rec_buff = ''
     ser.write((command+'\r\n').encode())
-    time.sleep(timeout)
+    sleep(timeout)
     if ser.inWaiting():
-        time.sleep(0.01)
+        sleep(0.01)
         rec_buff = ser.read(ser.inWaiting())
     if rec_buff != '':
         if back not in rec_buff.decode():
@@ -179,13 +182,8 @@ except Exception as e:
 ###########################
 # Upload picture to server
 ###########################
-ftpServerAddress = config.ftpServerAddress
-username = config.username
-password = config.password
-
-# TODO consider FTP_TLS, timeout = 3 minutes
-ftp = FTP(ftpServerAddress, timeout=180)
-ftp.login(user=username, passwd=password)
+ftp = FTP(config["ftpServerAddress"], timeout=120)
+ftp.login(user=config["username"], passwd=config["password"])
 
 # Go to folder with camera name + unique hardware serial number or create it
 try:
@@ -205,9 +203,9 @@ try:
     # Delete last image
     os.remove(imgFilePath + imgFileName)
 
-except:
-    error += "Could not open image. "
-    print("Could not open image. ")
+except Exception as e:
+    error += "Could not open image. " + str(e)
+    print("Could not open image. " + str(e))
 
 ###########################
 # Uploading sensor data to CSV
@@ -215,35 +213,37 @@ except:
 
 # Get WittyPi readings
 try:
+
     # https://www.baeldung.com/linux/run-function-in-script
 
     # Temperature
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
-    currentTemperature = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True)
+    currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
     currentTemperature = currentTemperature.replace("\n", "")
     currentTemperature = currentTemperature.split(" / ")[0] # Remove the Farenheit reading
     print("Temperature: " + currentTemperature)
 
     # Battery voltage
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
-    currentBatteryVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
+    currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
     currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
     print("Battery voltage: " + currentBatteryVoltage)
 
     # Raspberry Pi voltage
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
-    raspberryPiVoltage = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "V"
+    raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
     raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
     print("Output voltage: " + raspberryPiVoltage)
 
     # Current Power Draw (@5V)
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-    currentPowerDraw = subprocess.check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "A"
+    currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "A"
     currentPowerDraw = currentPowerDraw.replace("\n", "")
     print("Output current: " + currentPowerDraw)
-except:
-    error += "Failed to get WittyPi readings. "
-    print("Failed to get WittyPi readings.")
+
+except Exception as e:
+    error += "Failed to get WittyPi readings: " + str(e)
+    print("Failed to get WittyPi readings: " + str(e))
 
 # Get GPS position
 # SIM7600X-Module is already turned on
@@ -253,7 +253,7 @@ try:
         print('Start GPS session.')
         rec_buff = ''
         send_at('AT+CGPS=1,1', 'OK', 1)
-        time.sleep(2)
+        sleep(2)
         maxAttempts = 0
 
         while (maxAttempts <= 35):
@@ -264,7 +264,7 @@ try:
             else:
                 print('error %d' % answer)
                 send_at('AT+CGPS=0', 'OK', 1)
-                time.sleep(1.5)
+                sleep(1.5)
 except:
     error += "Failed to get GPS coordinates. "
     print("Failed to get GPS coordinates.")
@@ -282,11 +282,11 @@ except:
 newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
 
 # Append new measurements to log CSV or create new CSV file if none exists
-with io.StringIO() as csvBuffer:
+with StringIO() as csvBuffer:
     writer = csv.writer(csvBuffer)
     writer.writerow(newRow)
     csvData = csvBuffer.getvalue().encode('utf-8')
-    ftp.storbinary(f"APPE {csvFileName}", io.BytesIO(csvData))
+    ftp.storbinary(f"APPE {csvFileName}", BytesIO(csvData))
 
 ###########################
 # Download and read config file -> TODO work with read only file system
