@@ -77,10 +77,8 @@ wget -O /home/pi/config.yaml https://raw.githubusercontent.com/Eagleshot/Glacier
 # Download settings.yaml
 wget -O /home/pi/settings.yaml https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.yaml
 
-# TODO: BeforeStartup?
-
-# Add main.py to wittyPi afterStartup.sh
-echo "/usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
+# Add main.py to automatically run before wittyPi script
+echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.sh
 
 echo ''
 echo '================================================================================'

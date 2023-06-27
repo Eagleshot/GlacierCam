@@ -33,9 +33,11 @@ def getCPUSerial():
 
     return cpuserial
 
-# Read config file
+filePath = "/home/pi/"  # Path where files are saved
+
+# Read config.yaml file
 try:
-    with open('config.yaml', 'r') as file:
+    with open(f"{filePath}config.yaml", 'r') as file:
         config = safe_load(file)
 except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
@@ -43,7 +45,6 @@ except Exception as e:
 cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
 currentTime = datetime.today().strftime('%d%m%Y_%H%M')
 imgFileName = f"{currentTime}_{cameraName}.jpg"
-imgFilePath = "/home/pi/"  # Path where image is saved
 
 ###########################
 # Connect to FTP server
@@ -77,18 +78,18 @@ if config["multipleCamerasOnServer"] == True:
 
 # Try to download settings from server
 try:
-    with open('/home/pi/settings.yaml', 'wb') as fp:  # Download
+    with open(f"{filePath}settings.yaml", 'wb') as fp:  # Download
         ftp.retrbinary('RETR settings.yaml', fp.write)
 except Exception as e:
     print(f'No config file found. Creating new settings file with default settings: {str(e)}')
 
     # Upload config file if none exists
-    with open('/home/pi/settings.yaml', 'rb') as fp:  # Download
+    with open(f"{filePath}settings.yaml", 'rb') as fp:  # Download
         ftp.storbinary('STOR settings.yaml', fp)
 
 # Read settings file
 try:
-    with open("settings.yaml", 'r') as file:
+    with open(f"{filePath}settings.yaml", 'r') as file:
         settings = safe_load(file)
 except Exception as e:
     print(f"Could not open settings.yaml: {str(e)}")
@@ -219,7 +220,7 @@ else:
 ###########################
 try:
     camera.start_and_capture_file(
-        imgFilePath + imgFileName, capture_mode=cameraConfig, delay=3, show_preview=False)
+        filePath + imgFileName, capture_mode=cameraConfig, delay=3, show_preview=False)
 except Exception as e:
     error += f"Could not start camera and capture image: {str(e)}"
     print(f"Could not start camera and capture image: {str(e)}")
@@ -237,12 +238,12 @@ except Exception as e:
 # Upload to ftp server and then delete last image
 ###########################
 try:
-    with open(imgFilePath + imgFileName, 'rb') as file:
+    with open(f"{filePath}imgFileName", 'rb') as file:
         ftp.storbinary(f"STOR {imgFileName}", file)
         print(f"Successfully uploaded {imgFileName}")
 
     # Delete last image
-    remove(imgFilePath + imgFileName)
+    remove(f"{filePath}imgFileName")
 
 except Exception as e:
     error += f"Could not open image: {str(e)}"
