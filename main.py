@@ -188,6 +188,14 @@ except Exception as e:
 ftp = FTP(config["ftpServerAddress"], timeout=120)
 ftp.login(user=config["username"], passwd=config["password"])
 
+# Custom directory if specified
+if config["ftpDirectory"] != "":
+    try:
+        ftp.cwd(config["ftpDirectory"])
+    except:
+        ftp.mkd(config["ftpDirectory"])
+        ftp.cwd(config["ftpDirectory"])
+
 # Go to folder with camera name + unique hardware serial number or create it
 try:
     ftp.cwd(folderName)
