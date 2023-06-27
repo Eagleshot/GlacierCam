@@ -37,13 +37,13 @@ def getCPUSerial():
  
 cpuSerial = getCPUSerial()
 
-with open("config.yaml", 'r') as stream:
-    config = yaml.safe_load(stream)
+with open('config.yaml', 'r') as file:
+    config = yaml.safe_load(file)
 
-with open("settings.yaml", 'r') as stream:
-    settings = yaml.safe_load(stream)
+with open("settings.yaml", 'r') as file:
+    settings = yaml.safe_load(file)
 
-cameraName = config["cameraName"] # Camera name
+cameraName = config['cameraName'] # Camera name
 folderName = cameraName + "_" + cpuSerial # Camera folder with camera name + unique hardware serial
 imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + cameraName + "_" + cpuSerial + ".jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
