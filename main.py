@@ -248,7 +248,7 @@ try:
 
     # Current Power Draw (@5V)
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-    currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=subprocess.STDOUT, universal_newlines=True) + "A"
+    currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "A"
     currentPowerDraw = currentPowerDraw.replace("\n", "")
     print("Output current: " + currentPowerDraw)
 
