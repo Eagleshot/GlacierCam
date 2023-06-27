@@ -1,13 +1,10 @@
 # Camera settings
-lensPosition = 0.0
-resolution = (3280, 2464)
-
-startTimeHour = 8
-startTimeMinute = 0
-intervalMinutes = 60
-maxDurationMinute = 5
-repetitionsPerday = 8
-
-enableGPS = False
-
-shutdown = True
+lensPosition: 0.0
+resolution: [3280, 2464]
+startTimeHour: 8
+startTimeMinute: 0
+intervalMinutes: 60
+maxDurationMinute: 5
+repetitionsPerday: 8
+enableGPS: false
+shutdown: true

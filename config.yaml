@@ -1,10 +1,8 @@
 # Camera configuration
-cameraName = "Camera1"
-
-ftpServerAddress = "INSERT FTP SERVER ADDRESS HERE"
-username = "INSERT FTP USERNAME HERE"
-password = "INSERT FTP PASSWORD HERE"
-ftpDirectory = ""
-multipleCamerasOnServer = False
-
-localOnly = False
+cameraName: "Camera1"
+ftpServerAddress: "INSERT FTP SERVER ADDRESS HERE"
+username: "INSERT FTP USERNAME HERE"
+password: "INSERT FTP PASSWORD HERE"
+ftpDirectory: ""
+multipleCamerasOnServer: false
+localOnly: false
