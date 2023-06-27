@@ -9,8 +9,8 @@ from libcamera import controls
 from ftplib import FTP
 from datetime import datetime
 from time import sleep
-import csv
-import os
+from csv import writer
+from os import system, remove
 from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
 import yaml
@@ -39,6 +39,9 @@ cpuSerial = getCPUSerial()
 
 with open("config.yaml", 'r') as stream:
     config = yaml.safe_load(stream)
+
+with open("settings.yaml", 'r') as stream:
+    settings = yaml.safe_load(stream)
 
 cameraName = config["cameraName"] # Camera name
 folderName = cameraName + "_" + cpuSerial # Camera folder with camera name + unique hardware serial
@@ -155,7 +158,7 @@ cameraConfig = camera.create_still_configuration() # Automatically selects the h
 # TODO If -1 set to autofocus
 try:
     camera.set_controls({"AfMode": controls.AfModeEnum.Manual,
-                        "LensPosition": settings.lensPosition})
+                        "LensPosition": settings["lensPosition"]})
 except Exception as e:
     error += "Could not set lens position: " + str(e)
     print("Could not set lens position: " + str(e))
@@ -201,7 +204,7 @@ try:
         print(f"Successfully uploaded {imgFileName}")
 
     # Delete last image
-    os.remove(imgFilePath + imgFileName)
+    remove(imgFilePath + imgFileName)
 
 except Exception as e:
     error += "Could not open image. " + str(e)
@@ -248,7 +251,7 @@ except Exception as e:
 # Get GPS position
 # SIM7600X-Module is already turned on
 try:
-    if settings.enableGPS  == True:
+    if settings["enableGPS"]  == True:
         answer = 0
         print('Start GPS session.')
         rec_buff = ''
@@ -283,7 +286,7 @@ newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDr
 
 # Append new measurements to log CSV or create new CSV file if none exists
 with StringIO() as csvBuffer:
-    writer = csv.writer(csvBuffer)
+    writer = writer(csvBuffer)
     writer.writerow(newRow)
     csvData = csvBuffer.getvalue().encode('utf-8')
     ftp.storbinary(f"APPE {csvFileName}", BytesIO(csvData))
@@ -307,6 +310,6 @@ except:
     print('Could not quit FTP session.')
 
 # Shutdown computer if defined in loop
-if settings.shutdown == True:
+if settings["shutdown"] == True:
     print('Shutting down now.')
-    os.system("sudo shutdown -h now")
+    system("sudo shutdown -h now")
