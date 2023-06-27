@@ -219,8 +219,7 @@ else:
 # Capture image
 ###########################
 try:
-    camera.start_and_capture_file(
-        filePath + imgFileName, capture_mode=cameraConfig, delay=3, show_preview=False)
+    camera.start_and_capture_file(filePath + imgFileName, capture_mode=cameraConfig, delay=3, show_preview=False)
 except Exception as e:
     error += f"Could not start camera and capture image: {str(e)}"
     print(f"Could not start camera and capture image: {str(e)}")
@@ -238,12 +237,12 @@ except Exception as e:
 # Upload to ftp server and then delete last image
 ###########################
 try:
-    with open(f"{filePath}imgFileName", 'rb') as file:
+    with open(filePath + imgFileName, 'rb') as file:
         ftp.storbinary(f"STOR {imgFileName}", file)
         print(f"Successfully uploaded {imgFileName}")
 
     # Delete last image
-    remove(f"{filePath}imgFileName")
+    remove(filePath + imgFileName)
 
 except Exception as e:
     error += f"Could not open image: {str(e)}"
