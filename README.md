@@ -35,8 +35,9 @@ aufpassen usb pins -> löten?
 ### Setup rndis
 https://www.waveshare.com/wiki/Raspberry_Pi_networked_via_RNDIS
 
-# Edit config.py file
-sudo nano config.py
+# Edit config.yaml file
+sudo nano config.yaml
+You can validate yaml files herre: https://www.yamllint.com/
 
 # Edit username and password
 

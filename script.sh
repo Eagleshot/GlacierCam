@@ -27,6 +27,9 @@ sudo apt-get autoremove -y
 # Install pyserial with pip
 sudo pip3 install pyserial
 
+# Install pyyaml with pip
+sudo pip3 install pyyaml
+
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
@@ -68,11 +71,13 @@ echo '==========================================================================
 wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/main.py
 sudo chmod 777 /home/pi/main.py # Execution permissions
 
-# Download config.py
-wget -O /home/pi/config.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/config.py
+# Download config.yaml
+wget -O /home/pi/config.yaml https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/config.yaml
 
-# Download settings.py
-wget -O /home/pi/settings.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.py
+# Download settings.yaml
+wget -O /home/pi/settings.yaml https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.yaml
+
+# TODO: BeforeStartup?
 
 # Add main.py to wittyPi afterStartup.sh
 echo "/usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
