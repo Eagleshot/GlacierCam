@@ -107,11 +107,10 @@ Disable dhcpcd.service. Caution, this will break the internet connection if uplo
 Turn off white LED of witty pi
 
 # TODOs
+- [ ] Set focus in settings.yaml
+- [ ] Set resolution in settings.yaml
 - [ ] Witty Pi timing script -> replace /wittypi/script.sh
-- [ ] Set focus in settings.py
 - [ ] Sync time with NTP server / witty pi
 - [ ] Get real error messages from the camera
 - [ ] USB Backup
 - [ ] Web interface of ftp server (streamlit)
-- [ ] Camera Compression and metadata
-- [ ] Yaml instead of settings.py

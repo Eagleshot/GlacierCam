@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 
-# TODO Fix upload settings.yaml
-
 # Import required libraries
 from picamera2 import Picamera2
 from libcamera import controls
@@ -13,7 +11,7 @@ from csv import writer
 from os import system, remove
 from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
-import yaml
+from yaml import safe_load
 
 ###########################
 # Filenames
@@ -35,24 +33,24 @@ def getCPUSerial():
 
     return cpuserial
  
-cpuSerial = getCPUSerial()
+try:
+    with open('config.yaml', 'r') as file:
+        config = safe_load(file)
 
-with open('config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
+    with open("settings.yaml", 'r') as file:
+        settings = safe_load(file)
+except Exception as e:
+    print("Could not open config.yaml or settings.yaml: " + str(e))
 
-with open("settings.yaml", 'r') as file:
-    settings = yaml.safe_load(file)
-
-cameraName = config['cameraName'] # Camera name
-folderName = cameraName + "_" + cpuSerial # Camera folder with camera name + unique hardware serial
-imgFileName = datetime.today().strftime('%d%m%Y_%H%M_') + cameraName + "_" + cpuSerial + ".jpg"
+cameraName = config['cameraName'] + "_" + getCPUSerial() # Camera name + unique hardware serial
+currentTime = datetime.today().strftime('%d%m%Y_%H%M')
+imgFileName = currentTime + "_" + cameraName + ".jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
 
 ###########################
 # Readings
 ###########################
 csvFileName = "diagnostics.csv"
-currentTime = datetime.today().strftime('%d-%m-%Y %H:%M')
 currentTemperature = ""
 currentBatteryVoltage = "" 
 raspberryPiVoltage = ""
@@ -156,13 +154,19 @@ camera = Picamera2()
 cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
 
 # TODO If -1 set to autofocus
-try:
-    camera.set_controls({"AfMode": controls.AfModeEnum.Manual,
-                        "LensPosition": settings["lensPosition"]})
-except Exception as e:
-    error += "Could not set lens position: " + str(e)
-    print("Could not set lens position: " + str(e))
-
+if settings["lensPosition"] > -1:
+    try:
+        camera.set_controls({"AfMode": controls.AfModeEnum.Manual,
+                            "LensPosition": settings["lensPosition"]})
+    except Exception as e:
+        error += "Could not set lens position: " + str(e)
+        print("Could not set lens position: " + str(e))
+else:
+    try:
+        camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
+    except Exception as e:
+        error += "Could not set lens position: " + str(e)
+        print("Could not set lens position: " + str(e))
 ###########################
 # Capture image
 ###########################
@@ -179,11 +183,11 @@ except Exception as e:
 try:
     camera.stop()
 except Exception as e:
-    error += "Camera already stopped. "
-    print("Camera already stopped.")
+    error += "Camera already stopped: " + str(e)
+    print("Camera already stopped: " + str(e))
 
 ###########################
-# Upload picture to server
+# Connect to FTP server
 ###########################
 ftp = FTP(config["ftpServerAddress"], timeout=120)
 ftp.login(user=config["username"], passwd=config["password"])
@@ -197,11 +201,12 @@ if config["ftpDirectory"] != "":
         ftp.cwd(config["ftpDirectory"])
 
 # Go to folder with camera name + unique hardware serial number or create it
-try:
-    ftp.cwd(folderName)
-except:
-    ftp.mkd(folderName)
-    ftp.cwd(folderName)
+if config["multipleCamerasOnServer"] == True:
+    try:
+        ftp.cwd(cameraName)
+    except:
+        ftp.mkd(cameraName)
+        ftp.cwd(cameraName)
 
 ###########################
 # Upload to ftp server and then delete last image
@@ -223,10 +228,8 @@ except Exception as e:
 ###########################
 
 # Get WittyPi readings
+# See: https://www.baeldung.com/linux/run-function-in-script
 try:
-
-    # https://www.baeldung.com/linux/run-function-in-script
-
     # Temperature
     command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
     currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
@@ -300,20 +303,25 @@ with StringIO() as csvBuffer:
     ftp.storbinary(f"APPE {csvFileName}", BytesIO(csvData))
 
 ###########################
-# Download and read config file -> TODO work with read only file system
+# Download and read config file
 ###########################
+# TODO work with read only file system
+# TODO Fix upload settings.yaml
 try:
-    with open('/home/pi/settings.py', 'wb') as fp:  # Download
-        ftp.retrbinary('RETR settings.py', fp.write)
+    with open('/home/pi/settings.yaml', 'wb') as fp:  # Download
+        ftp.retrbinary('RETR settings.yaml', fp.write)
 except Exception as e:
     print('No config file found. Creating new config file with default settings: ' + str(e))
 
     # Upload config file if none exists
-    with open('/home/pi/settings.py', 'rb') as fp:  # Download
-        ftp.storbinary('STOR settings.py', fp)
+    with open('/home/pi/settings.yaml', 'rb') as fp:  # Download
+        ftp.storbinary('STOR settings.yaml', fp)
 
+###########################
+# Quit FTP session and shutdown raspberry pi
+###########################
 try:
-    ftp.quit
+    ftp.quit()
 except:
     print('Could not quit FTP session.')
 
