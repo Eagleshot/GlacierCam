@@ -40,11 +40,11 @@ try:
     with open("settings.yaml", 'r') as file:
         settings = safe_load(file)
 except Exception as e:
-    print("Could not open config.yaml or settings.yaml: " + str(e))
+    print(f"Could not open config.yaml or settings.yaml: {str(e)}")
 
-cameraName = config['cameraName'] + "_" + getCPUSerial() # Camera name + unique hardware serial
+cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
 currentTime = datetime.today().strftime('%d%m%Y_%H%M')
-imgFileName = currentTime + "_" + cameraName + ".jpg"
+imgFileName = f"{currentTime}_{cameraName}.jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
 
 ###########################
@@ -58,7 +58,7 @@ currentPowerDraw = ""
 currentSignalQuality = ""
 currentGPSPosLat = "-"
 currentGPSPosLong = "-"
-error = "" #TODO Real error messages
+error = ""
 
 ###########################
 # SIM7600X
@@ -69,8 +69,8 @@ try:
     ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
     ser.flushInput()
 except Exception as e:
-    error += "Could not open serial connection with 4G module: " + str(e)
-    print ("Could not open serial connection with 4G module: " + str(e))
+    error += f"Could not open serial connection with 4G module: {str(e)}"
+    print (f"Could not open serial connection with 4G module: {str(e)}")
 
 power_key = 6
 rec_buff = ''
@@ -92,7 +92,7 @@ def send_at2(command, back, timeout):
         return rec_buff.decode()
 
 # Get GPS Position
-def send_at(command, back, timeout):
+def getGPSPos(command, back, timeout):
     rec_buff = ''
     ser.write((command+'\r\n').encode())
     sleep(timeout)
@@ -159,14 +159,15 @@ if settings["lensPosition"] > -1:
         camera.set_controls({"AfMode": controls.AfModeEnum.Manual,
                             "LensPosition": settings["lensPosition"]})
     except Exception as e:
-        error += "Could not set lens position: " + str(e)
-        print("Could not set lens position: " + str(e))
+        error += f"Could not set lens position: {str(e)}"
+        print(f"Could not set lens position: {str(e)}")
 else:
     try:
         camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
     except Exception as e:
-        error += "Could not set lens position: " + str(e)
-        print("Could not set lens position: " + str(e))
+        error += f"Could not set lens position: {str(e)}"
+        print(f"Could not set lens position: {str(e)}")
+
 ###########################
 # Capture image
 ###########################
@@ -174,8 +175,8 @@ try:
     camera.start_and_capture_file(
         imgFilePath + imgFileName, capture_mode=cameraConfig, delay=3, show_preview=False)
 except Exception as e:
-    error += "Could not start camera and capture image: " + str(e)
-    print("Could not start camera and capture image: " + str(e))
+    error += f"Could not start camera and capture image: {str(e)}"
+    print(f"Could not start camera and capture image: {str(e)}")
 
 ###########################
 # Stop camera
@@ -183,8 +184,8 @@ except Exception as e:
 try:
     camera.stop()
 except Exception as e:
-    error += "Camera already stopped: " + str(e)
-    print("Camera already stopped: " + str(e))
+    error += f"Could not stop camera: {str(e)}"
+    print(f"Could not stop camera: {str(e)}")
 
 ###########################
 # Connect to FTP server
@@ -220,8 +221,8 @@ try:
     remove(imgFilePath + imgFileName)
 
 except Exception as e:
-    error += "Could not open image. " + str(e)
-    print("Could not open image. " + str(e))
+    error += f"Could not open image: {str(e)}"
+    print(f"Could not open image: {str(e)}")
 
 ###########################
 # Uploading sensor data to CSV
@@ -256,8 +257,8 @@ try:
     print("Output current: " + currentPowerDraw)
 
 except Exception as e:
-    error += "Failed to get WittyPi readings: " + str(e)
-    print("Failed to get WittyPi readings: " + str(e))
+    error += f"Failed to get WittyPi readings: {str(e)}"
+    print(f"Failed to get WittyPi readings: {str(e)}")
 
 # Get GPS position
 # SIM7600X-Module is already turned on
@@ -266,31 +267,31 @@ try:
         answer = 0
         print('Start GPS session.')
         rec_buff = ''
-        send_at('AT+CGPS=1,1', 'OK', 1)
+        getGPSPos('AT+CGPS=1,1', 'OK', 1)
         sleep(2)
         maxAttempts = 0
 
         while (maxAttempts <= 35):
             maxAttempts += 1
-            answer = send_at('AT+CGPSINFO', '+CGPSINFO: ', 1)
+            answer = getGPSPos('AT+CGPSINFO', '+CGPSINFO: ', 1)
             if answer == 1:  # Success
                 break
             else:
                 print('error %d' % answer)
-                send_at('AT+CGPS=0', 'OK', 1)
+                getGPSPos('AT+CGPS=0', 'OK', 1)
                 sleep(1.5)
-except:
-    error += "Failed to get GPS coordinates. "
-    print("Failed to get GPS coordinates.")
+except Exception as e:
+    error += f"Failed to get GPS coordinates: {str(e)}"
+    print(f"Failed to get GPS coordinates: {str(e)}")
 
 # Get cell signal quality
 try:
     currentSignalQuality = send_at2('AT+CSQ', 'OK', 1)[8:13]
     currentSignalQuality = currentSignalQuality.replace("\n", "")
     print("Cell signal quality: " + currentSignalQuality)
-except:
-    error += "Failed to get cell signal quality. "
-    print("Failed to get cell signal quality.")
+except Exception as e:
+    error += f"Failed to get cell signal quality: {str(e)}"
+    print(f"Failed to get cell signal quality: {str(e)}")
 
 # Upload data to server
 newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
@@ -311,7 +312,7 @@ try:
     with open('/home/pi/settings.yaml', 'wb') as fp:  # Download
         ftp.retrbinary('RETR settings.yaml', fp.write)
 except Exception as e:
-    print('No config file found. Creating new config file with default settings: ' + str(e))
+    print(f'No config file found. Creating new config file with default settings: {str(e)}')
 
     # Upload config file if none exists
     with open('/home/pi/settings.yaml', 'rb') as fp:  # Download
