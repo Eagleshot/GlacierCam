@@ -14,7 +14,7 @@ from subprocess import check_output, STDOUT
 from yaml import safe_load
 
 ###########################
-# Filenames
+# Configuration and filenames
 ###########################
 # Get unique hardware id of Raspberry Pi
 # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -32,20 +32,66 @@ def getCPUSerial():
         cpuserial = "ERROR000000000"
 
     return cpuserial
- 
+
+# Read config file
 try:
     with open('config.yaml', 'r') as file:
         config = safe_load(file)
-
-    with open("settings.yaml", 'r') as file:
-        settings = safe_load(file)
 except Exception as e:
-    print(f"Could not open config.yaml or settings.yaml: {str(e)}")
+    print(f"Could not open config.yaml: {str(e)}")
 
 cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
 currentTime = datetime.today().strftime('%d%m%Y_%H%M')
 imgFileName = f"{currentTime}_{cameraName}.jpg"
 imgFilePath = "/home/pi/"  # Path where image is saved
+
+###########################
+# Connect to FTP server
+###########################
+ftp = FTP(config["ftpServerAddress"], timeout=120)
+ftp.login(user=config["username"], passwd=config["password"])
+
+# Custom directory if specified
+if config["ftpDirectory"] != "":
+    try:
+        ftp.cwd(config["ftpDirectory"])
+    except:
+        ftp.mkd(config["ftpDirectory"])
+        ftp.cwd(config["ftpDirectory"])
+
+# Go to folder with camera name + unique hardware serial number or create it
+if config["multipleCamerasOnServer"] == True:
+    try:
+        ftp.cwd(cameraName)
+    except:
+        ftp.mkd(cameraName)
+        ftp.cwd(cameraName)
+
+###########################
+# Settings
+###########################
+
+# TODO work with read only file system - OK?
+# TODO Fix upload settings.yaml
+# TODO Do some checks if downloaded settings were valid?
+
+# Try to download settings from server
+try:
+    with open('/home/pi/settings.yaml', 'wb') as fp:  # Download
+        ftp.retrbinary('RETR settings.yaml', fp.write)
+except Exception as e:
+    print(f'No config file found. Creating new settings file with default settings: {str(e)}')
+
+    # Upload config file if none exists
+    with open('/home/pi/settings.yaml', 'rb') as fp:  # Download
+        ftp.storbinary('STOR settings.yaml', fp)
+
+# Read settings file
+try:
+    with open("settings.yaml", 'r') as file:
+        settings = safe_load(file)
+except Exception as e:
+    print(f"Could not open settings.yaml: {str(e)}")
 
 ###########################
 # Readings
@@ -188,28 +234,6 @@ except Exception as e:
     print(f"Could not stop camera: {str(e)}")
 
 ###########################
-# Connect to FTP server
-###########################
-ftp = FTP(config["ftpServerAddress"], timeout=120)
-ftp.login(user=config["username"], passwd=config["password"])
-
-# Custom directory if specified
-if config["ftpDirectory"] != "":
-    try:
-        ftp.cwd(config["ftpDirectory"])
-    except:
-        ftp.mkd(config["ftpDirectory"])
-        ftp.cwd(config["ftpDirectory"])
-
-# Go to folder with camera name + unique hardware serial number or create it
-if config["multipleCamerasOnServer"] == True:
-    try:
-        ftp.cwd(cameraName)
-    except:
-        ftp.mkd(cameraName)
-        ftp.cwd(cameraName)
-
-###########################
 # Upload to ftp server and then delete last image
 ###########################
 try:
@@ -302,21 +326,6 @@ with StringIO() as csvBuffer:
     writer.writerow(newRow)
     csvData = csvBuffer.getvalue().encode('utf-8')
     ftp.storbinary(f"APPE {csvFileName}", BytesIO(csvData))
-
-###########################
-# Download and read config file
-###########################
-# TODO work with read only file system
-# TODO Fix upload settings.yaml
-try:
-    with open('/home/pi/settings.yaml', 'wb') as fp:  # Download
-        ftp.retrbinary('RETR settings.yaml', fp.write)
-except Exception as e:
-    print(f'No config file found. Creating new config file with default settings: {str(e)}')
-
-    # Upload config file if none exists
-    with open('/home/pi/settings.yaml', 'rb') as fp:  # Download
-        ftp.storbinary('STOR settings.yaml', fp)
 
 ###########################
 # Quit FTP session and shutdown raspberry pi

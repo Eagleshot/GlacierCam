@@ -110,6 +110,5 @@ Turn off white LED of witty pi
 - [ ] Set resolution in settings.yaml
 - [ ] Witty Pi timing script -> replace /wittypi/script.sh
 - [ ] Sync time with NTP server / witty pi
-- [ ] Get real error messages from the camera
 - [ ] USB Backup
 - [ ] Web interface of ftp server (streamlit)
