@@ -101,6 +101,7 @@ systemd-analyze critical-chain
 Returns a list of services and their boot time impact.
 
 # Disable services
+# TODO Remove
 Disable dhcpcd.service. Caution, this will break the internet connection if upload is done over bluetooth or ethernet.
 ```bash
 
@@ -112,3 +113,6 @@ Turn off white LED of witty pi
 - [ ] Sync time with NTP server / witty pi
 - [ ] USB Backup
 - [ ] Web interface of ftp server (streamlit)
+
+
+# Additional log information can be found in the wittypi log files
