@@ -52,19 +52,7 @@ chmod +x configure && ./configure && make && sudo make install
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
-echo '|                    Step 3: Install WittyPi Software                          |'
-echo '|                                                                              |'
-echo '================================================================================'
-# Install WittyPi Software
-# See: https://www.uugear.com/product/witty-pi-4-mini/
-cd /home/pi
-wget https://www.uugear.com/repo/WittyPi4/install.sh
-sudo sh install.sh
-
-echo ''
-echo '================================================================================'
-echo '|                                                                              |'
-echo '|                       Step 4: Install Python script                          |'
+echo '|                       Step 3: Install Python script                          |'
 echo '|                                                                              |'
 echo '================================================================================'
 # Download python script to /home/pi
@@ -83,7 +71,7 @@ echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.s
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
-echo '|                     Step 5: Configure Raspberry Pi                           |'
+echo '|                     Step 4: Configure Raspberry Pi                           |'
 echo '|                                                                              |'
 echo '================================================================================'
 echo ''
@@ -95,14 +83,12 @@ sudo raspi-config nonint do_camera 0
 # Disable 1-wire interface
 sudo raspi-config nonint do_onewire 1
 
-# Enable I2C interface
-sudo raspi-config nonint do_i2c 0
+# I2C already activated by WittyPi script
 
 # Disable LED and other unused hardware
 echo "boot_delay=0" | sudo tee -a /boot/config.txt
 echo "disable_splash=1" | sudo tee -a /boot/config.txt
 echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
-echo "dtoverlay=disable-bt" | sudo tee -a /boot/config.txt
 echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 
 # Add quiet flag to cmdline.txt
@@ -110,6 +96,18 @@ sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
 
 # Enable the firewall
 sudo ufw enable
+
+echo ''
+echo '================================================================================'
+echo '|                                                                              |'
+echo '|                    Step 5: Install WittyPi Software                          |'
+echo '|                                                                              |'
+echo '================================================================================'
+# Install WittyPi Software
+# See: https://www.uugear.com/product/witty-pi-4-mini/
+cd /home/pi
+wget https://www.uugear.com/repo/WittyPi4/install.sh
+sudo sh install.sh
 
 echo ''
 echo '================================================================================'

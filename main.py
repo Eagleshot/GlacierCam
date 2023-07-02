@@ -13,6 +13,8 @@ from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
 from yaml import safe_load
 
+# TODO: See https://pyyaml.org/wiki/PyYAMLDocumentation -> safe load / security
+
 ###########################
 # Time synchronization
 ###########################
@@ -27,7 +29,7 @@ def syncWittyPiTimeWithNetwork():
         error += f"Could not synchronize time with network: {str(e)}"
         print(f"Could not synchronize time with network: {str(e)}")
 
-# syncWittyPiTimeWithNetwork()
+syncWittyPiTimeWithNetwork()
 
 ###########################
 # Configuration and filenames
@@ -89,7 +91,7 @@ if config["multipleCamerasOnServer"] == True:
 ###########################
 
 # TODO work with read only file system - OK?
-# TODO Fix upload settings.yaml
+# TODO Fix upload settings.yaml -> NEEDS SUDO
 # TODO Do some checks if downloaded settings were valid?
 
 # Try to download settings from server
@@ -126,6 +128,8 @@ camera = Picamera2()
 cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
 
 # TODO Camera resolution
+# https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
+# Table 6. Stream- specific configuration parameters
 if settings["resolution"] != ["0", "0"]:
     try:
         cameraConfig = camera.create_still_configuration({"size": (settings["resolution"][0], settings["resolution"][1])})
