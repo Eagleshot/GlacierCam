@@ -312,7 +312,6 @@ try:
     if settings["enableGPS"]  == True:
         answer = 0
         print('Start GPS session.')
-        rec_buff = ''
         getGPSPos('AT+CGPS=1,1', 'OK', 1)
         sleep(2)
         maxAttempts = 0
@@ -332,9 +331,9 @@ except Exception as e:
 
 # Get cell signal quality
 try:
-    currentSignalQuality = send_at('AT+CSQ', 'OK', 1)[8:13]
+    currentSignalQuality = send_at('AT+CSQ', 'OK', 1)[8:10]
     currentSignalQuality = currentSignalQuality.replace("\n", "")
-    print("Cell signal quality: " + currentSignalQuality)
+    print(f"Cell signal quality: {currentSignalQuality}")
 except Exception as e:
     error += f"Failed to get cell signal quality: {str(e)}"
     print(f"Failed to get cell signal quality: {str(e)}")
