@@ -7,7 +7,7 @@ from libcamera import controls
 from ftplib import FTP
 from datetime import datetime
 from time import sleep
-# from csv import writer
+from csv import writer
 from os import system, remove
 from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
@@ -341,9 +341,9 @@ except Exception as e:
 
 # Append new measurements to log CSV or create new CSV file if none exists
 with StringIO() as csvBuffer:
-    # writer = writer(csvBuffer)
+    writer = writer(csvBuffer)
     newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
-    # writer.writerow(newRow)
+    writer.writerow(newRow)
     csvData = csvBuffer.getvalue().encode('utf-8')
     ftp.storbinary(f"APPE {csvFileName}", BytesIO(csvData))
 
