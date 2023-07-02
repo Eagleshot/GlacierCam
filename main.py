@@ -109,6 +109,14 @@ error = ""
 camera = Picamera2()
 cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
 
+# TODO Camera resolution
+if settings["resolution"] != ["0", "0"]:
+    try:
+        cameraConfig = camera.create_still_configuration(resolution=(settings["resolution"][0], settings["resolution"][1]))
+    except Exception as e:
+        error += f"Could not set camera resolution: {str(e)}"
+        print(f"Could not set camera resolution: {str(e)}")
+
 # TODO If -1 set to autofocus
 if settings["lensPosition"] > -1:
     try:
