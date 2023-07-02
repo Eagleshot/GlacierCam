@@ -14,6 +14,22 @@ from subprocess import check_output, STDOUT
 from yaml import safe_load
 
 ###########################
+# Time synchronization
+###########################
+
+def syncWittyPiTimeWithNetwork():
+    try:
+        command = "cd /home/pi/wittypi && . ./utilities.sh && net_to_system && system_to_rtc"
+        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        output = output.replace("\n", "")
+        print(f"Time synchronized with network: {output}")
+    except Exception as e:
+        error += f"Could not synchronize time with network: {str(e)}"
+        print(f"Could not synchronize time with network: {str(e)}")
+
+# syncWittyPiTimeWithNetwork()
+
+###########################
 # Configuration and filenames
 ###########################
 # Get unique hardware id of Raspberry Pi
@@ -112,7 +128,7 @@ cameraConfig = camera.create_still_configuration() # Automatically selects the h
 # TODO Camera resolution
 if settings["resolution"] != ["0", "0"]:
     try:
-        cameraConfig = camera.create_still_configuration(resolution=(settings["resolution"][0], settings["resolution"][1]))
+        cameraConfig = camera.create_still_configuration({"size": (settings["resolution"][0], settings["resolution"][1])})
     except Exception as e:
         error += f"Could not set camera resolution: {str(e)}"
         print(f"Could not set camera resolution: {str(e)}")
@@ -179,7 +195,7 @@ def getWittyPiTemperature():
         currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
         currentTemperature = currentTemperature.replace("\n", "")
         currentTemperature = currentTemperature.split(" / ")[0] # Remove the Farenheit reading
-        print("Temperature: " + currentTemperature)
+        print(f"Temperature: {currentTemperature}")
         return currentTemperature
     except Exception as e:
         error += f"Could not get temperature: {str(e)}"
@@ -192,7 +208,7 @@ def getWittyPiBatteryVoltage():
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
         currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
         currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
-        print("Battery voltage: " + currentBatteryVoltage)
+        print(f"Battery voltage: {currentBatteryVoltage}")
         return currentBatteryVoltage
     except Exception as e:
         error += f"Could not get battery voltage: {str(e)}"
@@ -205,7 +221,7 @@ def getWittyPiVoltage():
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
         raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
         raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
-        print("Output voltage: " + raspberryPiVoltage)
+        print(f"Output voltage: {raspberryPiVoltage}")
         return raspberryPiVoltage
     except Exception as e:
         error += f"Could not get Raspberry Pi voltage: {str(e)}"
@@ -218,7 +234,7 @@ def getWittyPiCurrent():
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "A"
         currentPowerDraw = currentPowerDraw.replace("\n", "")
-        print("Output current: " + currentPowerDraw)
+        print(f"Output current: {currentPowerDraw}")
         return currentPowerDraw
     except Exception as e:
         error += f"Could not get Raspberry Pi current: {str(e)}"
