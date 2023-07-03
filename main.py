@@ -312,7 +312,6 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
     schedule += f"OFF   H{remainingHours}"
     if remainingMinutes > 0:
         schedule += f" M{remainingMinutes}"
-    schedule += "\n"
     
     return schedule
 
@@ -324,8 +323,14 @@ try:
         oldSchedule = f.read()
         if oldSchedule != schedule:
             print("Writing new schedule")
-            with open("/home/pi/wittypi/schedule.wpi", "w") as f:
-                f.write(schedule)
+
+            try:
+                with open("/home/pi/wittypi/schedule.wpi", "w") as f:
+                    f.write(schedule)
+            except:
+                # Write a new file if it doesn't exist
+                with open("/home/pi/wittypi/schedule.wpi", "x") as f:
+                    f.write(schedule)
             
             # Run WittyPi script
             command = "cd /home/pi/wittypi && . ./runScript.sh"
