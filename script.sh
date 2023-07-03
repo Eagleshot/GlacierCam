@@ -80,19 +80,16 @@ echo ''
 # Enable camera and other hardware interfaces
 sudo raspi-config nonint do_camera 0
 
-# Disable 1-wire interface
-sudo raspi-config nonint do_onewire 1
-
 # I2C already activated by WittyPi script
 
 # Disable LED and other unused hardware
-echo "boot_delay=0" | sudo tee -a /boot/config.txt
-echo "disable_splash=1" | sudo tee -a /boot/config.txt
-echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
-echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
+# echo "boot_delay=0" | sudo tee -a /boot/config.txt
+# echo "disable_splash=1" | sudo tee -a /boot/config.txt
+# echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
+# echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 
 # Add quiet flag to cmdline.txt
-sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
+# sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
 
 # Enable the firewall
 sudo ufw enable
