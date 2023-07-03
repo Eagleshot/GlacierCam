@@ -81,8 +81,8 @@ sudo raspi-config nonint do_camera 0
 
 # Disable LED and other unused hardware
 # echo "boot_delay=0" | sudo tee -a /boot/config.txt
-# echo "disable_splash=1" | sudo tee -a /boot/config.txt
-# echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
+echo "disable_splash=1" | sudo tee -a /boot/config.txt
+echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
 # echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 
 # Add quiet flag to cmdline.txt
@@ -99,12 +99,12 @@ echo '|                                                                         
 echo '================================================================================'
 # Install WittyPi Software
 # See: https://www.uugear.com/product/witty-pi-4-mini/
-cd /home/pi
-wget https://www.uugear.com/repo/WittyPi4/install.sh
-sudo sh install.sh
+# cd /home/pi
+# wget https://www.uugear.com/repo/WittyPi4/install.sh
+# sudo sh install.sh
 
-# Add main.py to automatically run before wittyPi script
-echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.sh
+# # Add main.py to automatically run before wittyPi script
+# echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.sh
 
 echo ''
 echo '================================================================================'
@@ -114,10 +114,10 @@ echo '|                                                                         
 echo '================================================================================'
 echo ''
 
-# Shut down to apply changes
-echo 'Shutting down in 5 seconds...'
+# Reboot to apply changes
+echo 'Rebooting in 5 seconds...'
 sleep 5
-sudo shutdown -h 0
+sudo reboot
 
 # TODO: Verify the changes/error handling
 # TODO: Maybe add some nice ascii art

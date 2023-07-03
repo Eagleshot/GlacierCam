@@ -145,7 +145,7 @@ cameraConfig = camera.create_still_configuration() # Automatically selects the h
 # Table 6. Stream- specific configuration parameters
 
 try:
-    if settings["resolution"] != ["0", "0"]:
+    if settings["resolution"][0] > 64 and settings["resolution"][1] > 64 and settings["resolution"][0] < 3280 and settings["resolution"][1] < 2464:
         cameraConfig = camera.create_still_configuration({"size": (settings["resolution"][0], settings["resolution"][1])})
 except Exception as e:
     error += f"Could not set custom camera resolution: {str(e)}"
