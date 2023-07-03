@@ -36,10 +36,12 @@ aufpassen usb pins -> löten?
 https://www.waveshare.com/wiki/Raspberry_Pi_networked_via_RNDIS
 
 # Edit config.yaml file
+```bash
 sudo nano config.yaml
+```
 You can validate yaml files herre: https://www.yamllint.com/
 
-# Edit username and password
+-> Edit username and password
 
 ### Install the wittypi hardware
 # TODO
@@ -109,42 +111,11 @@ Turn off white LED of witty pi
 
 # TODOs
 - [ ] Witty Pi timing script -> replace /wittypi/script.sh
-- [ ] Fix witty pi not automatically starting
 - [ ] USB Backup
 - [ ] Web interface of ftp server (streamlit)
 
 
 # Additional log information can be found in the wittypi log files
 
-import yaml
-
-def generate_schedule(yaml_file):
-    with open(yaml_file, 'r') as file:
-        data = yaml.safe_load(file)
-
-    startTimeHour = data.get('startTimeHour', 0)
-    startTimeMinute = data.get('startTimeMinute', 0)
-    intervalMinutes = data.get('intervalMinutes', 0)
-    maxDurationMinute = data.get('maxDurationMinute', 0)
-    repetitionsPerday = data.get('repetitionsPerday', 0)
-
-    schedule = []
-    schedule.append("BEGIN 2020-01-01 00:00:00")
-    schedule.append("END   2199-12-31 23:59:00")
-
-    for _ in range(repetitionsPerday):
-        schedule.append("ON    S0")
-        schedule.append(f"OFF   H{startTimeHour}")
-        schedule.append(f"ON    M{startTimeMinute}")
-        schedule.append(f"OFF   M{startTimeMinute + maxDurationMinute}")
-        startTimeMinute += intervalMinutes
-
-    schedule.append("ON    S0")
-    schedule.append(f"OFF   H{startTimeHour + (repetitionsPerday * intervalMinutes + startTimeMinute) // 60}")
-
-    with open("schedule.wpi", "w") as file:
-        file.write('\n'.join(schedule))
 
 
-yaml_file = "input.yaml"
-generate_schedule(yaml_file)

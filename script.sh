@@ -91,12 +91,12 @@ echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
 # Enable the firewall
 sudo ufw enable
 
-echo ''
-echo '================================================================================'
-echo '|                                                                              |'
-echo '|                    Step 5: Install WittyPi Software                          |'
-echo '|                                                                              |'
-echo '================================================================================'
+# echo ''
+# echo '================================================================================'
+# echo '|                                                                              |'
+# echo '|                    Step 5: Install WittyPi Software                          |'
+# echo '|                                                                              |'
+# echo '================================================================================'
 # Install WittyPi Software
 # See: https://www.uugear.com/product/witty-pi-4-mini/
 # cd /home/pi
@@ -104,7 +104,7 @@ echo '==========================================================================
 # sudo sh install.sh
 
 # # Add main.py to automatically run before wittyPi script
-# echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.sh
+# echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
 
 echo ''
 echo '================================================================================'

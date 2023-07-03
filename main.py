@@ -37,6 +37,8 @@ def syncWittyPiTimeWithNetwork():
         error += f"Could not synchronize time with network: {str(e)}"
         print(f"Could not synchronize time with network: {str(e)}")
 
+# TODO: Check if wittypi was started with button
+
 # syncWittyPiTimeWithNetwork()
 
 ###########################
@@ -260,6 +262,80 @@ currentTemperature = getWittyPiTemperature()
 currentBatteryVoltage = getWittyPiBatteryVoltage()
 raspberryPiVoltage = getWittyPiVoltage()
 currentPowerDraw = getWittyPiCurrent()
+
+###########################
+# Schedule script
+###########################
+def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurationMinute, repetitionsPerday):
+
+    schedule = "BEGIN 2020-01-01 00:00:00\n"
+    schedule += "END   2199-12-31 23:59:00\n"
+
+    # Check validity of parameters
+    if startTimeHour < 0 or startTimeHour > 24:
+        startTimeHour = 8
+    
+    if startTimeMinute < 0 or startTimeMinute > 60:
+        startTimeMinute = 0
+
+    if intervalMinutes < 0 or intervalMinutes > 1440:
+        intervalMinutes = 30
+
+    if maxDurationMinute < 0 or maxDurationMinute > 1440:
+        maxDurationMinute = 5
+    
+    if repetitionsPerday < 0 or repetitionsPerday > 150:
+        repetitionsPerday = 8
+    
+    # Start time
+    schedule += f"ON    S0\n"
+    schedule += f"OFF   H{startTimeHour}"
+    if startTimeMinute > 0:
+        schedule += f" M{startTimeMinute}"
+    schedule += "\n"
+
+    if ((repetitionsPerday * intervalMinutes)  + startTimeMinute + (startTimeHour * 60)) > 1440:
+        repetitionsPerday = 1
+
+    for i in range(repetitionsPerday):
+        schedule += f"ON    M{maxDurationMinute}\n"
+
+        # Last off is different
+        if i < repetitionsPerday - 1:
+            schedule += f"OFF   M{intervalMinutes - maxDurationMinute}\n"
+
+    # Turn camera off for the rest of the day
+    remainingMinutes = 1440 - (repetitionsPerday * intervalMinutes)  - startTimeMinute - (startTimeHour * 60) + (intervalMinutes - maxDurationMinute)
+    remainingHours = remainingMinutes // 60
+    remainingMinutes = remainingMinutes % 60
+
+    schedule += f"OFF   H{remainingHours}"
+    if remainingMinutes > 0:
+        schedule += f" M{remainingMinutes}"
+    schedule += "\n"
+    
+    return schedule
+
+try:
+    schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
+
+    # Compare to /home/pi/wittypi/schedule.wpi
+    with open("/home/pi/wittypi/schedule.wpi", "r") as f:
+        oldSchedule = f.read()
+        if oldSchedule != schedule:
+            print("Writing new schedule")
+            with open("/home/pi/wittypi/schedule.wpi", "w") as f:
+                f.write(schedule)
+            
+            # Run WittyPi script
+            command = "cd /home/pi/wittypi && . ./runScript.sh"
+            output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+            print(output)
+        else:
+            print("Schedule unchanged")
+except Exception as e:
+    error += f"Failed to generate schedule: {str(e)}"
+    print(f"Failed to generate schedule: {str(e)}")
 
 ##########################
 # SIM7600G-H 4G module
