@@ -268,8 +268,8 @@ currentPowerDraw = getWittyPiCurrent()
 ###########################
 def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurationMinute, repetitionsPerday):
 
-    schedule = "BEGIN 2010-01-01 00:00:00\n"
-    schedule += "END   2079-11-09 00:00:00\n"
+    schedule = "BEGIN 2010-01-01 00:00:00 \n"
+    schedule += "END   2079-11-09 00:00:00 \n"
 
     # Check validity of parameters
     if startTimeHour < 0 or startTimeHour > 24:
@@ -288,21 +288,21 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
         repetitionsPerday = 8
     
     # Start time
-    schedule += f"ON    S0\n"
+    schedule += f"ON    S0 \n"
     schedule += f"OFF   H{startTimeHour}"
     if startTimeMinute > 0:
         schedule += f" M{startTimeMinute}"
-    schedule += "\n"
+    schedule += " \n"
 
     if ((repetitionsPerday * intervalMinutes)  + startTimeMinute + (startTimeHour * 60)) > 1440:
         repetitionsPerday = 1
 
     for i in range(repetitionsPerday):
-        schedule += f"ON    M{maxDurationMinute}\n"
+        schedule += f"ON    M{maxDurationMinute} \n"
 
         # Last off is different
         if i < repetitionsPerday - 1:
-            schedule += f"OFF   M{intervalMinutes - maxDurationMinute}\n"
+            schedule += f"OFF   M{intervalMinutes - maxDurationMinute} \n"
 
     # Turn camera off for the rest of the day
     remainingMinutes = 1440 - (repetitionsPerday * intervalMinutes)  - startTimeMinute - (startTimeHour * 60) + (intervalMinutes - maxDurationMinute)
