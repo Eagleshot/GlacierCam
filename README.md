@@ -12,9 +12,9 @@ Then click on "SAVE" and "WRITE" to flash the OS to the microSD card. This proce
 ### Setup the software on the Raspberry Pi
 Required hardware: Raspberry Pi Zero WH (or other), monitor, HDMI to microHDMI adapter (optional), keyboard (with micro usb to usb adapter), power supply, ethernet adapter or WiFi for Pi Zero W
 
-Insert the microSD card and connect the Raspberry Pi to the monitor, keyboard, mouse and power supply. Boot up the Raspberry Pi and wait until it has started up. It may reboot several times. Log in with the username and password you set up in the previous step. The default username is "pi" and the default password is "raspberry".
+Insert the microSD card and connect the Raspberry Pi to the monitor, keyboard, mouse and power supply. Boot up the Raspberry Pi and wait until it has started up. It may reboot. Log in with the username and password you set up in the previous step. The default username is "pi" and the default password is "raspberry".
 
- write the following command in the terminal:
+ Write the following command in the terminal:
 
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
@@ -23,7 +23,7 @@ After the script has finished, the Raspberry Pi will automatically reboot to app
 
 ## TODO Alternative take preconfigured sd card and flash it with balena etcher
 In order to save time you can also use a preconfigured image and flash it to the sd card using win32 disk imager.
-
+https://sourceforge.net/projects/win32diskimager/
 ## Setup the software
 ### Install the camera
 # TODO

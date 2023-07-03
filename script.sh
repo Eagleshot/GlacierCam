@@ -65,9 +65,6 @@ wget -O /home/pi/config.yaml https://raw.githubusercontent.com/Eagleshot/Glacier
 # Download settings.yaml
 wget -O /home/pi/settings.yaml https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.yaml
 
-# Add main.py to automatically run before wittyPi script
-echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.sh
-
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
@@ -106,6 +103,9 @@ cd /home/pi
 wget https://www.uugear.com/repo/WittyPi4/install.sh
 sudo sh install.sh
 
+# Add main.py to automatically run before wittyPi script
+echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.sh
+
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
@@ -114,10 +114,10 @@ echo '|                                                                         
 echo '================================================================================'
 echo ''
 
-# Reboot to apply changes
-echo 'Rebooting in 5 seconds...'
+# Shut down to apply changes
+echo 'Shutting down in 5 seconds...'
 sleep 5
-sudo reboot
+sudo shutdown -h 0
 
 # TODO: Verify the changes/error handling
 # TODO: Maybe add some nice ascii art

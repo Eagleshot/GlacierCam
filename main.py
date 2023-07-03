@@ -16,6 +16,14 @@ from yaml import safe_load
 # TODO: See https://pyyaml.org/wiki/PyYAMLDocumentation -> safe load / security
 
 ###########################
+# Readings
+###########################
+csvFileName = "diagnostics.csv"
+currentGPSPosLat = "-"
+currentGPSPosLong = "-"
+error = ""
+
+###########################
 # Time synchronization
 ###########################
 
@@ -29,7 +37,7 @@ def syncWittyPiTimeWithNetwork():
         error += f"Could not synchronize time with network: {str(e)}"
         print(f"Could not synchronize time with network: {str(e)}")
 
-syncWittyPiTimeWithNetwork()
+# syncWittyPiTimeWithNetwork()
 
 ###########################
 # Configuration and filenames
@@ -67,24 +75,38 @@ imgFileName = f"{currentTime}_{cameraName}.jpg"
 ###########################
 # Connect to FTP server
 ###########################
-ftp = FTP(config["ftpServerAddress"], timeout=120)
-ftp.login(user=config["username"], passwd=config["password"])
+try:
+    ftp = FTP(config["ftpServerAddress"], timeout=120)
+    ftp.login(user=config["username"], passwd=config["password"])
+    connectedToFTP = True
+except Exception as e:
+    error += f"Could not connect to FTP server: {str(e)}"
+    print(f"Could not connect to FTP server: {str(e)}")
+    connectedToFTP = False
 
 # Custom directory if specified
-if config["ftpDirectory"] != "":
-    try:
-        ftp.cwd(config["ftpDirectory"])
-    except:
-        ftp.mkd(config["ftpDirectory"])
-        ftp.cwd(config["ftpDirectory"])
+try:
+    if config["ftpDirectory"] != "":
+        try:
+            ftp.cwd(config["ftpDirectory"])
+        except:
+            ftp.mkd(config["ftpDirectory"])
+            ftp.cwd(config["ftpDirectory"])
+except Exception as e:
+    error += f"Could not change directory on FTP server: {str(e)}"
+    print(f"Could not change directory on FTP server: {str(e)}")
 
 # Go to folder with camera name + unique hardware serial number or create it
-if config["multipleCamerasOnServer"] == True:
-    try:
-        ftp.cwd(cameraName)
-    except:
-        ftp.mkd(cameraName)
-        ftp.cwd(cameraName)
+try:
+    if config["multipleCamerasOnServer"] == True:
+        try:
+            ftp.cwd(cameraName)
+        except:
+            ftp.mkd(cameraName)
+            ftp.cwd(cameraName)
+except Exception as e:
+    error += f"Could not change directory on FTP server: {str(e)}"
+    print(f"Could not change directory on FTP server: {str(e)}")
 
 ###########################
 # Settings
@@ -113,15 +135,6 @@ except Exception as e:
     print(f"Could not open settings.yaml: {str(e)}")
 
 ###########################
-# Readings
-###########################
-csvFileName = "diagnostics.csv"
-currentSignalQuality = ""
-currentGPSPosLat = "-"
-currentGPSPosLong = "-"
-error = ""
-
-###########################
 # Setup camera
 ###########################
 camera = Picamera2()
@@ -130,33 +143,29 @@ cameraConfig = camera.create_still_configuration() # Automatically selects the h
 # TODO Camera resolution
 # https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
 # Table 6. Stream- specific configuration parameters
-if settings["resolution"] != ["0", "0"]:
-    try:
-        cameraConfig = camera.create_still_configuration({"size": (settings["resolution"][0], settings["resolution"][1])})
-    except Exception as e:
-        error += f"Could not set camera resolution: {str(e)}"
-        print(f"Could not set camera resolution: {str(e)}")
 
-# TODO If -1 set to autofocus
-if settings["lensPosition"] > -1:
-    try:
-        camera.set_controls({"AfMode": controls.AfModeEnum.Manual,
-                            "LensPosition": settings["lensPosition"]})
-    except Exception as e:
-        error += f"Could not set lens position: {str(e)}"
-        print(f"Could not set lens position: {str(e)}")
-else:
-    try:
+try:
+    if settings["resolution"] != ["0", "0"]:
+        cameraConfig = camera.create_still_configuration({"size": (settings["resolution"][0], settings["resolution"][1])})
+except Exception as e:
+    error += f"Could not set custom camera resolution: {str(e)}"
+    print(f"Could not set custom camera resolution: {str(e)}")
+
+# Focus settings
+try:
+    if settings["lensPosition"] > -1:
+        camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings["lensPosition"]})
+    else:
         camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
-    except Exception as e:
-        error += f"Could not set lens position: {str(e)}"
-        print(f"Could not set lens position: {str(e)}")
+except Exception as e:
+    error += f"Could not set lens position: {str(e)}"
+    print(f"Could not set lens position: {str(e)}")
 
 ###########################
 # Capture image
 ###########################
 try:
-    camera.start_and_capture_file(filePath + imgFileName, capture_mode=cameraConfig, delay=3, show_preview=False)
+    camera.start_and_capture_file(filePath + imgFileName, capture_mode=cameraConfig, delay=2, show_preview=False)
 except Exception as e:
     error += f"Could not start camera and capture image: {str(e)}"
     print(f"Could not start camera and capture image: {str(e)}")
@@ -189,6 +198,7 @@ except Exception as e:
 # Uploading sensor data to CSV
 ###########################
 
+# TODO: ftp connection check or offline mode
 # Get WittyPi readings
 # See: https://www.baeldung.com/linux/run-function-in-script
 
@@ -264,19 +274,35 @@ except Exception as e:
     print (f"Could not open serial connection with 4G module: {str(e)}")
 
 # Send AT command to SIM7600X
-def send_at(command, back, timeout):
+# def sendATCommand(command, back, timeout):
+#     rec_buff = ''
+#     ser.write((command+'\r\n').encode())
+#     sleep(timeout)
+#     if ser.inWaiting():
+#         sleep(0.01)
+#         rec_buff = ser.read(ser.inWaiting())
+#     if back not in rec_buff.decode():
+#         print(command + ' ERROR')
+#         print(command + ' back:\t' + rec_buff.decode())
+#         return 0
+#     else:
+#         return rec_buff.decode()
+
+# Get current signal quality
+def getCurrentSignalQuality():
     rec_buff = ''
-    ser.write((command+'\r\n').encode())
-    sleep(timeout)
+    ser.write(('AT+CSQ'+'\r\n').encode())
+    sleep(1)
     if ser.inWaiting():
         sleep(0.01)
         rec_buff = ser.read(ser.inWaiting())
-    if back not in rec_buff.decode():
-        print(command + ' ERROR')
-        print(command + ' back:\t' + rec_buff.decode())
-        return 0
+    if 'OK' not in rec_buff.decode():
+        print('Error getting signal quality - back:\t' + rec_buff.decode())
+        return ""
     else:
-        return rec_buff.decode()
+        currentSignalQuality = rec_buff.decode()[8:10]
+        currentSignalQuality = currentSignalQuality.replace("\n", "")
+        return currentSignalQuality
 
 # Get GPS Position
 def getGPSPos(command, back, timeout):
@@ -336,6 +362,7 @@ def getGPSPos(command, back, timeout):
 
 # Get GPS position
 # SIM7600X-Module is already turned on
+# TODO
 try:
     if settings["enableGPS"]  == True:
         answer = 0
@@ -358,9 +385,10 @@ except Exception as e:
     print(f"Failed to get GPS coordinates: {str(e)}")
 
 # Get cell signal quality
+# TODO
+currentSignalQuality = ""
 try:
-    currentSignalQuality = send_at('AT+CSQ', 'OK', 1)[8:10]
-    currentSignalQuality = currentSignalQuality.replace("\n", "")
+    currentSignalQuality = getCurrentSignalQuality()
     print(f"Cell signal quality: {currentSignalQuality}")
 except Exception as e:
     error += f"Failed to get cell signal quality: {str(e)}"
@@ -385,6 +413,10 @@ except Exception as e:
 ###########################
 # Shutdown Raspberry Pi if enabled
 ###########################
-if settings["shutdown"] == True:
-    print('Shutting down now.')
+try:
+    if settings["shutdown"] == True:
+        print('Shutting down now.')
+        system("sudo shutdown -h now")
+except Exception as e:
+    # Setting not found
     system("sudo shutdown -h now")
