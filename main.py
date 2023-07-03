@@ -268,7 +268,8 @@ currentPowerDraw = getWittyPiCurrent()
 ###########################
 def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurationMinute, repetitionsPerday):
 
-    schedule = "BEGIN 2010-01-01 00:00:00\nEND    2079-11-09 00:00:00\n"
+    # 2037 is the maximum year for WittyPi
+    schedule = "BEGIN\t2010-01-01 00:00:00\nEND\t2037-12-31 23:59:59\n"
 
     # Check validity of parameters
     if startTimeHour < 0 or startTimeHour > 24:
@@ -287,8 +288,8 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
         repetitionsPerday = 8
     
     # Start time
-    schedule += f"ON    S0\n"
-    schedule += f"OFF   H{startTimeHour}"
+    schedule += f"ON\tS0\n"
+    schedule += f"OFF\tH{startTimeHour}"
     if startTimeMinute > 0:
         schedule += f" M{startTimeMinute}"
     schedule += "\n"
@@ -297,18 +298,18 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
         repetitionsPerday = 1
 
     for i in range(repetitionsPerday):
-        schedule += f"ON    M{maxDurationMinute}\n"
+        schedule += f"ON\tM{maxDurationMinute}\n"
 
         # Last off is different
         if i < repetitionsPerday - 1:
-            schedule += f"OFF   M{intervalMinutes - maxDurationMinute}\n"
+            schedule += f"OFF\tM{intervalMinutes - maxDurationMinute}\n"
 
     # Turn camera off for the rest of the day
     remainingMinutes = 1440 - (repetitionsPerday * intervalMinutes)  - startTimeMinute - (startTimeHour * 60) + (intervalMinutes - maxDurationMinute)
     remainingHours = remainingMinutes // 60
     remainingMinutes = remainingMinutes % 60
 
-    schedule += f"OFF   H{remainingHours}"
+    schedule += f"OFF\tH{remainingHours}"
     if remainingMinutes > 0:
         schedule += f" M{remainingMinutes}"
     
