@@ -268,8 +268,8 @@ currentPowerDraw = getWittyPiCurrent()
 ###########################
 def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurationMinute, repetitionsPerday):
 
-    schedule = "BEGIN 2020-01-01 00:00:00\n"
-    schedule += "END   2199-12-31 23:59:00\n"
+    schedule = "BEGIN 2010-01-01 00:00:00\n"
+    schedule += "END   2079-11-09 00:00:00\n"
 
     # Check validity of parameters
     if startTimeHour < 0 or startTimeHour > 24:
