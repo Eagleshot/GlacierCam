@@ -318,12 +318,13 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
 try:
     schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
 
-    # Compare to /home/pi/wittypi/schedule.wpi
+    # Compare old schedule file to new one
     with open("/home/pi/wittypi/schedule.wpi", "r") as f:
         oldSchedule = f.read()
         if oldSchedule != schedule:
-            print("Writing new schedule")
 
+            # Write new schedule file
+            print("Writing and applying new schedule file.")
             try:
                 with open("/home/pi/wittypi/schedule.wpi", "w") as f:
                     f.write(schedule)
@@ -332,12 +333,13 @@ try:
                 with open("/home/pi/wittypi/schedule.wpi", "x") as f:
                     f.write(schedule)
             
-            # Run WittyPi script
+            # Apply new schedule
             command = "cd /home/pi/wittypi && . ./runScript.sh"
             output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
-            print(output)
+            output = output.split("\n")[1:3]
+            print(f"{output[0]}\n{output[1]}")
         else:
-            print("Schedule unchanged")
+            print("Schedule did not change.")
 except Exception as e:
     error += f"Failed to generate schedule: {str(e)}"
     print(f"Failed to generate schedule: {str(e)}")

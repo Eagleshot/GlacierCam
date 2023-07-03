@@ -110,7 +110,6 @@ Disable dhcpcd.service. Caution, this will break the internet connection if uplo
 Turn off white LED of witty pi
 
 # TODOs
-- [ ] Witty Pi timing script -> replace /wittypi/script.sh
 - [ ] USB Backup
 - [ ] Web interface of ftp server (streamlit)
 
