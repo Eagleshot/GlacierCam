@@ -313,6 +313,8 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
     schedule += f"OFF   H{remainingHours}"
     if remainingMinutes > 0:
         schedule += f" M{remainingMinutes}"
+
+    schedule = "BEGIN 2016-08-05 00:00:00\nEND   2025-07-31 23:59:59\nON    M1 WAIT\nOFF   M59"
     
     return schedule
 
