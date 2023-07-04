@@ -28,6 +28,8 @@ https://sourceforge.net/projects/win32diskimager/
 ### Install the camera
 # TODO
 
+# TODO Change dns server to cloudflare and google
+
 ### Install the sim module
 # TODO
 aufpassen usb pins -> löten?

@@ -148,7 +148,7 @@ cameraConfig = camera.create_still_configuration() # Automatically selects the h
 # Table 6. Stream- specific configuration parameters
 
 try:
-    if settings["resolution"][0] > 64 and settings["resolution"][1] > 64 and settings["resolution"][0] < 3280 and settings["resolution"][1] < 2464:
+    if settings["resolution"][0] > 64 and settings["resolution"][1] > 64 and settings["resolution"][0] < 4608 and settings["resolution"][1] < 2592:
         cameraConfig = camera.create_still_configuration({"size": (settings["resolution"][0], settings["resolution"][1])})
 except Exception as e:
     error += f"Could not set custom camera resolution: {str(e)}"
@@ -334,18 +334,23 @@ try:
                     # Write a new file if it doesn't exist
                     with open("/home/pi/wittypi/schedule.wpi", "x") as f:
                         f.write(schedule)
-                
-                # Apply new schedule
-                command = "cd /home/pi/wittypi && . ./runScript.sh"
-                output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
-                output = output.split("\n")[1:3]
-                print(f"{output[0]}\n{output[1]}")
             else:
                 print("Schedule did not change.")
 except Exception as e:
     error += f"Failed to generate schedule: {str(e)}"
     print(f"Failed to generate schedule: {str(e)}")
 
+
+try:
+    # Apply new schedule
+    command = "cd /home/pi/wittypi && sudo ./runScript.sh"
+    output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+    output = output.split("\n")[1:3]
+    print(f"{output[0]}\n{output[1]}")
+    error += f"{output[0]}, {output[1]}"
+except Exception as e:
+    error += f"Failed to apply schedule: {str(e)}"
+    print(f"Failed to apply schedule: {str(e)}")
 ##########################
 # SIM7600G-H 4G module
 ###########################
