@@ -88,7 +88,7 @@ except Exception as e:
 
 # Custom directory if specified
 try:
-    if config["ftpDirectory"] != "":
+    if config["ftpDirectory"] != "" and connectedToFTP == True:
         try:
             ftp.cwd(config["ftpDirectory"])
         except:
@@ -100,7 +100,7 @@ except Exception as e:
 
 # Go to folder with camera name + unique hardware serial number or create it
 try:
-    if config["multipleCamerasOnServer"] == True:
+    if config["multipleCamerasOnServer"] == True and connectedToFTP == True:
         try:
             ftp.cwd(cameraName)
         except:
@@ -125,9 +125,10 @@ try:
 except Exception as e:
     print(f'No config file found. Creating new settings file with default settings: {str(e)}')
 
-    # Upload config file if none exists
-    with open(f"{filePath}settings.yaml", 'rb') as fp:  # Download
-        ftp.storbinary('STOR settings.yaml', fp)
+    if connectedToFTP == True:
+        # Upload config file if none exists
+        with open(f"{filePath}settings.yaml", 'rb') as fp:  # Download
+            ftp.storbinary('STOR settings.yaml', fp)
 
 # Read settings file
 try:
@@ -193,6 +194,7 @@ try:
     remove(filePath + imgFileName)
 
 except Exception as e:
+    # TODO: Save image to USB drive
     error += f"Could not open image: {str(e)}"
     print(f"Could not open image: {str(e)}")
 
@@ -200,7 +202,6 @@ except Exception as e:
 # Uploading sensor data to CSV
 ###########################
 
-# TODO: ftp connection check or offline mode
 # Get WittyPi readings
 # See: https://www.baeldung.com/linux/run-function-in-script
 
@@ -478,12 +479,16 @@ except Exception as e:
     print(f"Failed to get cell signal quality: {str(e)}")
 
 # Append new measurements to log CSV or create new CSV file if none exists
-with StringIO() as csvBuffer:
-    writer = writer(csvBuffer)
-    newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
-    writer.writerow(newRow)
-    csvData = csvBuffer.getvalue().encode('utf-8')
-    ftp.storbinary(f"APPE {csvFileName}", BytesIO(csvData))
+try:
+    with StringIO() as csvBuffer:
+        writer = writer(csvBuffer)
+        newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
+        writer.writerow(newRow)
+        csvData = csvBuffer.getvalue().encode('utf-8')
+        ftp.storbinary(f"APPE {csvFileName}", BytesIO(csvData))
+except Exception as e:
+    # TODO Log to USB
+    print(f"Could not append new measurements to log CSV: {str(e)}")
 
 ###########################
 # Quit FTP session
