@@ -351,6 +351,12 @@ try:
     # Apply new schedule
     command = "cd /home/pi/wittypi && sudo ./runScript.sh"
     output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+
+    # If output contains warning
+    if "Warning" in output:
+        syncWittyPiTimeWithNetwork() # Sync time and try again
+        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        
     output = output.split("\n")[1:3]
     print(f"{output[0]}\n{output[1]}")
     error += f"{output[0]}, {output[1]}"
