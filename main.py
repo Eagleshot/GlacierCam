@@ -8,7 +8,7 @@ from ftplib import FTP
 from datetime import datetime
 from time import sleep
 from csv import writer
-from os import system, remove
+from os import system, remove, listdir
 from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
 from yaml import safe_load
@@ -186,12 +186,15 @@ except Exception as e:
 # Upload to ftp server and then delete last image
 ###########################
 try:
-    with open(filePath + imgFileName, 'rb') as file:
-        ftp.storbinary(f"STOR {imgFileName}", file)
-        print(f"Successfully uploaded {imgFileName}")
+    # Upload all images in filePath
+    for file in listdir(filePath):
+        if file.endswith(".jpg"):
+            with open(filePath + file, 'rb') as file:
+                ftp.storbinary(f"STOR {file}", file)
+                print(f"Successfully uploaded {file}")
 
-    # Delete last image
-    remove(filePath + imgFileName)
+                # Delete last image
+                remove(filePath + file)
 
 except Exception as e:
     # TODO: Save image to USB drive
@@ -269,10 +272,7 @@ currentPowerDraw = getWittyPiCurrent()
 ###########################
 def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurationMinute, repetitionsPerday):
 
-    # 2037 is the maximum year for WittyPi
-    schedule = "BEGIN\t2010-01-01 00:00:00\nEND\t2037-12-31 23:59:59\n"
-
-    # Check validity of parameters
+    # Basic validity check of parameters
     if startTimeHour < 0 or startTimeHour > 24:
         startTimeHour = 8
     
@@ -285,19 +285,16 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
     if maxDurationMinute < 0 or maxDurationMinute > 1440:
         maxDurationMinute = 5
     
-    if repetitionsPerday < 0 or repetitionsPerday > 150:
+    if repetitionsPerday < 0 or repetitionsPerday > 275:
         repetitionsPerday = 8
     
-    # Start time
-    schedule += f"ON\tS0\n"
-    schedule += f"OFF\tH{startTimeHour}"
-    if startTimeMinute > 0:
-        schedule += f" M{startTimeMinute}"
-    schedule += "\n"
-
     if ((repetitionsPerday * intervalMinutes)  + startTimeMinute + (startTimeHour * 60)) > 1440:
         repetitionsPerday = 1
 
+    # 2037 is the maximum year for WittyPi
+    formattedStartTime = "{:02d}:{:02d}".format(startTimeHour, startTimeMinute)
+    schedule = f"BEGIN\t2010-01-01 {formattedStartTime}:00\nEND\t2037-12-31 23:59:59\n"
+    
     for i in range(repetitionsPerday):
         schedule += f"ON\tM{maxDurationMinute}\n"
 
@@ -306,7 +303,7 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
             schedule += f"OFF\tM{intervalMinutes - maxDurationMinute}\n"
 
     # Turn camera off for the rest of the day
-    remainingMinutes = 1440 - (repetitionsPerday * intervalMinutes)  - startTimeMinute - (startTimeHour * 60) + (intervalMinutes - maxDurationMinute)
+    remainingMinutes = 1440 - (repetitionsPerday * intervalMinutes) + (intervalMinutes - maxDurationMinute)
     remainingHours = remainingMinutes // 60
     remainingMinutes = remainingMinutes % 60
 
@@ -339,7 +336,6 @@ try:
 except Exception as e:
     error += f"Failed to generate schedule: {str(e)}"
     print(f"Failed to generate schedule: {str(e)}")
-
 
 try:
     # Apply new schedule
