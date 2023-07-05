@@ -1,8 +1,10 @@
-# Camera configuration
+# Name of the camera
 cameraName: "Camera1"
+
+# FTP Server configuration
 ftpServerAddress: "INSERT FTP SERVER ADDRESS HERE"
 username: "INSERT FTP USERNAME HERE"
 password: "INSERT FTP PASSWORD HERE"
-ftpDirectory: ""
-multipleCamerasOnServer: false
-localOnly: false
+ftpDirectory: "" # Optional: The directory on the FTP server where the images will be uploaded
+multipleCamerasOnServer: false # Creates a unique folder for each camera on the FTP server
+localOnly: false # Disable FTP upload and only save images locally

@@ -27,7 +27,8 @@ Wenn Sie dies Ausgeführt haben, schreiben Sie folgenden Befehl in die Konsole u
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
 ```
-After the script has finished, the Raspberry Pi will automatically reboot to apply the changes.
+Nach dem Abschluss des Installationsskripts startet der Raspberry Pi automatisch neu, um die Änderungen zu übernehmen.
+
 
 ```bash
 wget https://www.uugear.com/repo/WittyPi4/install.sh

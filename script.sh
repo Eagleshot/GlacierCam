@@ -1,10 +1,12 @@
 #!/bin/bash -e
 
-# Check if sudo is used
+# Check if script is being run with sudo
 if [ "$(id -u)" != 0 ]; then
-  echo 'This script must be run as sudo!'
+  echo 'This script must be run as sudo or as root!'
   exit 1
 fi
+
+# TODO Maybe verify the changes/add some basic error handling
 
 echo ''
 echo '================================================================================'
@@ -49,6 +51,8 @@ sudo sed -i '$i sh /home/pi/SIM7600X-4G-HAT-B-Demo/Raspberry/c/sim7600_4G_hat_in
 cd /home/pi/SIM7600X-4G-HAT-B-Demo/Raspberry/c/bcm2835
 chmod +x configure && ./configure && make && sudo make install
 
+# TODO Maybe delete no longer deleted install files
+
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
@@ -80,13 +84,16 @@ sudo raspi-config nonint do_camera 0
 # I2C already activated by WittyPi script
 
 # Disable LED and other unused hardware
-# echo "boot_delay=0" | sudo tee -a /boot/config.txt
+echo "boot_delay=0" | sudo tee -a /boot/config.txt
 echo "disable_splash=1" | sudo tee -a /boot/config.txt
 echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
 # echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 
-# Add quiet flag to cmdline.txt
+# Add quiet flag to cmdline.txt to mute boot messages
 # sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
+
+# Change the DNS server to Cloudflare and Google
+echo "static domain_name_servers=1.1.1.1 8.8.8.8" | sudo tee -a /etc/dhcpcd.conf
 
 # Enable the firewall
 sudo ufw enable
@@ -97,14 +104,17 @@ sudo ufw enable
 # echo '|                    Step 5: Install WittyPi Software                          |'
 # echo '|                                                                              |'
 # echo '================================================================================'
+
+# This was disabled, because it currently doesn't work because of permission
+# TODO Maybe reenable in the future, once the root cause is found
+
 # Install WittyPi Software
-# TODO
 # See: https://www.uugear.com/product/witty-pi-4-mini/
 # cd /home/pi
 # wget https://www.uugear.com/repo/WittyPi4/install.sh
 # sudo sh install.sh
 
-# # Add main.py to automatically run before wittyPi script
+# Add main.py to automatically run before wittyPi script
 # echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
 
 echo ''
@@ -114,11 +124,9 @@ echo '|              Glacier Camera Software Installation Completed!  :)        
 echo '|                                                                              |'
 echo '================================================================================'
 echo ''
+# TODO Maybe add some nice ASCII art
 
 # Reboot to apply changes
 echo 'Rebooting in 5 seconds...'
 sleep 5
 sudo reboot
-
-# TODO: Verify the changes/error handling
-# TODO: Maybe add some nice ascii art

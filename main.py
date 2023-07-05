@@ -13,33 +13,12 @@ from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
 from yaml import safe_load
 
-# TODO: See https://pyyaml.org/wiki/PyYAMLDocumentation -> safe load / security
-
 ###########################
 # Readings
 ###########################
-csvFileName = "diagnostics.csv"
 currentGPSPosLat = "-"
 currentGPSPosLong = "-"
 error = ""
-
-###########################
-# Time synchronization
-###########################
-
-def syncWittyPiTimeWithNetwork():
-    try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && net_to_system && system_to_rtc"
-        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
-        output = output.replace("\n", "")
-        print(f"Time synchronized with network: {output}")
-    except Exception as e:
-        error += f"Could not synchronize time with network: {str(e)}"
-        print(f"Could not synchronize time with network: {str(e)}")
-
-# TODO: Check if wittypi was started with button
-
-# syncWittyPiTimeWithNetwork()
 
 ###########################
 # Configuration and filenames
@@ -115,13 +94,13 @@ except Exception as e:
 ###########################
 
 # TODO work with read only file system - OK?
-# TODO Fix upload settings.yaml -> NEEDS SUDO
 # TODO Do some checks if downloaded settings were valid?
 
 # Try to download settings from server
 try:
-    with open(f"{filePath}settings.yaml", 'wb') as fp:  # Download
-        ftp.retrbinary('RETR settings.yaml', fp.write)
+    if connectedToFTP == True:
+        with open(f"{filePath}settings.yaml", 'wb') as fp:  # Download
+            ftp.retrbinary('RETR settings.yaml', fp.write)
 except Exception as e:
     print(f'No config file found. Creating new settings file with default settings: {str(e)}')
 
@@ -138,18 +117,46 @@ except Exception as e:
     print(f"Could not open settings.yaml: {str(e)}")
 
 ###########################
+# Time synchronization
+###########################
+
+# TODO: Maybe check if wittypi was started with button and only sync time then?
+
+def syncWittyPiTimeWithNetwork():
+    try:
+        command = "cd /home/pi/wittypi && . ./utilities.sh && net_to_system && system_to_rtc"
+        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        output = output.replace("\n", "")
+        print(f"Time synchronized with network: {output}")
+    except Exception as e:
+        error += f"Could not synchronize time with network: {str(e)}"
+        print(f"Could not synchronize time with network: {str(e)}")
+
+try:
+    if settings["timeSync"] == True:
+        syncWittyPiTimeWithNetwork()
+except Exception as e:
+    error += f"Could not synchronize time with network: {str(e)}"
+    print(f"Could not synchronize time with network: {str(e)}")
+
+###########################
 # Setup camera
 ###########################
 camera = Picamera2()
 cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
 
-# TODO Camera resolution
 # https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
 # Table 6. Stream- specific configuration parameters
 
 try:
-    if settings["resolution"][0] > 64 and settings["resolution"][1] > 64 and settings["resolution"][0] < 4608 and settings["resolution"][1] < 2592:
-        cameraConfig = camera.create_still_configuration({"size": (settings["resolution"][0], settings["resolution"][1])})
+    min_resolution = 64
+    max_resolution = (4608, 2592)
+    resolution = settings["resolution"]
+
+    if min_resolution < resolution[0] < max_resolution[0] and min_resolution < resolution[1] < max_resolution[1]:
+        size = (resolution[0], resolution[1])
+        cameraConfig = camera.create_still_configuration({"size": size})
+
 except Exception as e:
     error += f"Could not set custom camera resolution: {str(e)}"
     print(f"Could not set custom camera resolution: {str(e)}")
@@ -249,23 +256,23 @@ def getWittyPiVoltage():
         return "-"
 
 # Raspberry Pi current
-def getWittyPiCurrent():
-    try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-        currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "A"
-        currentPowerDraw = currentPowerDraw.replace("\n", "")
-        print(f"Output current: {currentPowerDraw}")
-        return currentPowerDraw
-    except Exception as e:
-        error += f"Could not get Raspberry Pi current: {str(e)}"
-        print(f"Could not get Raspberry Pi current: {str(e)}")
-        return "-"
+# def getWittyPiCurrent():
+#     try:
+#         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
+#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "A"
+#         currentPowerDraw = currentPowerDraw.replace("\n", "")
+#         print(f"Output current: {currentPowerDraw}")
+#         return currentPowerDraw
+#     except Exception as e:
+#         error += f"Could not get Raspberry Pi current: {str(e)}"
+#         print(f"Could not get Raspberry Pi current: {str(e)}")
+#         return "-"
 
 # Get WittyPi readings
 currentTemperature = getWittyPiTemperature()
 currentBatteryVoltage = getWittyPiBatteryVoltage()
 raspberryPiVoltage = getWittyPiVoltage()
-currentPowerDraw = getWittyPiCurrent()
+currentPowerDraw = "-" # getWittyPiCurrent()
 
 ###########################
 # Schedule script
@@ -347,6 +354,7 @@ try:
 except Exception as e:
     error += f"Failed to apply schedule: {str(e)}"
     print(f"Failed to apply schedule: {str(e)}")
+
 ##########################
 # SIM7600G-H 4G module
 ###########################
@@ -487,7 +495,7 @@ try:
         newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
         writer.writerow(newRow)
         csvData = csvBuffer.getvalue().encode('utf-8')
-        ftp.storbinary(f"APPE {csvFileName}", BytesIO(csvData))
+        ftp.storbinary(f"APPE diagnostics.csv", BytesIO(csvData))
 except Exception as e:
     # TODO Log to USB
     print(f"Could not append new measurements to log CSV: {str(e)}")
@@ -496,7 +504,8 @@ except Exception as e:
 # Quit FTP session
 ###########################
 try:
-    ftp.quit()
+    if connectedToFTP == True:
+        ftp.quit()
 except Exception as e:
     print(f"Could not quit FTP session: {str(e)}")
 
@@ -510,3 +519,5 @@ try:
 except Exception as e:
     # Setting not found
     system("sudo shutdown -h now")
+
+# TODO Add comments to settings.yaml and config.yaml

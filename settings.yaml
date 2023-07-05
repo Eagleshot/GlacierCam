@@ -1,10 +1,27 @@
 # Camera settings
-lensPosition: 0.0
-resolution: [3280, 2464]
+# -1.0 is Autofocus
+# 0.0 is infinity TODO
+lensPosition: -1.0
+
+# Select camera resolution
+# Select [0, 0] for maximum resolution
+# Has to be between 64x64 and 4608x2592
+resolution: [0, 0]
+
+# Change camera timer schedule
 startTimeHour: 8
 startTimeMinute: 0
-intervalMinutes: 60
+intervalMinutes: 30
 maxDurationMinute: 5
-repetitionsPerday: 8
+repetitionsPerday: 16
+timeSync: false # Enable or disable time synchronization with internet
+
+# Enable or disable GPS location
 enableGPS: false
-shutdown: true
+
+# Enable or disable shutdown after program has run
+shutdown: false
+
+
+# TODO Detailed description of each setting
+# the lensPosition is controls the focus of the camera. TODO insert datasheet data. By selecting -1.0 the camera will use autofocus.
