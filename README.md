@@ -1,49 +1,79 @@
 # GlacierCam
-## Installation
-### 1. Install Raspberry Pi OS
-Required hardware: microSD card, computer with microSD card reader and internet connection
+## Installationsanleitung
+# TODO: Materialliste
+### 1. Vorgefertigte Software installieren
+In order to save time you can also use a preconfigured image and flash it to the sd card using win32 disk imager.
+https://sourceforge.net/projects/win32diskimager/
 
-Download and install the Raspberry Pi Imager to flash the OS to the microSD card. The software can be downloaded [here](https://www.raspberrypi.com/software/).
+Falls Sie diesen Schritt ausgeführt haben, können Sie direkt mit Schritt 4 weiterfahren.
 
-Open the raspberry Pi Imager and click on the "Choose OS" button. Select "Raspberry Pi OS (other)" and click on "CHOOSE OS". Select "Raspberry Pi OS Lite (32-bit)" (the Pi Zero is a 32-bit computer). Then insert the microSD card and select it in the "SD Card" menu. Next click on the gear icon and select "Set Username and Password" and set a unique username and password. You can also add a WiFi connection if you don't have an ethernet adapter. In addition you can change the keyboard layout and timezone.
+### 2. Raspberry Pi OS installieren
+Benötigte Hardware: microSD-Karte, Computer mit microSD-Kartenleser und Internetverbindung
 
-Then click on "SAVE" and "WRITE" to flash the OS to the microSD card. This process will take roughly 15 minutes, depending on the speed of the microSD card and the internet connection. When the process is finished, remove the microSD card from the computer and insert it into the Raspberry Pi. Attention: This will delete all data on the microSD card.
+Laden Sie den Raspberry Pi Imager herunter und installieren Sie ihn, um das Betriebssystem auf die microSD-Karte zu flashen. Die Software kann [hier](https://www.raspberrypi.com/software/) für alle gängigen Betriebssysteme heruntergeladen werden.
 
-### Setup the software on the Raspberry Pi
-Required hardware: Raspberry Pi Zero WH (or other), monitor, HDMI to microHDMI adapter (optional), keyboard (with micro usb to usb adapter), power supply, ethernet adapter or WiFi for Pi Zero W
+Öffnen Sie den Raspberry Pi Imager und klicken Sie auf den Knopf "OS WÄHLEN". Klicken Sie auf "Raspberry Pi OS (other)" und wählen "Raspberry Pi OS Lite (32-bit)" aus. Die Raspberry Pi OS Lite Version ist eine schlankere Version des Betriebssystems, die keine grafische Benutzeroberfläche enthält. Dies ist für diese Anwendungen ausreichend und spart Speicherplatz und Ressourcen. Der Pi Zero W, welcher verwendet wird, bietet zudem keinen 64-bit Support, weshalb die 32-bit Version verwendet wird.
 
-Insert the microSD card and connect the Raspberry Pi to the monitor, keyboard, mouse and power supply. Boot up the Raspberry Pi and wait until it has started up. It may reboot. Log in with the username and password you set up in the previous step. The default username is "pi" and the default password is "raspberry".
+Schliessen Sie anschliessend die microSD-Karte an und wählen Sie sie im Menü "SD-KARTE WÄHLEN" aus. Klicken Sie dann auf das Zahnradsymbol unten rechts und wählen Sie "Benutzername und Passwort setzen:" aus. Legen Sie einen eindeutigen Benutzernamen und ein Passwort fest. Zusätzlich können Sie noch die Spracheinstellungen festlegen und die Zeitzone auf "Europe/Zurich" sowie das Tastaturlayout auf "CH" setzen. Sie können hier auch eine WiFi-Verbindung für den nächsten Installationsschritt hinzufügen, wenn Sie keinen Ethernet-Adapter haben. Alle restlichen Einstellungen wie die Aktivierung von SSH können Sie deaktivieren.
 
- Write the following command in the terminal:
+Klicken Sie dann auf "SPEICHERN" und "SCHREIBEN", um das Betriebssystem auf die microSD-Karte zu übertragen. Achtung: Dadurch werden alle Daten auf der microSD-Karte gelöscht. Dieser Vorgang dauert etwa 15 Minuten, abhängig von der Geschwindigkeit der microSD-Karte, des Computers und der Internetverbindung. Wenn der Vorgang abgeschlossen ist, nehmen Sie die microSD-Karte aus dem Computer. 
 
+## 3. Installation der Software auf dem Raspberry Pi
+Benötigte Hardware: Raspberry Pi Zero WH (oder andere), Monitor, HDMI Kabel mit microHDMI-Adapter, Tastatur (mit micro usb-zu-usb-Adapter), Netzteil, Ethernet-Adapter (oder WiFi Verbindung für Pi Zero W)
+
+Legen Sie die microSD Karte ein und verbinden Sie den Raspberry Pi mit dem Monitor und der Tastatur. Schliessen Sie das Netzteil an, dann sollte er automatisch starten. Es wird ein Signal auf dem Bildschirm ausgegeben und die grüne Aktivitäts-LED auf dem Raspberry leuchtet auf. Während dem Installationsprozess wird der Raspberry Pi einmal neu starten. Melden Sie sich mit dem Benutzernamen und Passwort an, welches Sie im vorherigen Schritt festgelegt haben. Der Standardbenutzername ist "pi" und das Standardpasswort ist "raspberry". Bei der Eingabe des Passworts wird dieses nichts angezeigt, dies ist normal und ist ein Sicherheitsfeature.
+
+Wenn Sie dies Ausgeführt haben, schreiben Sie folgenden Befehl in die Konsole und drücken Sie Enter:
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
 ```
 After the script has finished, the Raspberry Pi will automatically reboot to apply the changes.
 
-## TODO Alternative take preconfigured sd card and flash it with balena etcher
-In order to save time you can also use a preconfigured image and flash it to the sd card using win32 disk imager.
-https://sourceforge.net/projects/win32diskimager/
-## Setup the software
-### Install the camera
+```bash
+wget https://www.uugear.com/repo/WittyPi4/install.sh
+```
+
+```bash¨
+sudo sh install.sh
+```
+
+```bash
+sudo reboot
+```
+
+Add main.py to automatically run before wittyPi script
+```bash
+echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.sh
+```
+
+Herunterfahren des Raspberry Pi:
+```bash
+sudo shutdown -h 0
+```
+warten bis heruntergefahren und led nicht mehr leuchtet, dann strom und kabel abziehen.
+
+
+
+
+### 4. Kamera installieren
 # TODO
 
-# TODO Change dns server to cloudflare and google
-
-### Install the sim module
+### 5. Waveshare SIM7600G-H 4G HAT (B) installieren
 # TODO
 aufpassen usb pins -> löten?
 
-### Setup rndis
+### 6. RNDIS installieren
 https://www.waveshare.com/wiki/Raspberry_Pi_networked_via_RNDIS
 
-# Edit config.yaml file
+### 7. Edit config.yaml file
 ```bash
 sudo nano config.yaml
 ```
 You can validate yaml files herre: https://www.yamllint.com/
 
 -> Edit username and password
+
+# TODO PAsswort ändern
 
 ### Install the wittypi hardware
 # TODO
@@ -117,6 +147,36 @@ Turn off white LED of witty pi
 
 
 # Additional log information can be found in the wittypi log files
+
+
+## Sicherheit
+Sicherheit ist heute ein 
+*Best practices
+up to date system (keine updates im feld - schwierig)
+nutzername/passwort
+firewall blockiert anfragen von aussen, kein ssh zugriff von aussen
+input validierung von einstellungen See https://pyyaml.org/wiki/PyYAMLDocumentation -> safe load / security
+
+verschlüsselte übertragung möglich
+read only modus (kann umgangen werden)
+
+
+physikalische sicherheit -> keine verschlüsselung festplatte mögl.
+sd karte/gerät/logindaten können geklaut werden, nur beschränkt sicher mit physikalischem zugriff
+
+programm wird als root ausgeführt
+
+todo erklärung/qr code auf gehäuse
+
+Datenübertragung:
+Test mit versch. sim, simabedckung link swisscom
+geschätztes datenvolumen
+speed test/ping
+mögl. direkt über at commands files auf ftp/ftps server hochzuladen, allerdings weniger flexibel für zukunft
+möglichkeit jegliche standart zur datenübertragung zu benutzen (sftp, webdav etc.)
+auch getestet mit wlan (wieder aktivieren), über ethernet adapter, gibt auch viele thirdparty mögl auch für zukunft.
+
+
 
 
 
