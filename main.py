@@ -189,8 +189,8 @@ try:
     # Upload all images in filePath
     for file in listdir(filePath):
         if file.endswith(".jpg"):
-            with open(filePath + file, 'rb') as file:
-                ftp.storbinary(f"STOR {file}", file)
+            with open(filePath + file, 'rb') as imgFile:
+                ftp.storbinary(f"STOR {file}", imgFile)
                 print(f"Successfully uploaded {file}")
 
                 # Delete last image
