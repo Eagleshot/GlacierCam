@@ -21,19 +21,18 @@ Klicken Sie dann auf "SPEICHERN" und "SCHREIBEN", um das Betriebssystem auf die 
 ## 3. Installation der Software auf dem Raspberry Pi
 Benötigte Hardware: Raspberry Pi Zero WH (oder andere), Monitor, HDMI Kabel mit microHDMI-Adapter, Tastatur (mit micro usb-zu-usb-Adapter), Netzteil, Ethernet-Adapter (oder WiFi Verbindung für Pi Zero W)
 
-Legen Sie die microSD Karte ein und verbinden Sie den Raspberry Pi mit dem Monitor und der Tastatur. Schliessen Sie das Netzteil an, dann sollte er automatisch starten. Es wird ein Signal auf dem Bildschirm ausgegeben und die grüne Aktivitäts-LED auf dem Raspberry leuchtet auf. Während dem Installationsprozess wird der Raspberry Pi einmal neu starten. Melden Sie sich mit dem Benutzernamen und Passwort an, welches Sie im vorherigen Schritt festgelegt haben. Der Standardbenutzername ist "pi" und das Standardpasswort ist "raspberry". Bei der Eingabe des Passworts wird dieses nichts angezeigt, dies ist normal und ist ein Sicherheitsfeature.
+Legen Sie die microSD Karte ein und verbinden Sie den Raspberry Pi mit dem Monitor und der Tastatur. Schliessen Sie das Netzteil an, dann sollte er automatisch starten. Es wird ein Signal auf dem Bildschirm ausgegeben und die grüne Aktivitäts-LED auf dem Raspberry leuchtet auf. Während dem Installationsprozess wird der Raspberry Pi mehrmals neu starten. Melden Sie sich mit dem Benutzernamen und Passwort an, welches Sie im vorherigen Schritt festgelegt haben. Der Standardbenutzername ist "pi" und das Standardpasswort ist "raspberry". Bei der Eingabe des Passworts wird dieses nichts angezeigt, dies ist normal und ist ein Sicherheitsfeature.
 
 Wenn Sie dies Ausgeführt haben, schreiben Sie folgenden Befehl in die Konsole und drücken Sie Enter:
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
 ```
-Nach dem Abschluss des Installationsskripts startet der Raspberry Pi automatisch neu, um die Änderungen zu übernehmen.
-
+Nach dem Abschluss des Installationsskripts startet der Raspberry Pi automatisch neu, um die Änderungen zu übernehmen. Danach müssen Sie sich noch einmal einloggen, um die Software für den WittyPi4 herunterzuladen. Dazu schreiben Sie folgenden Befehl in die Konsole und drücken Sie Enter:
 
 ```bash
 wget https://www.uugear.com/repo/WittyPi4/install.sh
 ```
-
+Danach können sie das Installationsprogramm mit folgendem Befehl ausführen:
 ```bash¨
 sudo sh install.sh
 ```

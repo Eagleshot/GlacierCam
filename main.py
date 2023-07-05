@@ -321,25 +321,24 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
     return schedule
 
 try:
-    if connectedToFTP == True:
-        schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
+    schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
 
-        # Compare old schedule file to new one
-        with open("/home/pi/wittypi/schedule.wpi", "r") as f:
-            oldSchedule = f.read()
-            if oldSchedule != schedule:
+    # Compare old schedule file to new one
+    with open("/home/pi/wittypi/schedule.wpi", "r") as f:
+        oldSchedule = f.read()
+        if oldSchedule != schedule:
 
-                # Write new schedule file
-                print("Writing and applying new schedule file.")
-                try:
-                    with open("/home/pi/wittypi/schedule.wpi", "w") as f:
-                        f.write(schedule)
-                except:
-                    # Write a new file if it doesn't exist
-                    with open("/home/pi/wittypi/schedule.wpi", "x") as f:
-                        f.write(schedule)
-            else:
-                print("Schedule did not change.")
+            # Write new schedule file
+            print("Writing and applying new schedule file.")
+            try:
+                with open("/home/pi/wittypi/schedule.wpi", "w") as f:
+                    f.write(schedule)
+            except:
+                # Write a new file if it doesn't exist
+                with open("/home/pi/wittypi/schedule.wpi", "x") as f:
+                    f.write(schedule)
+        else:
+            print("Schedule did not change.")
 except Exception as e:
     error += f"Failed to generate schedule: {str(e)}"
     print(f"Failed to generate schedule: {str(e)}")
