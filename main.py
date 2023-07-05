@@ -193,16 +193,16 @@ except Exception as e:
 # Upload to ftp server and then delete last image
 ###########################
 try:
-    # Upload all images in filePath
-    for file in listdir(filePath):
-        if file.endswith(".jpg"):
-            with open(filePath + file, 'rb') as imgFile:
-                ftp.storbinary(f"STOR {file}", imgFile)
-                print(f"Successfully uploaded {file}")
+    if connectedToFTP == True:
+        # Upload all images in filePath
+        for file in listdir(filePath):
+            if file.endswith(".jpg"):
+                with open(filePath + file, 'rb') as imgFile:
+                    ftp.storbinary(f"STOR {file}", imgFile)
+                    print(f"Successfully uploaded {file}")
 
-                # Delete last image
-                remove(filePath + file)
-
+                    # Delete last image
+                    remove(filePath + file)
 except Exception as e:
     # TODO: Save image to USB drive
     error += f"Could not open image: {str(e)}"
@@ -321,24 +321,28 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
     return schedule
 
 try:
+    # TODO
     schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
 
     # Compare old schedule file to new one
-    with open("/home/pi/wittypi/schedule.wpi", "r") as f:
-        oldSchedule = f.read()
-        if oldSchedule != schedule:
+    try:
+        with open("/home/pi/wittypi/schedule.wpi", "r") as f:
+            oldSchedule = f.read()
+        
+            if oldSchedule != schedule:
 
-            # Write new schedule file
-            print("Writing and applying new schedule file.")
-            try:
+                # Write new schedule file
+                print("Writing and applying new schedule file.")
+            
                 with open("/home/pi/wittypi/schedule.wpi", "w") as f:
                     f.write(schedule)
-            except:
-                # Write a new file if it doesn't exist
-                with open("/home/pi/wittypi/schedule.wpi", "x") as f:
-                    f.write(schedule)
-        else:
-            print("Schedule did not change.")
+
+            else:
+                print("Schedule did not change.")
+    except:
+        # Write a new file if it doesn't exist
+        with open("/home/pi/wittypi/schedule.wpi", "x") as f:
+            f.write(schedule)
 except Exception as e:
     error += f"Failed to generate schedule: {str(e)}"
     print(f"Failed to generate schedule: {str(e)}")
@@ -489,6 +493,7 @@ except Exception as e:
 
 # Append new measurements to log CSV or create new CSV file if none exists
 try:
+    # TODO Offline mode
     with StringIO() as csvBuffer:
         writer = writer(csvBuffer)
         newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
