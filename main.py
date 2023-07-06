@@ -8,17 +8,13 @@ from ftplib import FTP
 from datetime import datetime
 from time import sleep
 from csv import writer
-from os import system, remove, listdir
+from os import system, remove, listdir, path
 from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
 from yaml import safe_load
 
-###########################
-# Readings
-###########################
 currentGPSPosLat = "-"
 currentGPSPosLong = "-"
-error = ""
 
 ###########################
 # Configuration and filenames
@@ -52,6 +48,7 @@ except Exception as e:
 cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
 currentTime = datetime.today().strftime('%d%m%Y_%H%M')
 imgFileName = f"{currentTime}_{cameraName}.jpg"
+error = ""
 
 ###########################
 # Connect to FTP server
@@ -99,15 +96,19 @@ except Exception as e:
 # Try to download settings from server
 try:
     if connectedToFTP == True:
-        with open(f"{filePath}settings.yaml", 'wb') as fp:  # Download
-            ftp.retrbinary('RETR settings.yaml', fp.write)
-except Exception as e:
-    print(f'No config file found. Creating new settings file with default settings: {str(e)}')
+        
+        fileList = ftp.nlst()
 
-    if connectedToFTP == True:
-        # Upload config file if none exists
-        with open(f"{filePath}settings.yaml", 'rb') as fp:  # Download
-            ftp.storbinary('STOR settings.yaml', fp)
+        # Check if settings file exists
+        if "settings.yaml" in fileList:
+            with open(f"{filePath}settings.yaml", 'wb') as fp:  # Download
+                ftp.retrbinary('RETR settings.yaml', fp.write)
+        else:
+            print("No settings file found on FTP server. Creating new settings file with default settings.")
+            with open(f"{filePath}settings.yaml", 'wb') as fp:
+                ftp.storbinary('STOR settings.yaml', fp)
+except Exception as e:
+    print(f'Error with settings file: {str(e)}')
 
 # Read settings file
 try:
@@ -139,6 +140,97 @@ except Exception as e:
     error += f"Could not synchronize time with network: {str(e)}"
     print(f"Could not synchronize time with network: {str(e)}")
 
+###########################
+# Schedule script
+###########################
+def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurationMinute, repetitionsPerday):
+
+    # Basic validity check of parameters
+    if startTimeHour < 0 or startTimeHour > 24:
+        startTimeHour = 8
+    
+    if startTimeMinute < 0 or startTimeMinute > 60:
+        startTimeMinute = 0
+
+    if intervalMinutes < 0 or intervalMinutes > 1440:
+        intervalMinutes = 30
+
+    if maxDurationMinute < 0 or maxDurationMinute > 1440:
+        maxDurationMinute = 5
+    
+    if repetitionsPerday < 0 or repetitionsPerday > 275:
+        repetitionsPerday = 8
+    
+    if ((repetitionsPerday * intervalMinutes)  + startTimeMinute + (startTimeHour * 60)) > 1440:
+        repetitionsPerday = 1
+
+    # 2037 is the maximum year for WittyPi
+    formattedStartTime = "{:02d}:{:02d}".format(startTimeHour, startTimeMinute)
+    schedule = f"BEGIN\t2010-01-01 {formattedStartTime}:00\nEND\t2037-12-31 23:59:59\n"
+    
+    for i in range(repetitionsPerday):
+        schedule += f"ON\tM{maxDurationMinute}\n"
+
+        # Last off is different
+        if i < repetitionsPerday - 1:
+            schedule += f"OFF\tM{intervalMinutes - maxDurationMinute}\n"
+
+    # Turn camera off for the rest of the day
+    remainingMinutes = 1440 - (repetitionsPerday * intervalMinutes) + (intervalMinutes - maxDurationMinute)
+    remainingHours = remainingMinutes // 60
+    remainingMinutes = remainingMinutes % 60
+
+    schedule += f"OFF\tH{remainingHours}"
+    if remainingMinutes > 0:
+        schedule += f" M{remainingMinutes}"
+    
+    return schedule
+
+try:
+    # TODO
+    schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
+
+    # Compare old schedule file to new one
+    try:
+        with open("/home/pi/wittypi/schedule.wpi", "r") as f:
+            oldSchedule = f.read()
+        
+            if oldSchedule != schedule:
+
+                # Write new schedule file
+                print("Writing and applying new schedule file.")
+            
+                with open("/home/pi/wittypi/schedule.wpi", "w") as f:
+                    f.write(schedule)
+
+            else:
+                print("Schedule did not change.")
+    except:
+        # Write a new file if it doesn't exist
+        with open("/home/pi/wittypi/schedule.wpi", "x") as f:
+            f.write(schedule)
+except Exception as e:
+    error += f"Failed to generate schedule: {str(e)}"
+    print(f"Failed to generate schedule: {str(e)}")
+
+try:
+    # Apply new schedule
+    command = "cd /home/pi/wittypi && sudo ./runScript.sh"
+    output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+    output = output.split("\n")[1:3]
+
+    # If output contains warning
+    if "Warning" in output[1]:
+        syncWittyPiTimeWithNetwork() # Sync time and try again
+        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        output = output.split("\n")[1:3]
+
+    print(f"{output[0]}\n{output[1]}")
+    error += f"{output[0]}, {output[1]}"
+except Exception as e:
+    error += f"Failed to apply schedule: {str(e)}"
+    print(f"Failed to apply schedule: {str(e)}")
+    
 ###########################
 # Setup camera
 ###########################
@@ -273,97 +365,6 @@ currentTemperature = getWittyPiTemperature()
 currentBatteryVoltage = getWittyPiBatteryVoltage()
 raspberryPiVoltage = getWittyPiVoltage()
 currentPowerDraw = "-" # getWittyPiCurrent()
-
-###########################
-# Schedule script
-###########################
-def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurationMinute, repetitionsPerday):
-
-    # Basic validity check of parameters
-    if startTimeHour < 0 or startTimeHour > 24:
-        startTimeHour = 8
-    
-    if startTimeMinute < 0 or startTimeMinute > 60:
-        startTimeMinute = 0
-
-    if intervalMinutes < 0 or intervalMinutes > 1440:
-        intervalMinutes = 30
-
-    if maxDurationMinute < 0 or maxDurationMinute > 1440:
-        maxDurationMinute = 5
-    
-    if repetitionsPerday < 0 or repetitionsPerday > 275:
-        repetitionsPerday = 8
-    
-    if ((repetitionsPerday * intervalMinutes)  + startTimeMinute + (startTimeHour * 60)) > 1440:
-        repetitionsPerday = 1
-
-    # 2037 is the maximum year for WittyPi
-    formattedStartTime = "{:02d}:{:02d}".format(startTimeHour, startTimeMinute)
-    schedule = f"BEGIN\t2010-01-01 {formattedStartTime}:00\nEND\t2037-12-31 23:59:59\n"
-    
-    for i in range(repetitionsPerday):
-        schedule += f"ON\tM{maxDurationMinute}\n"
-
-        # Last off is different
-        if i < repetitionsPerday - 1:
-            schedule += f"OFF\tM{intervalMinutes - maxDurationMinute}\n"
-
-    # Turn camera off for the rest of the day
-    remainingMinutes = 1440 - (repetitionsPerday * intervalMinutes) + (intervalMinutes - maxDurationMinute)
-    remainingHours = remainingMinutes // 60
-    remainingMinutes = remainingMinutes % 60
-
-    schedule += f"OFF\tH{remainingHours}"
-    if remainingMinutes > 0:
-        schedule += f" M{remainingMinutes}"
-    
-    return schedule
-
-try:
-    # TODO
-    schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
-
-    # Compare old schedule file to new one
-    try:
-        with open("/home/pi/wittypi/schedule.wpi", "r") as f:
-            oldSchedule = f.read()
-        
-            if oldSchedule != schedule:
-
-                # Write new schedule file
-                print("Writing and applying new schedule file.")
-            
-                with open("/home/pi/wittypi/schedule.wpi", "w") as f:
-                    f.write(schedule)
-
-            else:
-                print("Schedule did not change.")
-    except:
-        # Write a new file if it doesn't exist
-        with open("/home/pi/wittypi/schedule.wpi", "x") as f:
-            f.write(schedule)
-except Exception as e:
-    error += f"Failed to generate schedule: {str(e)}"
-    print(f"Failed to generate schedule: {str(e)}")
-
-try:
-    # Apply new schedule
-    command = "cd /home/pi/wittypi && sudo ./runScript.sh"
-    output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
-    output = output.split("\n")[1:3]
-
-    # If output contains warning
-    if "Warning" in output[1]:
-        syncWittyPiTimeWithNetwork() # Sync time and try again
-        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
-        output = output.split("\n")[1:3]
-
-    print(f"{output[0]}\n{output[1]}")
-    error += f"{output[0]}, {output[1]}"
-except Exception as e:
-    error += f"Failed to apply schedule: {str(e)}"
-    print(f"Failed to apply schedule: {str(e)}")
 
 ##########################
 # SIM7600G-H 4G module
@@ -500,15 +501,39 @@ except Exception as e:
 
 # Append new measurements to log CSV or create new CSV file if none exists
 try:
-    # TODO Offline mode
     with StringIO() as csvBuffer:
         writer = writer(csvBuffer)
-        newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
-        writer.writerow(newRow)
-        csvData = csvBuffer.getvalue().encode('utf-8')
-        ftp.storbinary(f"APPE diagnostics.csv", BytesIO(csvData))
+
+        # Check if is connected to FTP server
+        if connectedToFTP == True:
+            # Check if local CSV file exists
+            try:
+                if path.exists(f"{filePath}diagnostics.csv") == True:
+                    with open(f"{filePath}diagnostics.csv", 'r') as file:
+                        csvData = file.read()
+                        writer.writerow(csvData.split("\n")[0].split(","))
+            except Exception as e:
+                print(f"Could not open diagnostics.csv: {str(e)}")
+            newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
+            writer.writerow(newRow)
+            csvData = csvBuffer.getvalue().encode('utf-8')
+            ftp.storbinary(f"APPE diagnostics.csv", BytesIO(csvData))
+        
+        else:
+            # Check if local CSV file exists
+            if path.exists(f"{filePath}diagnostics.csv") == True:
+                with open(f"{filePath}diagnostics.csv", 'r') as file:
+                    csvData = file.read()
+                    writer.writerow(csvData.split("\n")[0].split(","))
+            else:
+                # Create new CSV file
+                writer.writerow(["Time", "Battery voltage", "Raspberry Pi voltage", "Raspberry Pi current", "Temperature", "Cell signal quality", "GPS position (latitude)", "GPS position (longitude)", "Error"])
+
+                with open(f"{filePath}diagnostics.csv", 'w') as file:
+                    csvData = file.read()
+                    writer.writerow(csvData.split("\n")[0].split(","))
+
 except Exception as e:
-    # TODO Log to USB
     print(f"Could not append new measurements to log CSV: {str(e)}")
 
 ###########################
