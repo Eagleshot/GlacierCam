@@ -19,7 +19,8 @@ echo '==========================================================================
 echo ''
 
 # Install required packages
-PACKAGES="minicom p7zip-full python3-pip ufw" # picamera2 is preinstalled
+PACKAGES="minicom python3-pip ufw" # picamera2 is preinstalled
+# p7zip-full is needed for the Waveshare SIM7600G-H 4G/LTE HAT driver
 
 sudo apt-get update
 sudo apt-get upgrade -y
@@ -60,7 +61,7 @@ sudo pip3 install pyyaml
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
-echo '|                       Step 2: Install Python script                          |'
+echo '|                       Step 2: Download Python scripts                        |'
 echo '|                                                                              |'
 echo '================================================================================'
 # Download python script to /home/pi
@@ -76,7 +77,7 @@ wget -O /home/pi/settings.yaml https://raw.githubusercontent.com/Eagleshot/Glaci
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
-echo '|                     Step 4: Configure Raspberry Pi                           |'
+echo '|                     Step 3: Configure Raspberry Pi                           |'
 echo '|                                                                              |'
 echo '================================================================================'
 echo ''
@@ -92,8 +93,8 @@ sudo raspi-config nonint do_i2c 0
 sudo raspi-config nonint do_onewire 1
 
 # Disable LED and other unused hardware
-echo "boot_delay=0" | sudo tee -a /boot/config.txt
-echo "disable_splash=1" | sudo tee -a /boot/config.txt
+# echo "boot_delay=0" | sudo tee -a /boot/config.txt
+# echo "disable_splash=1" | sudo tee -a /boot/config.txt
 echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
 # echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 
