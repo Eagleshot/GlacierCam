@@ -13,6 +13,7 @@ from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
 from yaml import safe_load
 
+# TODO If GPS is enabled turn on first and only read out later
 currentGPSPosLat = "-"
 currentGPSPosLong = "-"
 
@@ -62,9 +63,9 @@ except Exception as e:
     print(f"Could not connect to FTP server: {str(e)}")
     connectedToFTP = False
 
-# Custom directory if specified
+# Go to custom directory in FTP server if specified
 try:
-    if config["ftpDirectory"] != "" and connectedToFTP == True:
+    if config["ftpDirectory"] != "" and connectedToFTP:
         try:
             ftp.cwd(config["ftpDirectory"])
         except:
@@ -76,7 +77,7 @@ except Exception as e:
 
 # Go to folder with camera name + unique hardware serial number or create it
 try:
-    if config["multipleCamerasOnServer"] == True and connectedToFTP == True:
+    if config["multipleCamerasOnServer"] == True and connectedToFTP:
         try:
             ftp.cwd(cameraName)
         except:
@@ -95,7 +96,7 @@ except Exception as e:
 
 # Try to download settings from server
 try:
-    if connectedToFTP == True:
+    if connectedToFTP:
         
         fileList = ftp.nlst()
 
@@ -105,7 +106,7 @@ try:
                 ftp.retrbinary('RETR settings.yaml', fp.write)
         else:
             print("No settings file found on FTP server. Creating new settings file with default settings.")
-            with open(f"{filePath}settings.yaml", 'wb') as fp:
+            with open(f"{filePath}settings.yaml", 'rb') as fp:
                 ftp.storbinary('STOR settings.yaml', fp)
 except Exception as e:
     print(f'Error with settings file: {str(e)}')
@@ -124,6 +125,12 @@ except Exception as e:
 # TODO: Maybe check if wittypi was started with button and only sync time then?
 
 def syncWittyPiTimeWithNetwork():
+
+    # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
+
+    # Wait for 100s
+    sleep(100)
+
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && net_to_system && system_to_rtc"
         output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
@@ -134,7 +141,7 @@ def syncWittyPiTimeWithNetwork():
         print(f"Could not synchronize time with network: {str(e)}")
 
 try:
-    if settings["timeSync"] == True:
+    if settings["timeSync"] and connectedToFTP:
         syncWittyPiTimeWithNetwork()
 except Exception as e:
     error += f"Could not synchronize time with network: {str(e)}"
@@ -213,6 +220,8 @@ except Exception as e:
     error += f"Failed to generate schedule: {str(e)}"
     print(f"Failed to generate schedule: {str(e)}")
 
+# TODO: This could be circumvented by shutting down the Raspberry Pi with GPIO 4 so that the daemon.sh applies the schedule
+# However this way the next shutdown time would not directly be outputted
 try:
     # Apply new schedule
     command = "cd /home/pi/wittypi && sudo ./runScript.sh"
@@ -225,11 +234,13 @@ try:
         output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
         output = output.split("\n")[1:3]
 
+    # TODO: Maybe extra field in CSV
     print(f"{output[0]}\n{output[1]}")
-    error += f"{output[0]}, {output[1]}"
+    nextStartupTime = output[1][-19:]
 except Exception as e:
     error += f"Failed to apply schedule: {str(e)}"
     print(f"Failed to apply schedule: {str(e)}")
+    nextStartupTime = "-"
     
 ###########################
 # Setup camera
@@ -239,7 +250,6 @@ cameraConfig = camera.create_still_configuration() # Automatically selects the h
 
 # https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
 # Table 6. Stream- specific configuration parameters
-
 try:
     min_resolution = 64
     max_resolution = (4608, 2592)
@@ -267,6 +277,7 @@ except Exception as e:
 # Capture image
 ###########################
 try:
+    # TODO: Maybe save image to USB drive
     camera.start_and_capture_file(filePath + imgFileName, capture_mode=cameraConfig, delay=2, show_preview=False)
 except Exception as e:
     error += f"Could not start camera and capture image: {str(e)}"
@@ -285,7 +296,7 @@ except Exception as e:
 # Upload to ftp server and then delete last image
 ###########################
 try:
-    if connectedToFTP == True:
+    if connectedToFTP:
         # Upload all images in filePath
         for file in listdir(filePath):
             if file.endswith(".jpg"):
@@ -293,10 +304,9 @@ try:
                     ftp.storbinary(f"STOR {file}", imgFile)
                     print(f"Successfully uploaded {file}")
 
-                    # Delete last image
+                    # Delete uploaded image from Raspberry Pi
                     remove(filePath + file)
 except Exception as e:
-    # TODO: Save image to USB drive
     error += f"Could not open image: {str(e)}"
     print(f"Could not open image: {str(e)}")
 
@@ -335,6 +345,7 @@ def getWittyPiBatteryVoltage():
         return "-"
 
 # Raspberry Pi voltage
+# TODO Maybe make setting to disable additional sensor readings in the future
 def getWittyPiVoltage():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
@@ -348,6 +359,7 @@ def getWittyPiVoltage():
         return "-"
 
 # Raspberry Pi current
+# Not needed at the moment
 # def getWittyPiCurrent():
 #     try:
 #         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
@@ -379,19 +391,19 @@ except Exception as e:
     print (f"Could not open serial connection with 4G module: {str(e)}")
 
 # Send AT command to SIM7600X
-# def sendATCommand(command, back, timeout):
-#     rec_buff = ''
-#     ser.write((command+'\r\n').encode())
-#     sleep(timeout)
-#     if ser.inWaiting():
-#         sleep(0.01)
-#         rec_buff = ser.read(ser.inWaiting())
-#     if back not in rec_buff.decode():
-#         print(command + ' ERROR')
-#         print(command + ' back:\t' + rec_buff.decode())
-#         return 0
-#     else:
-#         return rec_buff.decode()
+def sendATCommand(command, back, timeout):
+    rec_buff = ''
+    ser.write((command+'\r\n').encode())
+    sleep(timeout)
+    if ser.inWaiting():
+        sleep(0.01)
+        rec_buff = ser.read(ser.inWaiting())
+    if back not in rec_buff.decode():
+        print(command + ' ERROR')
+        print(command + ' back:\t' + rec_buff.decode())
+        return 0
+    else:
+        return rec_buff.decode()
 
 # Get current signal quality
 def getCurrentSignalQuality():
@@ -470,13 +482,13 @@ def getGPSPos(command, back, timeout):
 # TODO
 try:
     if settings["enableGPS"]  == True:
-        answer = 0
+        
         print('Start GPS session.')
-        getGPSPos('AT+CGPS=1,1', 'OK', 1)
+        sendATCommand('AT+CGPS=1,1', 'OK', 1)
         sleep(2)
         maxAttempts = 0
 
-        while (maxAttempts <= 10):
+        while (maxAttempts <= 5):
             maxAttempts += 1
             answer = getGPSPos('AT+CGPSINFO', '+CGPSINFO: ', 1)
             if answer == 1:  # Success
@@ -505,23 +517,22 @@ try:
         writer = writer(csvBuffer)
 
         # Check if is connected to FTP server
-        if connectedToFTP == True:
+        if connectedToFTP:
             # Check if local CSV file exists
             try:
-                if path.exists(f"{filePath}diagnostics.csv") == True:
+                if path.exists(f"{filePath}diagnostics.csv"):
                     with open(f"{filePath}diagnostics.csv", 'r') as file:
                         csvData = file.read()
                         writer.writerow(csvData.split("\n")[0].split(","))
             except Exception as e:
                 print(f"Could not open diagnostics.csv: {str(e)}")
-            newRow = [currentTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
+            newRow = [currentTime, nextStartupTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
             writer.writerow(newRow)
             csvData = csvBuffer.getvalue().encode('utf-8')
             ftp.storbinary(f"APPE diagnostics.csv", BytesIO(csvData))
-        
         else:
             # Check if local CSV file exists
-            if path.exists(f"{filePath}diagnostics.csv") == True:
+            if path.exists(f"{filePath}diagnostics.csv"):
                 with open(f"{filePath}diagnostics.csv", 'r') as file:
                     csvData = file.read()
                     writer.writerow(csvData.split("\n")[0].split(","))
@@ -540,7 +551,7 @@ except Exception as e:
 # Quit FTP session
 ###########################
 try:
-    if connectedToFTP == True:
+    if connectedToFTP:
         ftp.quit()
 except Exception as e:
     print(f"Could not quit FTP session: {str(e)}")
@@ -549,11 +560,9 @@ except Exception as e:
 # Shutdown Raspberry Pi if enabled
 ###########################
 try:
-    if settings["shutdown"] == True:
+    if settings["shutdown"]:
         print('Shutting down now.')
         system("sudo shutdown -h now")
 except Exception as e:
     # Setting not found
     system("sudo shutdown -h now")
-
-# TODO Add comments to settings.yaml and config.yaml
