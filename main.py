@@ -294,24 +294,20 @@ def getGPSPos():
         if '+CGPSINFO: ' not in rec_buff.decode():
             print('Error:\t' + rec_buff.decode())
             return 0
-        elif ',,,,,,' in rec_buff.decode():
-            print('GPS is not ready')
+        elif ',,,,,,' in rec_buff.decode(): # GPS Not ready
             return 0
         else:
             # Additions to Demo Code Written by Tim! -> Core Electronics
             GPSDATA = str(rec_buff.decode())
             Cleaned = GPSDATA[13:]
-            # print(Cleaned)
 
             Lat = Cleaned[:2]
             SmallLat = Cleaned[2:11]
             NorthOrSouth = Cleaned[12]
-            # print(Lat, SmallLat, NorthOrSouth)
 
             Long = Cleaned[14:17]
             SmallLong = Cleaned[17:26]
             EastOrWest = Cleaned[27]
-            # print(Long, SmallLong, EastOrWest)
 
             FinalLat = float(Lat) + (float(SmallLat)/60)
             FinalLong = float(Long) + (float(SmallLong)/60)
@@ -333,8 +329,7 @@ def getGPSPos():
                   ' Degrees - Latitude: ' + currentGPSPosLat + ' Degrees')
 
             return 1
-    else:
-        print('GPS is not ready')
+    else: # No GPS data
         return 0
     
 # See Waveshare documentation
@@ -483,6 +478,15 @@ def getWittyPiVoltage():
 #         return "-"
 
 ###########################
+# Get readings
+###########################
+currentTemperature = getWittyPiTemperature()
+currentBatteryVoltage = getWittyPiBatteryVoltage()
+raspberryPiVoltage = getWittyPiVoltage()
+currentPowerDraw = "-" # getWittyPiCurrent()
+currentSignalQuality = getCurrentSignalQuality()
+
+###########################
 # Get GPS position
 ###########################
 try:
@@ -496,24 +500,15 @@ try:
             if answer == 1:  # Success
                 break
             else:
-                print('error %d' % answer)
+                print(f"Attempt {maxAttempts}/5 failed - no signal yet. Trying again in 5 seconds.")
                 sleep(5)
         
-        print('Stop GPS session.')
+        print('Stopping GPS session.')
         sendATCommand('AT+CGPS=0', 'OK', 1)
 
 except Exception as e:
     error += f"Failed to get GPS coordinates: {str(e)}"
     print(f"Failed to get GPS coordinates: {str(e)}")
-
-###########################
-# Get readings
-###########################
-currentTemperature = getWittyPiTemperature()
-currentBatteryVoltage = getWittyPiBatteryVoltage()
-raspberryPiVoltage = getWittyPiVoltage()
-currentPowerDraw = "-" # getWittyPiCurrent()
-currentSignalQuality = getCurrentSignalQuality()
 
 ###########################
 # Log readings to CSV
