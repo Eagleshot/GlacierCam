@@ -325,9 +325,7 @@ def getGPSPos():
             currentGPSPosLat = str(FinalLatText)
             currentGPSPosLong = str(FinalLongText)
 
-            print('Longitude:' + currentGPSPosLong +
-                  ' Degrees - Latitude: ' + currentGPSPosLat + ' Degrees')
-
+            print(f"GPS position: {currentGPSPosLat}, {currentGPSPosLong}")
             return 1
     else: # No GPS data
         return 0
@@ -429,7 +427,7 @@ def getWittyPiTemperature():
         currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
         currentTemperature = currentTemperature.replace("\n", "")
         currentTemperature = currentTemperature.split(" / ")[0] # Remove the Farenheit reading
-        print(f"Temperature:\t{currentTemperature}")
+        print(f"Temperature: {currentTemperature}")
         return currentTemperature
     except Exception as e:
         error += f"Could not get temperature: {str(e)}"
@@ -442,7 +440,7 @@ def getWittyPiBatteryVoltage():
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
         currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
         currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
-        print(f"Battery voltage:\t{currentBatteryVoltage}")
+        print(f"Battery voltage: {currentBatteryVoltage}")
         return currentBatteryVoltage
     except Exception as e:
         error += f"Could not get battery voltage: {str(e)}"
@@ -456,7 +454,7 @@ def getWittyPiVoltage():
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
         raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
         raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
-        print(f"Output voltage:\t{raspberryPiVoltage}")
+        print(f"Output voltage: {raspberryPiVoltage}")
         return raspberryPiVoltage
     except Exception as e:
         error += f"Could not get Raspberry Pi voltage: {str(e)}"
@@ -470,7 +468,7 @@ def getWittyPiVoltage():
 #         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
 #         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "A"
 #         currentPowerDraw = currentPowerDraw.replace("\n", "")
-#         print(f"Output current:\t{currentPowerDraw}")
+#         print(f"Output current: {currentPowerDraw}")
 #         return currentPowerDraw
 #     except Exception as e:
 #         error += f"Could not get Raspberry Pi current: {str(e)}"
