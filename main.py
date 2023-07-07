@@ -372,11 +372,6 @@ def getWittyPiVoltage():
 #         print(f"Could not get Raspberry Pi current: {str(e)}")
 #         return "-"
 
-# Get WittyPi readings
-currentTemperature = getWittyPiTemperature()
-currentBatteryVoltage = getWittyPiBatteryVoltage()
-raspberryPiVoltage = getWittyPiVoltage()
-currentPowerDraw = "-" # getWittyPiCurrent()
 
 ##########################
 # SIM7600G-H 4G module
@@ -407,32 +402,36 @@ def sendATCommand(command, back, timeout):
 
 # Get current signal quality
 def getCurrentSignalQuality():
+    try:
+        rec_buff = ''
+        ser.write(('AT+CSQ\r\n').encode())
+        sleep(1)
+        if ser.inWaiting():
+            sleep(0.01)
+            rec_buff = ser.read(ser.inWaiting())
+        if 'OK' not in rec_buff.decode():
+            print('Error getting signal quality - back:\t' + rec_buff.decode())
+            return ""
+        else:
+            currentSignalQuality = rec_buff.decode()[8:10]
+            currentSignalQuality = currentSignalQuality.replace("\n", "")
+            return currentSignalQuality
+    except Exception as e:
+        error += f"Could not get current signal quality: {str(e)}"
+        print(f"Could not get current signal quality: {str(e)}")
+        return ""
+
+# Get GPS Position
+def getGPSPos():
     rec_buff = ''
-    ser.write(('AT+CSQ'+'\r\n').encode())
+    ser.write(('AT+CGPSINFO\r\n').encode())
     sleep(1)
     if ser.inWaiting():
         sleep(0.01)
         rec_buff = ser.read(ser.inWaiting())
-    if 'OK' not in rec_buff.decode():
-        print('Error getting signal quality - back:\t' + rec_buff.decode())
-        return ""
-    else:
-        currentSignalQuality = rec_buff.decode()[8:10]
-        currentSignalQuality = currentSignalQuality.replace("\n", "")
-        return currentSignalQuality
-
-# Get GPS Position
-def getGPSPos(command, back, timeout):
-    rec_buff = ''
-    ser.write((command+'\r\n').encode())
-    sleep(timeout)
-    if ser.inWaiting():
-        sleep(0.01)
-        rec_buff = ser.read(ser.inWaiting())
     if rec_buff != '':
-        if back not in rec_buff.decode():
-            print(command + ' ERROR')
-            print(command + ' back:\t' + rec_buff.decode())
+        if '+CGPSINFO: ' not in rec_buff.decode():
+            print('Error:\t' + rec_buff.decode())
             return 0
         elif ',,,,,,' in rec_buff.decode():
             print('GPS is not ready')
@@ -490,27 +489,32 @@ try:
 
         while (maxAttempts <= 5):
             maxAttempts += 1
-            answer = getGPSPos('AT+CGPSINFO', '+CGPSINFO: ', 1)
+            answer = getGPSPos()
             if answer == 1:  # Success
                 break
             else:
                 print('error %d' % answer)
-                getGPSPos('AT+CGPS=0', 'OK', 1)
                 sleep(1.5)
+        
+        print('Stop GPS session.')
+        sendATCommand('AT+CGPS=0', 'OK', 1)
+
 except Exception as e:
     error += f"Failed to get GPS coordinates: {str(e)}"
     print(f"Failed to get GPS coordinates: {str(e)}")
 
-# Get cell signal quality
-# TODO
-currentSignalQuality = ""
-try:
-    currentSignalQuality = getCurrentSignalQuality()
-    print(f"Cell signal quality: {currentSignalQuality}")
-except Exception as e:
-    error += f"Failed to get cell signal quality: {str(e)}"
-    print(f"Failed to get cell signal quality: {str(e)}")
+###########################
+# Get readings
+###########################
+currentTemperature = getWittyPiTemperature()
+currentBatteryVoltage = getWittyPiBatteryVoltage()
+raspberryPiVoltage = getWittyPiVoltage()
+currentPowerDraw = "-" # getWittyPiCurrent()
+currentSignalQuality = getCurrentSignalQuality()
 
+###########################
+# Log readings to CSV
+###########################
 # Append new measurements to log CSV or create new CSV file if none exists
 try:
     with StringIO() as csvBuffer:
