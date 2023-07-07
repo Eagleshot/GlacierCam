@@ -241,149 +241,10 @@ except Exception as e:
     error += f"Failed to apply schedule: {str(e)}"
     print(f"Failed to apply schedule: {str(e)}")
     nextStartupTime = "-"
-    
-###########################
-# Setup camera
-###########################
-camera = Picamera2()
-cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
-
-# https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
-# Table 6. Stream- specific configuration parameters
-try:
-    min_resolution = 64
-    max_resolution = (4608, 2592)
-    resolution = settings["resolution"]
-
-    if min_resolution < resolution[0] < max_resolution[0] and min_resolution < resolution[1] < max_resolution[1]:
-        size = (resolution[0], resolution[1])
-        cameraConfig = camera.create_still_configuration({"size": size})
-
-except Exception as e:
-    error += f"Could not set custom camera resolution: {str(e)}"
-    print(f"Could not set custom camera resolution: {str(e)}")
-
-# Focus settings
-try:
-    if settings["lensPosition"] > -1:
-        camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings["lensPosition"]})
-    else:
-        camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
-except Exception as e:
-    error += f"Could not set lens position: {str(e)}"
-    print(f"Could not set lens position: {str(e)}")
-
-###########################
-# Capture image
-###########################
-try:
-    # TODO: Maybe save image to USB drive
-    camera.start_and_capture_file(filePath + imgFileName, capture_mode=cameraConfig, delay=2, show_preview=False)
-except Exception as e:
-    error += f"Could not start camera and capture image: {str(e)}"
-    print(f"Could not start camera and capture image: {str(e)}")
-
-###########################
-# Stop camera
-###########################
-try:
-    camera.stop()
-except Exception as e:
-    error += f"Could not stop camera: {str(e)}"
-    print(f"Could not stop camera: {str(e)}")
-
-###########################
-# Upload to ftp server and then delete last image
-###########################
-try:
-    if connectedToFTP:
-        # Upload all images in filePath
-        for file in listdir(filePath):
-            if file.endswith(".jpg"):
-                with open(filePath + file, 'rb') as imgFile:
-                    ftp.storbinary(f"STOR {file}", imgFile)
-                    print(f"Successfully uploaded {file}")
-
-                    # Delete uploaded image from Raspberry Pi
-                    remove(filePath + file)
-except Exception as e:
-    error += f"Could not open image: {str(e)}"
-    print(f"Could not open image: {str(e)}")
-
-###########################
-# Uploading sensor data to CSV
-###########################
-
-# Get WittyPi readings
-# See: https://www.baeldung.com/linux/run-function-in-script
-
-# Temperature
-def getWittyPiTemperature():
-    try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
-        currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
-        currentTemperature = currentTemperature.replace("\n", "")
-        currentTemperature = currentTemperature.split(" / ")[0] # Remove the Farenheit reading
-        print(f"Temperature: {currentTemperature}")
-        return currentTemperature
-    except Exception as e:
-        error += f"Could not get temperature: {str(e)}"
-        print(f"Could not get temperature: {str(e)}")
-        return "-"
-
-# Battery voltage
-def getWittyPiBatteryVoltage():
-    try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
-        currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
-        currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
-        print(f"Battery voltage: {currentBatteryVoltage}")
-        return currentBatteryVoltage
-    except Exception as e:
-        error += f"Could not get battery voltage: {str(e)}"
-        print(f"Could not get battery voltage: {str(e)}")
-        return "-"
-
-# Raspberry Pi voltage
-# TODO Maybe make setting to disable additional sensor readings in the future
-def getWittyPiVoltage():
-    try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
-        raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
-        raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
-        print(f"Output voltage: {raspberryPiVoltage}")
-        return raspberryPiVoltage
-    except Exception as e:
-        error += f"Could not get Raspberry Pi voltage: {str(e)}"
-        print(f"Could not get Raspberry Pi voltage: {str(e)}")
-        return "-"
-
-# Raspberry Pi current
-# Not needed at the moment
-# def getWittyPiCurrent():
-#     try:
-#         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "A"
-#         currentPowerDraw = currentPowerDraw.replace("\n", "")
-#         print(f"Output current: {currentPowerDraw}")
-#         return currentPowerDraw
-#     except Exception as e:
-#         error += f"Could not get Raspberry Pi current: {str(e)}"
-#         print(f"Could not get Raspberry Pi current: {str(e)}")
-#         return "-"
-
 
 ##########################
 # SIM7600G-H 4G module
 ###########################
-# See Waveshare documentation
-try:
-    import serial
-    ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
-    ser.flushInput()
-except Exception as e:
-    error += f"Could not open serial connection with 4G module: {str(e)}"
-    print (f"Could not open serial connection with 4G module: {str(e)}")
 
 # Send AT command to SIM7600X
 def sendATCommand(command, back, timeout):
@@ -475,16 +336,158 @@ def getGPSPos():
     else:
         print('GPS is not ready')
         return 0
+    
+# See Waveshare documentation
+try:
+    import serial
+    ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
+    ser.flushInput()
 
+    # Enable GPS to later read out position
+    if settings["enableGPS"]  == True:
+        print('Start GPS session.')
+        sendATCommand('AT+CGPS=1,1', 'OK', 1)
+
+except Exception as e:
+    error += f"Could not open serial connection with 4G module: {str(e)}"
+    print (f"Could not open serial connection with 4G module: {str(e)}")
+ 
+###########################
+# Setup camera
+###########################
+camera = Picamera2()
+cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
+
+# https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
+# Table 6. Stream- specific configuration parameters
+try:
+    min_resolution = 64
+    max_resolution = (4608, 2592)
+    resolution = settings["resolution"]
+
+    if min_resolution < resolution[0] < max_resolution[0] and min_resolution < resolution[1] < max_resolution[1]:
+        size = (resolution[0], resolution[1])
+        cameraConfig = camera.create_still_configuration({"size": size})
+
+except Exception as e:
+    error += f"Could not set custom camera resolution: {str(e)}"
+    print(f"Could not set custom camera resolution: {str(e)}")
+
+# Focus settings
+try:
+    if settings["lensPosition"] > -1:
+        camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings["lensPosition"]})
+    else:
+        camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
+except Exception as e:
+    error += f"Could not set lens position: {str(e)}"
+    print(f"Could not set lens position: {str(e)}")
+
+###########################
+# Capture image
+###########################
+try:
+    # TODO: Maybe save image to USB drive
+    camera.start_and_capture_file(filePath + imgFileName, capture_mode=cameraConfig, delay=2, show_preview=False)
+except Exception as e:
+    error += f"Could not start camera and capture image: {str(e)}"
+    print(f"Could not start camera and capture image: {str(e)}")
+
+###########################
+# Stop camera
+###########################
+try:
+    camera.stop()
+except Exception as e:
+    error += f"Could not stop camera: {str(e)}"
+    print(f"Could not stop camera: {str(e)}")
+
+###########################
+# Upload to ftp server and then delete last image
+###########################
+try:
+    if connectedToFTP:
+        # Upload all images in filePath
+        for file in listdir(filePath):
+            if file.endswith(".jpg"):
+                with open(filePath + file, 'rb') as imgFile:
+                    ftp.storbinary(f"STOR {file}", imgFile)
+                    print(f"Successfully uploaded {file}")
+
+                    # Delete uploaded image from Raspberry Pi
+                    remove(filePath + file)
+except Exception as e:
+    error += f"Could not open image: {str(e)}"
+    print(f"Could not open image: {str(e)}")
+
+###########################
+# Uploading sensor data to CSV
+###########################
+
+# Get WittyPi readings
+# See: https://www.baeldung.com/linux/run-function-in-script
+
+# Temperature
+def getWittyPiTemperature():
+    try:
+        command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
+        currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        currentTemperature = currentTemperature.replace("\n", "")
+        currentTemperature = currentTemperature.split(" / ")[0] # Remove the Farenheit reading
+        print(f"Temperature:\t{currentTemperature}")
+        return currentTemperature
+    except Exception as e:
+        error += f"Could not get temperature: {str(e)}"
+        print(f"Could not get temperature: {str(e)}")
+        return "-"
+
+# Battery voltage
+def getWittyPiBatteryVoltage():
+    try:
+        command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
+        currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
+        currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
+        print(f"Battery voltage:\t{currentBatteryVoltage}")
+        return currentBatteryVoltage
+    except Exception as e:
+        error += f"Could not get battery voltage: {str(e)}"
+        print(f"Could not get battery voltage: {str(e)}")
+        return "-"
+
+# Raspberry Pi voltage
+# TODO Maybe make setting to disable additional sensor readings in the future
+def getWittyPiVoltage():
+    try:
+        command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
+        raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
+        raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
+        print(f"Output voltage:\t{raspberryPiVoltage}")
+        return raspberryPiVoltage
+    except Exception as e:
+        error += f"Could not get Raspberry Pi voltage: {str(e)}"
+        print(f"Could not get Raspberry Pi voltage: {str(e)}")
+        return "-"
+
+# Raspberry Pi current
+# Not needed at the moment
+# def getWittyPiCurrent():
+#     try:
+#         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
+#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "A"
+#         currentPowerDraw = currentPowerDraw.replace("\n", "")
+#         print(f"Output current:\t{currentPowerDraw}")
+#         return currentPowerDraw
+#     except Exception as e:
+#         error += f"Could not get Raspberry Pi current: {str(e)}"
+#         print(f"Could not get Raspberry Pi current: {str(e)}")
+#         return "-"
+
+###########################
 # Get GPS position
-# SIM7600X-Module is already turned on
-# TODO
+###########################
 try:
     if settings["enableGPS"]  == True:
         
-        print('Start GPS session.')
-        sendATCommand('AT+CGPS=1,1', 'OK', 1)
-        sleep(2)
         maxAttempts = 0
 
         while (maxAttempts <= 5):
@@ -494,7 +497,7 @@ try:
                 break
             else:
                 print('error %d' % answer)
-                sleep(1.5)
+                sleep(5)
         
         print('Stop GPS session.')
         sendATCommand('AT+CGPS=0', 'OK', 1)
