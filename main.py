@@ -261,6 +261,12 @@ def sendATCommand(command, back, timeout):
         return rec_buff.decode()
 
 # Get current signal quality
+# https://www.manualslib.com/download/1593302/Simcom-Sim7000-Series.html
+# 0 -115 dBm or less
+# 1 -111 dBm
+# 2...30 -110... -54 dBm
+# 31 -52 dBm or greater
+# 99 not known or not detectable
 def getCurrentSignalQuality():
     try:
         rec_buff = ''
