@@ -13,10 +13,6 @@ from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
 from yaml import safe_load
 
-# TODO If GPS is enabled turn on first and only read out later
-currentGPSPosLat = "-"
-currentGPSPosLong = "-"
-
 ###########################
 # Configuration and filenames
 ###########################
@@ -150,7 +146,9 @@ except Exception as e:
 ###########################
 # Schedule script
 ###########################
-def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurationMinute, repetitionsPerday):
+# TODO Maybe take sunrise and sunset into account according to GPS position
+# See: https://github.com/sffjunkie/astral
+def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
 
     # Basic validity check of parameters
     if startTimeHour < 0 or startTimeHour > 24:
@@ -168,7 +166,7 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
     if repetitionsPerday < 0 or repetitionsPerday > 275:
         repetitionsPerday = 8
     
-    if ((repetitionsPerday * intervalMinutes)  + startTimeMinute + (startTimeHour * 60)) > 1440:
+    if ((repetitionsPerday * intervalMinutes) + startTimeMinute + (startTimeHour * 60)) > 1440:
         repetitionsPerday = 1
 
     # 2037 is the maximum year for WittyPi
@@ -194,31 +192,32 @@ def generate_schedule(startTimeHour, startTimeMinute, intervalMinutes, maxDurati
     return schedule
 
 try:
-    # TODO
     schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
-
-    # Compare old schedule file to new one
-    try:
-        with open("/home/pi/wittypi/schedule.wpi", "r") as f:
-            oldSchedule = f.read()
-        
-            if oldSchedule != schedule:
-
-                # Write new schedule file
-                print("Writing and applying new schedule file.")
-            
-                with open("/home/pi/wittypi/schedule.wpi", "w") as f:
-                    f.write(schedule)
-
-            else:
-                print("Schedule did not change.")
-    except:
-        # Write a new file if it doesn't exist
-        with open("/home/pi/wittypi/schedule.wpi", "x") as f:
-            f.write(schedule)
 except Exception as e:
-    error += f"Failed to generate schedule: {str(e)}"
-    print(f"Failed to generate schedule: {str(e)}")
+    error += f"Failed to generate schedule with setting: {str(e)}"
+    print(f"Failed to generate schedule with setting: {str(e)}")
+
+    schedule = generate_schedule(8, 0, 30, 5, 8)
+
+# Compare old schedule file to new one
+try:
+    with open("/home/pi/wittypi/schedule.wpi", "r") as f:
+        oldSchedule = f.read()
+        
+        if oldSchedule != schedule:
+                
+            # Write new schedule file
+            print("Writing and applying new schedule file.")
+            
+            with open("/home/pi/wittypi/schedule.wpi", "w") as f:
+                f.write(schedule)
+
+        else:
+            print("Schedule did not change.")
+except:
+    # Write a new file if it doesn't exist
+    with open("/home/pi/wittypi/schedule.wpi", "x") as f:
+        f.write(schedule)
 
 # TODO: This could be circumvented by shutting down the Raspberry Pi with GPIO 4 so that the daemon.sh applies the schedule
 # However this way the next shutdown time would not directly be outputted
@@ -283,6 +282,9 @@ def getCurrentSignalQuality():
         return ""
 
 # Get GPS Position
+currentGPSPosLat = "-"
+currentGPSPosLong = "-"
+
 def getGPSPos():
     rec_buff = ''
     ser.write(('AT+CGPSINFO\r\n').encode())
@@ -317,13 +319,10 @@ def getGPSPos():
             if EastOrWest == 'W':
                 FinalLong = -FinalLong
 
-            FinalLongText = round(FinalLong, 7)
-            FinalLatText = round(FinalLat, 7)
-
             global currentGPSPosLat
             global currentGPSPosLong
-            currentGPSPosLat = str(FinalLatText)
-            currentGPSPosLong = str(FinalLongText)
+            currentGPSPosLat = str(round(FinalLong, 4))
+            currentGPSPosLong = str(round(FinalLat, 4))
 
             print(f"GPS position: {currentGPSPosLat}, {currentGPSPosLong}")
             return 1
@@ -478,6 +477,7 @@ def getWittyPiVoltage():
 ###########################
 # Get readings
 ###########################
+# TODO: Maybe only get readings like GPS once a day
 currentTemperature = getWittyPiTemperature()
 currentBatteryVoltage = getWittyPiBatteryVoltage()
 raspberryPiVoltage = getWittyPiVoltage()
