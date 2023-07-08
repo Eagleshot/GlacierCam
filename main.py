@@ -7,7 +7,7 @@ from libcamera import controls
 from ftplib import FTP
 from datetime import datetime
 from time import sleep
-from csv import writer
+from csv import writer, reader
 from os import system, remove, listdir, path
 from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
