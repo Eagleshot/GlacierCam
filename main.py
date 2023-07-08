@@ -521,6 +521,7 @@ except Exception as e:
 try:
     with StringIO() as csvBuffer:
         writer = writer(csvBuffer)
+        newRow = [currentTime, nextStartupTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
 
         # Check if is connected to FTP server
         if connectedToFTP:
@@ -529,27 +530,23 @@ try:
                 if path.exists(f"{filePath}diagnostics.csv"):
                     with open(f"{filePath}diagnostics.csv", 'r') as file:
                         csvData = file.read()
-                        writer.writerow(csvData.split("\n")[0].split(","))
-            except Exception as e:
+                        writer.writerow(csvData.split("\n")[0].split(","))            except Exception as e:
+            except Exception as e:   
+                error += f"Could not open diagnostics.csv: {str(e)}"
                 print(f"Could not open diagnostics.csv: {str(e)}")
-            newRow = [currentTime, nextStartupTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
+            
+            # Append new row to CSV file
             writer.writerow(newRow)
             csvData = csvBuffer.getvalue().encode('utf-8')
+
+            # Upload CSV file to FTP server
             ftp.storbinary(f"APPE diagnostics.csv", BytesIO(csvData))
         else:
-            # Check if local CSV file exists
-            if path.exists(f"{filePath}diagnostics.csv"):
-                with open(f"{filePath}diagnostics.csv", 'r') as file:
-                    csvData = file.read()
-                    writer.writerow(csvData.split("\n")[0].split(","))
-            else:
-                # Create new CSV file
-                writer.writerow(["Time", "Battery voltage", "Raspberry Pi voltage", "Raspberry Pi current", "Temperature", "Cell signal quality", "GPS position (latitude)", "GPS position (longitude)", "Error"])
+            csvData = csvBuffer.getvalue().encode('utf-8')
 
-                with open(f"{filePath}diagnostics.csv", 'w') as file:
-                    csvData = file.read()
-                    writer.writerow(csvData.split("\n")[0].split(","))
-
+            # Append new row to local CSV file        
+            with open("diagnostics.csv", 'a', newline='') as file:
+                file.write(csvData.decode('utf-8'))
 except Exception as e:
     print(f"Could not append new measurements to log CSV: {str(e)}")
 
