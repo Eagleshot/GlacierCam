@@ -539,7 +539,10 @@ try:
                 if path.exists(f"{filePath}diagnostics.csv"):
                     with open(f"{filePath}diagnostics.csv", 'r') as file:
                         csvData = file.read()
-                        writer.writerow(csvData.split("\n")[0].split(","))            except Exception as e:
+                        # Write all lies to writer
+                        for line in reader(StringIO(csvData)):
+                            writer.writerow(line)
+                    remove("diagnostics.csv")
             except Exception as e:   
                 error += f"Could not open diagnostics.csv: {str(e)}"
                 print(f"Could not open diagnostics.csv: {str(e)}")
@@ -551,6 +554,7 @@ try:
             # Upload CSV file to FTP server
             ftp.storbinary(f"APPE diagnostics.csv", BytesIO(csvData))
         else:
+            writer.writerow(newRow)
             csvData = csvBuffer.getvalue().encode('utf-8')
 
             # Append new row to local CSV file        
