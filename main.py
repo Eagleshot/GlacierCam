@@ -50,14 +50,23 @@ error = ""
 ###########################
 # Connect to FTP server
 ###########################
-try:
-    ftp = FTP(config["ftpServerAddress"], timeout=120)
-    ftp.login(user=config["username"], passwd=config["password"])
-    connectedToFTP = True
-except Exception as e:
-    error += f"Could not connect to FTP server: {str(e)}"
-    print(f"Could not connect to FTP server: {str(e)}")
-    connectedToFTP = False
+for i in range(5):
+    try:
+        ftp = FTP(config["ftpServerAddress"], timeout=30)
+        ftp.login(user=config["username"], passwd=config["password"])
+        connectedToFTP = True
+    except Exception as e:
+        error += f"Could not connect to FTP server: {str(e)}"
+        print(f"Could not connect to FTP server: {str(e)}")
+        connectedToFTP = False
+    
+    if connectedToFTP == False:
+        # Wait 5 seconds and try again
+        print(f"Attempt {i+1}/5 failed - trying again in 5 seconds.")
+        error += f"Attempt {i+1}/5 failed - trying again in 5 seconds."
+        sleep(5)
+    else:
+        break
 
 # Go to custom directory in FTP server if specified
 try:
