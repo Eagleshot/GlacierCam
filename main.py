@@ -299,6 +299,7 @@ def getCurrentSignalQuality():
 # Get GPS Position
 currentGPSPosLat = "-"
 currentGPSPosLong = "-"
+currentGPSPosHeight = "-"
 
 def getGPSPos():
     rec_buff = ''
@@ -315,6 +316,7 @@ def getGPSPos():
             return 0
         else:
             # Additions to Demo Code Written by Tim! -> Core Electronics
+            # https://core-electronics.com.au/guides/raspberry-pi/raspberry-pi-4g-gps-hat/
             GPSDATA = str(rec_buff.decode())
             Cleaned = GPSDATA[13:]
 
@@ -334,10 +336,15 @@ def getGPSPos():
             if EastOrWest == 'W':
                 FinalLong = -FinalLong
 
+            # Height
+            Height = Cleaned[45:49]
+
             global currentGPSPosLat
             global currentGPSPosLong
+            global currentGPSPosHeight
             currentGPSPosLat = str(round(FinalLong, 4))
             currentGPSPosLong = str(round(FinalLat, 4))
+            currentGPSPosHeight = str(round(float(Height), 1))
 
             print(f"GPS position: {currentGPSPosLat}, {currentGPSPosLong}")
             return 1
@@ -507,13 +514,13 @@ try:
         
         maxAttempts = 0
 
-        while (maxAttempts <= 5):
+        while (maxAttempts < 7):
             maxAttempts += 1
             answer = getGPSPos()
             if answer == 1:  # Success
                 break
             else:
-                print(f"Attempt {maxAttempts}/5 failed - no signal yet. Trying again in 5 seconds.")
+                print(f"Attempt {maxAttempts}/7 failed - no signal yet. Trying again in 5 seconds.")
                 sleep(5)
         
         print('Stopping GPS session.')

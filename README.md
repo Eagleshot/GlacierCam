@@ -143,37 +143,10 @@ Turn off white LED of witty pi
 - [ ] USB Backup
 - [ ] Web interface of ftp server (streamlit)
 
-## Sicherheit
-Sicherheit ist heute ein 
-*Best practices
-up to date system (keine updates im feld - schwierig)
-nutzername/passwort
-firewall blockiert anfragen von aussen, kein ssh zugriff von aussen
-input validierung von einstellungen See https://pyyaml.org/wiki/PyYAMLDocumentation -> safe load / security
 
-verschlüsselte übertragung möglich
-read only modus (kann umgangen werden)
-
-
-physikalische sicherheit -> keine verschlüsselung festplatte mögl.
-sd karte/gerät/logindaten können geklaut werden, nur beschränkt sicher mit physikalischem zugriff
-
-programm wird als root ausgeführt
 
 todo erklärung/qr code auf gehäuse
 
-Datenübertragung:
-Datenübertragung über verschiedene Kanäle möglich:
-Rasperry Pi W hat einen eingebauten WiFi- und Bluetooth Chip. Zudem kann der Rasperry über einen USB Adapter via Ethernet Kabel angeschlossen werden. Für unsere anwendungszwecke wird ein 4g modul mit eingebautem gps verwendet. Durch den aufbau des python skripts spielt es keine Rolle, welche "Internetquelle" verwendet wird. Es ist auch möglich, mehrere anschlüsse gleichzeitig zu verwenden (test erwähnen). Im Falle eines Ausfalls einer Verbindung wird so automatisch die verbindung gewechselt um so eine höhere verfügbarkeit zu erreichen. Ist das internet gar nicht erreichbar werden bilder zwischengespeichert und wenn internet nächstes mal wieder online alle zusammen hochgeladen.
-
-DNS Server. - verwendet mehrere Anbieter für höchste Verfügbarkeit.
-
-Test mit versch. sim, simabedckung link swisscom
-geschätztes datenvolumen
-speed test/ping
-mögl. direkt über at commands files auf ftp/ftps server hochzuladen, allerdings weniger flexibel für zukunft
-möglichkeit jegliche standart zur datenübertragung zu benutzen (sftp, webdav etc.)
-auch getestet mit wlan (wieder aktivieren), über ethernet adapter, gibt auch viele thirdparty mögl auch für zukunft.
 
 # Kamera
 
