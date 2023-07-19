@@ -346,7 +346,7 @@ def getGPSPos():
             currentGPSPosLong = str(round(FinalLat, 4))
             currentGPSPosHeight = str(round(float(Height), 1))
 
-            print(f"GPS position: {currentGPSPosLat}, {currentGPSPosLong}")
+            print(f"GPS position: {currentGPSPosLat}, {currentGPSPosLong}, {currentGPSPosHeight}")
             return 1
     else: # No GPS data
         return 0
@@ -537,7 +537,7 @@ except Exception as e:
 try:
     with StringIO() as csvBuffer:
         writer = writer(csvBuffer)
-        newRow = [currentTime, nextStartupTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, error]
+        newRow = [currentTime, nextStartupTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, currentGPSPosHeight, error]
 
         # Check if is connected to FTP server
         if connectedToFTP:
