@@ -132,7 +132,7 @@ except Exception as e:
 def syncWittyPiTimeWithNetwork():
 
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
-
+    # TODO: Maybe use GPS time as a reference
     # Wait for 100s
     sleep(100)
 
@@ -342,11 +342,11 @@ def getGPSPos():
             global currentGPSPosLat
             global currentGPSPosLong
             global currentGPSPosHeight
-            currentGPSPosLat = str(round(FinalLong, 4))
-            currentGPSPosLong = str(round(FinalLat, 4))
+            currentGPSPosLat = str(round(FinalLong, 5))
+            currentGPSPosLong = str(round(FinalLat, 5))
             currentGPSPosHeight = str(round(float(Height), 1))
 
-            print(f"GPS position: {currentGPSPosLat}, {currentGPSPosLong}, {currentGPSPosHeight}")
+            print(f"GPS position: LAT {currentGPSPosLat}, LON {currentGPSPosLong}, HEIGHT {currentGPSPosHeight}")
             return 1
     else: # No GPS data
         return 0
