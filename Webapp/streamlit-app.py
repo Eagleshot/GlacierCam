@@ -29,9 +29,20 @@ def main():
         page_icon="🏔️"
     )
 
+    # Hide footer and menu
+    # See: https://discuss.streamlit.io/t/remove-made-with-streamlit-from-bottom-of-app/1370/2
+    hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+
     # Title
     st.title("GlacierCam 🏔️")
 
+    # Placeholder for the image
     imagePlaceholder = st.empty()
 
     # Download diagnosticsf.csv as file with utf-8 encoding
