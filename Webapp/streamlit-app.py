@@ -7,6 +7,12 @@ from yaml import safe_load
 from datetime import datetime
 import matplotlib.pyplot as plt
 
+# FTP server credentials
+FTP_HOST = st.secrets["FTP_HOST"]
+FTP_USERNAME = st.secrets["FTP_USERNAME"]
+FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
+FTP_FOLDER = st.secrets["FTP_FOLDER"]
+
 # Connect to the FTP server
 ftp = FTP(FTP_HOST)
 ftp.login(user=FTP_USERNAME, passwd=FTP_PASSWORD)
