@@ -6,6 +6,8 @@ import pandas as pd
 from yaml import safe_load
 from datetime import datetime
 import matplotlib.pyplot as plt
+import altair as alt
+import pytz
 
 # FTP server credentials
 FTP_HOST = st.secrets["FTP_HOST"]
@@ -116,15 +118,6 @@ def main():
         use_container_width=True
     )
 
-    # Print last Battery Voltage
-    st.write("Batteriespannung: ", df['Battery Voltage'].iloc[-1])
-
-    # Print last temperature
-    st.write("Temperatur: ", df['Temperature'].iloc[-1])
-
-    # Print last signal quality
-    st.write("Signalqualität: ", df['Signal Quality'].iloc[-1])
-
     # Last startup relative to now
     lastStartup = df['Timestamp'].iloc[-1]
     now = datetime.now()
@@ -142,7 +135,6 @@ def main():
     nextStartup = df['Next Startup'].iloc[-1]
     nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%S')
     # nextStartup = nextStartup + pd.Timedelta(minutes=1)
-    now = datetime.now()
     timeDifference = nextStartup - now
     # Write difference in hours and minutes
     nextStartText = lastStartText + " - nächster Start in " 
@@ -155,27 +147,63 @@ def main():
     st.write(nextStartText)
 
     # Battery Voltage
-    st.title("Batteriespannung in V")
+    st.title("Batterie")
+    st.write("Letzte Messung: ", df['Battery Voltage'].iloc[-1])
     df['Battery Voltage'] = df['Battery Voltage'].str[:-1]
     df['Battery Voltage'] = df['Battery Voltage'].astype(float)
-    st.line_chart(df['Battery Voltage'])
+
+    chart = alt.Chart(df).mark_line().encode(
+        x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
+        y=alt.Y('Battery Voltage:Q', axis=alt.Axis(title='Battery Voltage (V)')),
+        tooltip=['Timestamp:T', 'Battery Voltage:Q']
+    ).interactive()
+
+    st.altair_chart(chart, use_container_width=True)
 
     # Internal Voltage
-    st.title("Interne Spannung in V")
+    st.title("Interne Spannung")
+    st.write("Letzte Messung: ", df['Internal Voltage'].iloc[-1])
     df['Internal Voltage'] = df['Internal Voltage'].str[:-1]
     df['Internal Voltage'] = df['Internal Voltage'].astype(float)
-    st.line_chart(df['Internal Voltage'])
+
+    chart = alt.Chart(df).mark_line().encode(
+        x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
+        y=alt.Y('Internal Voltage:Q', axis=alt.Axis(title='Internal Voltage (V)')),
+        tooltip=['Timestamp:T', 'Internal Voltage:Q']
+    ).interactive()
+
+    st.altair_chart(chart, use_container_width=True)
 
     # Temperature
-    st.title("Temperatur in °C")
+    st.title("Temperatur")
+    st.write("Letzte Messung: ", df['Temperature'].iloc[-1])
+
     df['Temperature'] = df['Temperature'].str[:-2]
     df['Temperature'] = df['Temperature'].astype(float)
-    st.line_chart(df['Temperature'])
+
+    chart = alt.Chart(df).mark_line().encode(
+        x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
+        y=alt.Y('Temperature:Q', axis=alt.Axis(title='Temperature (°C)')),
+        tooltip=['Timestamp:T', 'Temperature:Q']
+    ).interactive()
+
+    st.altair_chart(chart, use_container_width=True)
 
     # Signal Quality
+    # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
     st.title("Signalqualität")
+    st.write("Letzte Messung: ", df['Signal Quality'].iloc[-1].astype(str))
+
     df['Signal Quality'] = df['Signal Quality']
-    st.line_chart(df['Signal Quality'])
+
+    chart = alt.Chart(df).mark_line().encode(
+        x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
+        y=alt.Y('Signal Quality:Q', axis=alt.Axis(title='Signal Quality (arb. units))')),
+        tooltip=['Timestamp:T', 'Signal Quality:Q']
+    ).interactive()
+
+    st.altair_chart(chart, use_container_width=True)
+   
 
     # Show a map with the location of the camera (not "-")
     st.title("Standort der Kamera")
