@@ -118,13 +118,18 @@ def main():
         use_container_width=True
     )
 
-    # Last startup relative to now
+    # Overview of the last measurements
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Batterie", df['Battery Voltage'].iloc[-1])
+    col2.metric("Interne Spannung", df['Internal Voltage'].iloc[-1])
+    col3.metric("Temperatur", df['Temperature'].iloc[-1])
+    col4.metric("Signalqualität", df['Signal Quality'].iloc[-1])
+
     # Last startup relative to now
     lastStartup = df['Timestamp'].iloc[-1]
-
     now = datetime.now(pytz.timezone('Europe/Zurich')).replace(tzinfo=None)
-
     timeDifference = now - lastStartup.replace(tzinfo=None)
+
     # Write difference in hours and minutes
     lastStartText = "Letzter Start vor "
     if timeDifference.seconds//3600 > 0:
@@ -137,7 +142,7 @@ def main():
     # Print next startup relative to now
     nextStartup = df['Next Startup'].iloc[-1]
     nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%S')
-    # nextStartup = nextStartup + pd.Timedelta(minutes=1)
+    nextStartup = nextStartup + pd.Timedelta(minutes=1)
     timeDifference = nextStartup - now
     # Write difference in hours and minutes
     nextStartText = lastStartText + " - nächster Start in " 
@@ -149,10 +154,7 @@ def main():
         nextStartText = nextStartText + "weniger als einer Minute."
     st.write(nextStartText)
 
-    # col1, col2, col3 = st.columns(3)
-    # col1.metric("Temperature", "70 °F", "1.2 °F")
-    # col2.metric("Wind", "9 mph", "-8%")
-    # col3.metric("Humidity", "86%", "4%")
+    st.divider()
 
     # Battery Voltage
     st.title("Batterie")
@@ -214,7 +216,7 @@ def main():
    
 
     # Show a map with the location of the camera (not "-")
-    st.title("Standort der Kamera")
+    st.title("Standort")
     try:
         df = df[df['Latitude'] != '-']
         df = df[df['Longitude'] != '-']
@@ -224,18 +226,18 @@ def main():
         st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
 
         # Print timestamp
-        st.write("Letztes Update: ", df['Timestamp'].iloc[-1])
+        st.write("Letztes Update: ", df['Timestamp'].iloc[-1].strftime("%d.%m.%Y %H:%M:%S Uhr"))
     except:
         st.write("Keine Koordinaten vorhanden")
 
-    # Read settings.yaml and display it
-    ftp.retrbinary('RETR settings.yaml', open('settings.yaml', 'wb').write)
-    
-    # Add a divider
-    st.divider()
+    # Add a linebreak
+    st.write("")
+    st.write("")
 
     # Display the dataframe
     with st.expander("Rohdaten anzeigen"):
+
+        # TODO get Original CSV
         st.dataframe(df)
 
         # Download diagnostics.csv
@@ -247,20 +249,21 @@ def main():
             use_container_width=True
         )
 
+    # Read settings.yaml and display it
+    ftp.retrbinary('RETR settings.yaml', open('settings.yaml', 'wb').write)
+
     # Display the settings
     with st.expander("Einstellungen anzeigen"):
 
         with open('settings.yaml') as file:
-            dfSettings = safe_load(file)
+            settings = safe_load(file)
 
-        st.dataframe(dfSettings)
+        # Display the settings
+        st.write(settings)
 
-        # Easteregg button which lets it snow
-        if st.button("?"):
+        # Easteregg button which lets it snow with snow emojis
+        if st.button("❄️⛄"):
             st.snow()
-
-
-    
 
 # Run the app
 if __name__ == "__main__":
