@@ -35,7 +35,6 @@ def main():
     # See: https://discuss.streamlit.io/t/remove-made-with-streamlit-from-bottom-of-app/1370/2
     hide_streamlit_style = """
             <style>
-            #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             </style>
             """
@@ -268,3 +267,4 @@ def main():
 # Run the app
 if __name__ == "__main__":
     main()
+    
