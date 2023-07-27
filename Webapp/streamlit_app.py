@@ -81,7 +81,6 @@ def main():
     # Only show the image files
     files = [file for file in files if file.endswith(".jpg")]
 
-
     # Get all the characters after the 12th character from the first
     lastCharacters = files[-1][13:]
 
@@ -91,6 +90,7 @@ def main():
     # Select slider
     selected_file = st.select_slider(
         "Wähle ein Bild aus",
+        label_visibility="hidden", # Hide the label
         options=files,
         value=files[-1]
     )
@@ -119,9 +119,12 @@ def main():
     )
 
     # Last startup relative to now
+    # Last startup relative to now
     lastStartup = df['Timestamp'].iloc[-1]
-    now = datetime.now()
-    timeDifference = now - lastStartup
+
+    now = datetime.now(pytz.timezone('Europe/Zurich')).replace(tzinfo=None)
+
+    timeDifference = now - lastStartup.replace(tzinfo=None)
     # Write difference in hours and minutes
     lastStartText = "Letzter Start vor "
     if timeDifference.seconds//3600 > 0:
@@ -145,6 +148,11 @@ def main():
     else:
         nextStartText = nextStartText + "weniger als einer Minute."
     st.write(nextStartText)
+
+    # col1, col2, col3 = st.columns(3)
+    # col1.metric("Temperature", "70 °F", "1.2 °F")
+    # col2.metric("Wind", "9 mph", "-8%")
+    # col3.metric("Humidity", "86%", "4%")
 
     # Battery Voltage
     st.title("Batterie")
