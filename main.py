@@ -42,6 +42,7 @@ try:
 except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
 
+# TODO: Maybe use python timestamp for diagnostics.csv and use UTC time for easier time conversion
 cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
 currentTime = datetime.today().strftime('%d%m%Y_%H%M')
 imgFileName = f"{currentTime}_{cameraName}.jpg"
@@ -97,7 +98,7 @@ except Exception as e:
 ###########################
 
 # TODO work with read only file system - OK?
-# TODO Do some checks if downloaded settings were valid?
+# TODO Do additional checks if downloaded settings were valid?
 
 # Try to download settings from server
 try:
@@ -128,7 +129,6 @@ except Exception as e:
 ###########################
 
 # TODO: Maybe check if wittypi was started with button and only sync time then?
-
 def syncWittyPiTimeWithNetwork():
 
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
@@ -268,6 +268,8 @@ def sendATCommand(command, back, timeout):
         return 0
     else:
         return rec_buff.decode()
+    
+# TODO: Maybe move SIM7600G-H 4G and WittyPi code to separate file/library for easier readability
 
 # Get current signal quality
 # https://www.manualslib.com/download/1593302/Simcom-Sim7000-Series.html
@@ -469,7 +471,7 @@ def getWittyPiBatteryVoltage():
         return "-"
 
 # Raspberry Pi voltage
-# TODO Maybe make setting to disable additional sensor readings in the future
+# TODO Maybe make setting a setting to enable/disable additional sensor readings in the future
 def getWittyPiVoltage():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
@@ -549,7 +551,7 @@ try:
                         # Write all lies to writer
                         for line in reader(StringIO(csvData)):
                             writer.writerow(line)
-                    remove("diagnostics.csv")
+                    remove(filePath + "diagnostics.csv")
             except Exception as e:   
                 error += f"Could not open diagnostics.csv: {str(e)}"
                 print(f"Could not open diagnostics.csv: {str(e)}")
