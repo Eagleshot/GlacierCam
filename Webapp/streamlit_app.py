@@ -41,7 +41,7 @@ def main():
     st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 
     # Title
-    st.title("GlacierCam 🏔️")
+    st.title("GlacierCam")
 
     # Placeholder for the image
     imagePlaceholder = st.empty()
@@ -50,7 +50,7 @@ def main():
     ftp.retrbinary('RETR diagnostics.csv', open('df.csv', 'wb').write)
     df = pd.read_csv('df.csv', encoding='utf-8')
 
-    # TODO Unique naming
+    # TODO Improve naming
     df.rename(columns={df.columns[0]: 'Timestamp'}, inplace=True)
     df.rename(columns={df.columns[1]: 'Next Startup'}, inplace=True)
     df.rename(columns={df.columns[2]: 'Battery Voltage'}, inplace=True)
@@ -154,9 +154,28 @@ def main():
     st.write(nextStartText)
 
     st.divider()
+    
+    # Toggle to change the timeframe of the graphs
+    with st.sidebar:
+        st.title("Einstellungen")
+        with st.expander("Zeitraum auswählen"):
+            # Get the start and end date
+            startDate = st.date_input("Startdatum", df['Timestamp'].iloc[0])
+            endDate = st.date_input("Enddatum", df['Timestamp'].iloc[-1])
 
+            # Get the start and end time
+            startTime = st.time_input("Startzeit", datetime.strptime("00:00", "%H:%M").time())
+            endTime = st.time_input("Endzeit", datetime.strptime("23:59", "%H:%M").time())
+
+            # Combine the start and end date and time
+            startDateTime = datetime.combine(startDate, startTime)
+            endDateTime = datetime.combine(endDate, endTime)
+
+            # Filter the dataframe
+            df = df[(df['Timestamp'] >= startDateTime) & (df['Timestamp'] <= endDateTime)]
+    
     # Battery Voltage
-    st.title("Batterie")
+    st.header("Batterie")
     st.write("Letzte Messung: ", df['Battery Voltage'].iloc[-1])
     df['Battery Voltage'] = df['Battery Voltage'].str[:-1]
     df['Battery Voltage'] = df['Battery Voltage'].astype(float)
@@ -170,7 +189,7 @@ def main():
     st.altair_chart(chart, use_container_width=True)
 
     # Internal Voltage
-    st.title("Interne Spannung")
+    st.header("Interne Spannung")
     st.write("Letzte Messung: ", df['Internal Voltage'].iloc[-1])
     df['Internal Voltage'] = df['Internal Voltage'].str[:-1]
     df['Internal Voltage'] = df['Internal Voltage'].astype(float)
@@ -184,7 +203,7 @@ def main():
     st.altair_chart(chart, use_container_width=True)
 
     # Temperature
-    st.title("Temperatur")
+    st.header("Temperatur")
     st.write("Letzte Messung: ", df['Temperature'].iloc[-1])
 
     df['Temperature'] = df['Temperature'].str[:-2]
@@ -200,7 +219,7 @@ def main():
 
     # Signal Quality
     # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
-    st.title("Signalqualität")
+    st.header("Signalqualität")
     st.write("Letzte Messung: ", df['Signal Quality'].iloc[-1].astype(str))
 
     df['Signal Quality'] = df['Signal Quality']
@@ -241,7 +260,7 @@ def main():
 
         # Download diagnostics.csv
         st.download_button(
-            label="Diagnosedatei herunterladen 📝",
+            label="Rohdaten herunterladen 📝",
             data=df.to_csv().encode("utf-8"),
             file_name="diagnostics.csv",
             mime="text/csv",
