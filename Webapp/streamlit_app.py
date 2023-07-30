@@ -173,7 +173,7 @@ def main():
 
             # Filter the dataframe
             df = df[(df['Timestamp'] >= startDateTime) & (df['Timestamp'] <= endDateTime)]
-    
+
     # Battery Voltage
     st.header("Batterie")
     st.write("Letzte Messung: ", df['Battery Voltage'].iloc[-1])
@@ -234,7 +234,7 @@ def main():
    
 
     # Show a map with the location of the camera (not "-")
-    st.title("Standort")
+    st.header("Standort")
     try:
         df = df[df['Latitude'] != '-']
         df = df[df['Longitude'] != '-']
