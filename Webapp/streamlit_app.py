@@ -13,14 +13,6 @@ import pytz
 FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
-FTP_FOLDER = st.secrets["FTP_FOLDER"]
-
-# Connect to the FTP server
-ftp = FTP(FTP_HOST)
-ftp.login(user=FTP_USERNAME, passwd=FTP_PASSWORD)
-
-# Change the working directory to the FTP folder
-ftp.cwd(FTP_FOLDER)
 
 # Streamlit app
 def main():
@@ -38,7 +30,25 @@ def main():
             footer {visibility: hidden;}
             </style>
             """
-    st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+    # Change the camera selection
+    with st.sidebar:
+        st.header("Kamera auswählen")
+        
+        FTP_FOLDER = st.selectbox(
+            "Bitte wählen Sie eine Kamera aus:",
+            options=st.secrets["FTP_FOLDER"],
+            index=0,
+            # label_visibility="hidden"
+        )
+
+    # Connect to the FTP server
+    ftp = FTP(FTP_HOST)
+    ftp.login(user=FTP_USERNAME, passwd=FTP_PASSWORD)
+
+    # Change the working directory to the FTP folder
+    ftp.cwd(FTP_FOLDER)
 
     # Title
     st.title("GlacierCam")
@@ -154,10 +164,10 @@ def main():
     st.write(nextStartText)
 
     st.divider()
-    
-    # Toggle to change the timeframe of the graphs
+
     with st.sidebar:
-        st.title("Einstellungen")
+        st.header("Zeitraum auswählen")
+   
         with st.expander("Zeitraum auswählen"):
             # Get the start and end date
             startDate = st.date_input("Startdatum", df['Timestamp'].iloc[0])
@@ -173,6 +183,7 @@ def main():
 
             # Filter the dataframe
             df = df[(df['Timestamp'] >= startDateTime) & (df['Timestamp'] <= endDateTime)]
+
 
     # Battery Voltage
     st.header("Batterie")
