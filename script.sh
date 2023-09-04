@@ -115,6 +115,7 @@ sudo ufw enable
 
 # This was disabled, because it currently doesn't work because of permission
 # TODO Maybe reenable in the future, once the root cause is found
+# TODO: Disable UWI after installation - see https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
 
 # Install WittyPi Software
 # See: https://www.uugear.com/product/witty-pi-4-mini/

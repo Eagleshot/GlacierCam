@@ -63,8 +63,8 @@ for i in range(5):
     
     if connectedToFTP == False:
         # Wait 5 seconds and try again
-        print(f"Attempt {i+1}/5 failed - trying again in 5 seconds.")
-        error += f"Attempt {i+1}/5 failed - trying again in 5 seconds."
+        print(f". Attempt {i+1}/5 failed - trying again in 5 seconds.")
+        error += f". Attempt {i+1}/5 failed - trying again in 5 seconds."
         sleep(5)
     else:
         break
@@ -123,6 +123,8 @@ try:
         settings = safe_load(file)
 except Exception as e:
     print(f"Could not open settings.yaml: {str(e)}")
+
+# TODO: Maybe add option to upload witty pi logs for additional diagnostics
 
 ###########################
 # Time synchronization
