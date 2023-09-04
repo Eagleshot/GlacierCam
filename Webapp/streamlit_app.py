@@ -5,7 +5,6 @@ from PIL import Image
 import pandas as pd
 from yaml import safe_load
 from datetime import datetime
-import matplotlib.pyplot as plt
 import altair as alt
 import pytz
 
@@ -40,7 +39,6 @@ def main():
             "Bitte wählen Sie eine Kamera aus:",
             options=st.secrets["FTP_FOLDER"],
             index=0,
-            # label_visibility="hidden"
         )
 
     # Connect to the FTP server
@@ -89,23 +87,16 @@ def main():
 
     # Only show the image files
     files = [file for file in files if file.endswith(".jpg")]
-
-    # Get all the characters after the 12th character from the first
-    lastCharacters = files[-1][13:]
-
-    # Only the first 12 characters of the filename are displayed
-    files = [file[:13] for file in files]
-
+   
     # Select slider
     selected_file = st.select_slider(
         "Wähle ein Bild aus",
         label_visibility="hidden", # Hide the label
         options=files,
-        value=files[-1]
+        value=files[-1],
+        # Format the timestamp
+        format_func=lambda x: f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]}",
     )
-
-    # Add the rest of the filename back to selected_file
-    selected_file = selected_file + lastCharacters
 
     # Get the image file from the FTP server
     image_data = BytesIO()
@@ -169,6 +160,7 @@ def main():
         st.header("Zeitraum auswählen")
    
         with st.expander("Zeitraum auswählen"):
+
             # Get the start and end date
             startDate = st.date_input("Startdatum", df['Timestamp'].iloc[0])
             endDate = st.date_input("Enddatum", df['Timestamp'].iloc[-1])
@@ -183,7 +175,6 @@ def main():
 
             # Filter the dataframe
             df = df[(df['Timestamp'] >= startDateTime) & (df['Timestamp'] <= endDateTime)]
-
 
     # Battery Voltage
     st.header("Batterie")
@@ -237,21 +228,20 @@ def main():
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
-        y=alt.Y('Signal Quality:Q', axis=alt.Axis(title='Signal Quality (arb. units))')),
+        y=alt.Y('Signal Quality:Q', axis=alt.Axis(title='Signal Quality (arb. units)')),
         tooltip=['Timestamp:T', 'Signal Quality:Q']
     ).interactive()
 
     st.altair_chart(chart, use_container_width=True)
    
-
     # Show a map with the location of the camera (not "-")
     st.header("Standort")
     try:
-        df = df[df['Latitude'] != '-']
-        df = df[df['Longitude'] != '-']
+        dfMap = df[df['Latitude'] != '-']
+        dfMap = dfMap[df['Longitude'] != '-']
         # Convert the latitude and longitude to float
-        last_latitude = float(df['Latitude'].iloc[-1])
-        last_longitude = float(df['Longitude'].iloc[-1])
+        last_latitude = float(dfMap['Latitude'].iloc[-1])
+        last_longitude = float(dfMap['Longitude'].iloc[-1])
         st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
 
         # Print timestamp
