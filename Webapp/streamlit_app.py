@@ -47,6 +47,12 @@ def main():
             index=0,
         )
 
+        # timezone = st.selectbox(
+        #     "Bitte wählen Sie eine Zeitzone aus:",
+        #     options = pytz.all_timezones,
+        #     index = 0
+        # )
+
     # Connect to the FTP server
     ftp = FTP(FTP_HOST)
     ftp.login(user=FTP_USERNAME, passwd=FTP_PASSWORD)
@@ -54,8 +60,16 @@ def main():
     # Change the working directory to the FTP folder
     ftp.cwd(FTP_FOLDER)
 
-    # Title
-    st.title("GlacierCam")
+    # Get the list of files from the FTP server
+    files = ftp.nlst()
+
+    # Only show the image files
+    files = [file for file in files if file.endswith(".jpg")]
+
+    # Camera name
+    cameraname = files[-1][14:-21]
+
+    st.title(cameraname)
 
     # Placeholder for the image
     imagePlaceholder = st.empty()
@@ -83,7 +97,13 @@ def main():
     df['Internal Voltage'] = df['Internal Voltage'].astype(float)
     df['Temperature'] = df['Temperature'].str[:-2]
     df['Temperature'] = df['Temperature'].astype(float)
-    df['Signal Quality'] = df['Signal Quality'].astype(int)
+    try:
+        df['Signal Quality'] = df['Signal Quality'].astype(int)
+    except:
+        # Remove all non numeric characters
+        df['Signal Quality'] = df['Signal Quality'].str.replace(r'\D', '')
+        # df['Signal Quality'] = df['Signal Quality'].astype(int)
+
 
     # Format timestamp
     df["Day"] = df["Timestamp"].str[:2]
@@ -96,12 +116,6 @@ def main():
 
     # Drop the columns
     df.drop(columns=["Day", "Month", "Year", "Hour", "Minute"], inplace=True)
-
-    # Get the list of files from the FTP server
-    files = ftp.nlst()
-
-    # Only show the image files
-    files = [file for file in files if file.endswith(".jpg")]
    
     # Select slider
     selected_file = st.select_slider(
@@ -110,7 +124,7 @@ def main():
         options=files,
         value=files[-1],
         # Format the timestamp and dont show date if it is today
-        format_func=lambda x: f"{x[9:11]}:{x[11:13]}" if x[:8] == datetime.now(timezone).strftime("%d%m%Y") else f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]}",
+        format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(timezone).strftime("%d%m%Y") else f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]} Uhr",
     )
 
     # Get the image file from the FTP server
@@ -201,6 +215,13 @@ def main():
             # Filter the dataframe
             df = df[(df['Timestamp'] >= startDateTime) & (df['Timestamp'] <= endDateTime)]
 
+            
+        # Login
+        st.header("Login")
+        password = st.text_input("Passwort", type="password")
+        if password == FTP_PASSWORD:
+            st.success("Erfolgreich eingeloggt.")
+
     # Battery Voltage
     st.header("Batterie")
     st.write(f"Letzte Messung: {str(df['Battery Voltage'].iloc[-1])}V")
@@ -237,7 +258,11 @@ def main():
     # Signal Quality
     # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
     st.header("Signalqualität")
-    st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1].astype(str))}")
+    try:
+        st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1].astype(str))}")
+    except:
+        st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1])}")
+
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
@@ -248,18 +273,19 @@ def main():
    
     # Show a map with camera location
     st.header("Standort")
-    try:
-        dfMap = df[df['Latitude'] != '-']
-        dfMap = dfMap[df['Longitude'] != '-']
+    dfMap = df[df['Latitude'] != '-']
+    dfMap = dfMap[df['Longitude'] != '-']
+
+    if dfMap.empty:
+        st.write("Keine Koordinaten in diesem Zeitraum vorhanden.")
+    else:
         # Convert the latitude and longitude to float
         last_latitude = float(dfMap['Latitude'].iloc[-1])
         last_longitude = float(dfMap['Longitude'].iloc[-1])
         st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
 
         # Print timestamp
-        st.markdown(f"Letztes Update: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')} - [Google Maps Link](https://www.google.com/maps/search/?api=1&query={last_latitude},{last_longitude})" )
-    except:
-        st.write("Keine Koordinaten in diesem Zeitraum vorhanden.")
+        st.markdown(f"Letztes Update: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')} - [Google Maps](https://www.google.com/maps/search/?api=1&query={last_latitude},{last_longitude})" )
 
     # Add a linebreak
     st.write("")
