@@ -1,3 +1,7 @@
+# TODO Fix nächster Start in 23 Stunden und 59 Minuten.
+# TODO Add settings after login
+# TODO Timelapse and timestamp comparison
+
 import streamlit as st
 from ftplib import FTP
 from io import BytesIO
@@ -12,6 +16,8 @@ import pytz
 FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
+
+timezone = pytz.timezone('Europe/Zurich')
 
 # Streamlit app
 def main():
@@ -70,7 +76,16 @@ def main():
     df.rename(columns={df.columns[8]: 'Latitude'}, inplace=True)
     df.rename(columns={df.columns[9]: 'Error'}, inplace=True)
 
-    # Format of timestamp: 27062023_1912
+    # Modify the columns
+    df['Battery Voltage'] = df['Battery Voltage'].str[:-1]
+    df['Battery Voltage'] = df['Battery Voltage'].astype(float)
+    df['Internal Voltage'] = df['Internal Voltage'].str[:-1]
+    df['Internal Voltage'] = df['Internal Voltage'].astype(float)
+    df['Temperature'] = df['Temperature'].str[:-2]
+    df['Temperature'] = df['Temperature'].astype(float)
+    df['Signal Quality'] = df['Signal Quality'].astype(int)
+
+    # Format timestamp
     df["Day"] = df["Timestamp"].str[:2]
     df["Month"] = df["Timestamp"].str[2:4]
     df["Year"] = df["Timestamp"].str[4:8]  
@@ -94,8 +109,8 @@ def main():
         label_visibility="hidden", # Hide the label
         options=files,
         value=files[-1],
-        # Format the timestamp
-        format_func=lambda x: f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]}",
+        # Format the timestamp and dont show date if it is today
+        format_func=lambda x: f"{x[9:11]}:{x[11:13]}" if x[:8] == datetime.now(timezone).strftime("%d%m%Y") else f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]}",
     )
 
     # Get the image file from the FTP server
@@ -119,15 +134,26 @@ def main():
     )
 
     # Overview of the last measurements
+    # TODO Maybe add delta
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Batterie", df['Battery Voltage'].iloc[-1])
-    col2.metric("Interne Spannung", df['Internal Voltage'].iloc[-1])
-    col3.metric("Temperatur", df['Temperature'].iloc[-1])
-    col4.metric("Signalqualität", df['Signal Quality'].iloc[-1])
+    timestampSelectedImage = datetime.strptime(selected_file[0:13], '%d%m%Y_%H%M')
+    index = df[df['Timestamp'] == timestampSelectedImage].index[0]
+
+    delta = df['Battery Voltage'].iloc[index] - df['Battery Voltage'].iloc[index-1]
+    col1.metric("Batterie", f"{df['Battery Voltage'].iloc[index]}V")
+
+    delta = df['Internal Voltage'].iloc[index] - df['Internal Voltage'].iloc[index-1]
+    col2.metric("Interne Spannung", f"{df['Internal Voltage'].iloc[index]}V", f"{delta}V")
+
+    delta = df['Temperature'].iloc[index] - df['Temperature'].iloc[index-1]
+    col3.metric("Temperatur", f"{df['Temperature'].iloc[index]}°C", f"{delta}°C")
+
+    # delta = df['Signal Quality'].iloc[index] - df['Signal Quality'].iloc[index-1]
+    col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
 
     # Last startup relative to now
     lastStartup = df['Timestamp'].iloc[-1]
-    now = datetime.now(pytz.timezone('Europe/Zurich')).replace(tzinfo=None)
+    now = datetime.now(timezone).replace(tzinfo=None)
     timeDifference = now - lastStartup.replace(tzinfo=None)
 
     # Write difference in hours and minutes
@@ -144,7 +170,6 @@ def main():
     nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%S')
     nextStartup = nextStartup + pd.Timedelta(minutes=1)
     timeDifference = nextStartup - now
-    # Write difference in hours and minutes
     nextStartText = lastStartText + " - nächster Start in " 
     if timeDifference.seconds//3600 > 0:
         nextStartText = nextStartText + str(timeDifference.seconds//3600) + " Stunden und " + str((timeDifference.seconds//60)%60) + " Minuten."
@@ -178,63 +203,50 @@ def main():
 
     # Battery Voltage
     st.header("Batterie")
-    st.write("Letzte Messung: ", df['Battery Voltage'].iloc[-1])
-    df['Battery Voltage'] = df['Battery Voltage'].str[:-1]
-    df['Battery Voltage'] = df['Battery Voltage'].astype(float)
+    st.write(f"Letzte Messung: {str(df['Battery Voltage'].iloc[-1])}V")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
         y=alt.Y('Battery Voltage:Q', axis=alt.Axis(title='Battery Voltage (V)')),
         tooltip=['Timestamp:T', 'Battery Voltage:Q']
     ).interactive()
-
     st.altair_chart(chart, use_container_width=True)
 
     # Internal Voltage
     st.header("Interne Spannung")
-    st.write("Letzte Messung: ", df['Internal Voltage'].iloc[-1])
-    df['Internal Voltage'] = df['Internal Voltage'].str[:-1]
-    df['Internal Voltage'] = df['Internal Voltage'].astype(float)
+    st.write(f"Letzte Messung: {str(df['Internal Voltage'].iloc[-1])}V")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
         y=alt.Y('Internal Voltage:Q', axis=alt.Axis(title='Internal Voltage (V)')),
         tooltip=['Timestamp:T', 'Internal Voltage:Q']
     ).interactive()
-
     st.altair_chart(chart, use_container_width=True)
 
     # Temperature
     st.header("Temperatur")
-    st.write("Letzte Messung: ", df['Temperature'].iloc[-1])
-
-    df['Temperature'] = df['Temperature'].str[:-2]
-    df['Temperature'] = df['Temperature'].astype(float)
+    st.write(f"Letzte Messung: {str(df['Temperature'].iloc[-1])}°C")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
         y=alt.Y('Temperature:Q', axis=alt.Axis(title='Temperature (°C)')),
         tooltip=['Timestamp:T', 'Temperature:Q']
     ).interactive()
-
     st.altair_chart(chart, use_container_width=True)
 
     # Signal Quality
     # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
     st.header("Signalqualität")
-    st.write("Letzte Messung: ", df['Signal Quality'].iloc[-1].astype(str))
-
-    df['Signal Quality'] = df['Signal Quality']
+    st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1].astype(str))}")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
         y=alt.Y('Signal Quality:Q', axis=alt.Axis(title='Signal Quality (arb. units)')),
         tooltip=['Timestamp:T', 'Signal Quality:Q']
     ).interactive()
-
     st.altair_chart(chart, use_container_width=True)
    
-    # Show a map with the location of the camera (not "-")
+    # Show a map with camera location
     st.header("Standort")
     try:
         dfMap = df[df['Latitude'] != '-']
@@ -245,18 +257,17 @@ def main():
         st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
 
         # Print timestamp
-        st.write("Letztes Update: ", df['Timestamp'].iloc[-1].strftime("%d.%m.%Y %H:%M:%S Uhr"))
+        st.markdown(f"Letztes Update: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')} - [Google Maps Link](https://www.google.com/maps/search/?api=1&query={last_latitude},{last_longitude})" )
     except:
-        st.write("Keine Koordinaten vorhanden")
+        st.write("Keine Koordinaten in diesem Zeitraum vorhanden.")
 
     # Add a linebreak
     st.write("")
     st.write("")
 
     # Display the dataframe
-    with st.expander("Rohdaten anzeigen"):
+    with st.expander("Rohdaten"):
 
-        # TODO get Original CSV
         st.dataframe(df)
 
         # Download diagnostics.csv
@@ -272,13 +283,20 @@ def main():
     ftp.retrbinary('RETR settings.yaml', open('settings.yaml', 'wb').write)
 
     # Display the settings
-    with st.expander("Einstellungen anzeigen"):
+    with st.expander("Einstellungen"):
 
         with open('settings.yaml') as file:
             settings = safe_load(file)
 
         # Display the settings
         st.write(settings)
+
+    with st.expander("Fehlermeldungen"):
+        # Display the errors (not nan)
+        dfError = df[df['Error'].notna()]
+        # Display error message and timestamp as text in reverse order
+        for index, row in dfError[::-1].iterrows():
+            st.write(row['Timestamp'].strftime("%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
 
         # Easteregg button which lets it snow with snow emojis
         if st.button("❄️⛄"):
