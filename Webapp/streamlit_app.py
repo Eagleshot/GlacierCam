@@ -17,8 +17,6 @@ FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
 
-timezone = pytz.timezone('Europe/Zurich')
-
 # Streamlit app
 def main():
 
@@ -39,19 +37,13 @@ def main():
 
     # Change the camera selection
     with st.sidebar:
+
         st.header("Kamera auswählen")
-        
         FTP_FOLDER = st.selectbox(
             "Bitte wählen Sie eine Kamera aus:",
             options=st.secrets["FTP_FOLDER"],
             index=0,
         )
-
-        # timezone = st.selectbox(
-        #     "Bitte wählen Sie eine Zeitzone aus:",
-        #     options = pytz.all_timezones,
-        #     index = 0
-        # )
 
     # Connect to the FTP server
     ftp = FTP(FTP_HOST)
@@ -116,6 +108,42 @@ def main():
 
     # Drop the columns
     df.drop(columns=["Day", "Month", "Year", "Hour", "Minute"], inplace=True)
+
+    with st.sidebar:
+
+        # Zeitraum auswählen
+        st.header("Zeitraum auswählen")
+        with st.expander("Zeitraum auswählen"):
+
+            # Get the start and end date
+            startDate = st.date_input("Startdatum", df['Timestamp'].iloc[0])
+            endDate = st.date_input("Enddatum", df['Timestamp'].iloc[-1])
+
+            # Get the start and end time
+            startTime = st.time_input("Startzeit", datetime.strptime("00:00", "%H:%M").time())
+            endTime = st.time_input("Endzeit", datetime.strptime("23:59", "%H:%M").time())
+
+            # Combine the start and end date and time
+            startDateTime = datetime.combine(startDate, startTime)
+            endDateTime = datetime.combine(endDate, endTime)
+
+            # Filter the dataframe
+            df = df[(df['Timestamp'] >= startDateTime) & (df['Timestamp'] <= endDateTime)]
+
+        # Zeitzone auswählen
+        st.header("Zeitzone auswählen")
+        timezone_selection = st.selectbox(
+            "Bitte wählen Sie eine Zeitzone aus:",
+            options=pytz.all_timezones,
+            index=pytz.all_timezones.index('Europe/Zurich'),
+        )
+        timezone = pytz.timezone(timezone_selection)
+            
+        # Login
+        st.header("Login")
+        password = st.text_input("Passwort", type="password")
+        if password == FTP_PASSWORD:
+            st.success("Erfolgreich eingeloggt.")
    
     # Select slider
     selected_file = st.select_slider(
@@ -166,6 +194,7 @@ def main():
     col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
 
     # Last startup relative to now
+    # TODO Tage, Monate etc. anzeigen
     lastStartup = df['Timestamp'].iloc[-1]
     now = datetime.now(timezone).replace(tzinfo=None)
     timeDifference = now - lastStartup.replace(tzinfo=None)
@@ -194,33 +223,6 @@ def main():
     st.write(nextStartText)
 
     st.divider()
-
-    with st.sidebar:
-        st.header("Zeitraum auswählen")
-   
-        with st.expander("Zeitraum auswählen"):
-
-            # Get the start and end date
-            startDate = st.date_input("Startdatum", df['Timestamp'].iloc[0])
-            endDate = st.date_input("Enddatum", df['Timestamp'].iloc[-1])
-
-            # Get the start and end time
-            startTime = st.time_input("Startzeit", datetime.strptime("00:00", "%H:%M").time())
-            endTime = st.time_input("Endzeit", datetime.strptime("23:59", "%H:%M").time())
-
-            # Combine the start and end date and time
-            startDateTime = datetime.combine(startDate, startTime)
-            endDateTime = datetime.combine(endDate, endTime)
-
-            # Filter the dataframe
-            df = df[(df['Timestamp'] >= startDateTime) & (df['Timestamp'] <= endDateTime)]
-
-            
-        # Login
-        st.header("Login")
-        password = st.text_input("Passwort", type="password")
-        if password == FTP_PASSWORD:
-            st.success("Erfolgreich eingeloggt.")
 
     # Battery Voltage
     st.header("Batterie")
