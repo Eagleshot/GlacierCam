@@ -17,13 +17,26 @@ FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
 
+# Login status
+if "userIsLoggedIn" not in st.session_state:
+    st.session_state.userIsLoggedIn = False
+
+timezone = pytz.timezone('Europe/Zurich')
+
 # Streamlit app
 def main():
 
     # Set page title and favicon
     st.set_page_config(
         page_title="GlacierCam",
-        page_icon="🏔️"
+        page_icon="🏔️",
+        initial_sidebar_state="collapsed",
+        menu_items={
+        # TODO
+        'Get Help': "mailto:noel@eagleshot.ch",
+        'Report a bug': "mailto:noel@eagleshot.ch",
+        'About': "Erstellt von [Noel Frey](https://github.com/Eagleshot) im Rahmen einer Zusammenarbeit der [FHGR](https://www.fhgr.ch/) und der [ETH Zürich](https://vaw.ethz.ch)."
+        }
     )
 
     # Hide footer and menu
@@ -129,21 +142,16 @@ def main():
 
             # Filter the dataframe
             df = df[(df['Timestamp'] >= startDateTime) & (df['Timestamp'] <= endDateTime)]
-
-        # Zeitzone auswählen
-        st.header("Zeitzone auswählen")
-        timezone_selection = st.selectbox(
-            "Bitte wählen Sie eine Zeitzone aus:",
-            options=pytz.all_timezones,
-            index=pytz.all_timezones.index('Europe/Zurich'),
-        )
-        timezone = pytz.timezone(timezone_selection)
             
         # Login
+        # TODO Improve security (e.g. multiple login attempts)
         st.header("Login")
-        password = st.text_input("Passwort", type="password")
-        if password == FTP_PASSWORD:
+        password = st.text_input("Bitte loggen Sie sich ein um die Einstellungen anzupassen.", type="password")
+        if password == "1234": # FTP_PASSWORD:
             st.success("Erfolgreich eingeloggt.")
+            st.session_state.userIsLoggedIn = True
+        else:
+            st.error("Falsches Passwort.")
    
     # Select slider
     selected_file = st.select_slider(
@@ -319,6 +327,54 @@ def main():
         # Display the settings
         st.write(settings)
 
+    # settings.yaml
+    # {
+    #     "lensPosition": 0
+    #     "resolution": [
+    #         0:
+    #         0
+    #         1:
+    #         0
+    #     ]
+    #     "startTimeHour": 6
+    #     "startTimeMinute": 0
+    #     "intervalMinutes": 10
+    #     "maxDurationMinute": 5
+    #     "repetitionsPerday": 96
+    #     "timeSync": false
+    #     "enableGPS": false
+    #     "shutdown": true
+    # }
+
+    # Edit the settings
+    if st.session_state.userIsLoggedIn:
+        with st.expander("Einstellungen anpassen"):
+
+            st.write("Einstellungen anpassen")
+            st.write("")
+            st.write("Autofokus einstellen")
+            autofocus = st.toggle("Autofokus", help="Aktiviert den automatischen Autofokus der Kamera. Kann deaktiviert werden um den Fokus manuell einzustellen.")
+            
+            if not autofocus:
+                lensPosition = st.slider("Linsenposition", 0, 1023, 0)
+
+            st.write("")
+            timeSync = st.toggle("Zeitsynchronisation", help="Aktiviert die Zeitsynchronisation der Kamera.")
+            enableGPS = st.toggle("GPS aktivieren", help="Aktiviert die GPS Funktion der Kamera.")
+            shutdown = st.toggle("Shutdown", help="Kamera nach Bildaufnahme ausschalten.")
+            
+            # Zeitzone auswählen
+            # TODO
+            # st.header("Zeitzone auswählen")
+            # timezone_selection = st.selectbox(
+            #     "Bitte wählen Sie eine Zeitzone aus:",
+            #     options=pytz.all_timezones,
+            #     index=pytz.all_timezones.index('Europe/Zurich'),
+            # )
+            # timezone = pytz.timezone(timezone_selection)
+       
+
+    # Display the errors
     with st.expander("Fehlermeldungen"):
         # Display the errors (not nan)
         dfError = df[df['Error'].notna()]
