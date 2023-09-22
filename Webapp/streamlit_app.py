@@ -11,6 +11,7 @@ from yaml import safe_load
 from datetime import datetime
 import altair as alt
 import pytz
+from suntime import Sun, SunTimeException
 
 # FTP server credentials
 FTP_HOST = st.secrets["FTP_HOST"]
@@ -147,11 +148,10 @@ def main():
         # TODO Improve security (e.g. multiple login attempts)
         st.header("Login")
         password = st.text_input("Bitte loggen Sie sich ein um die Einstellungen anzupassen.", type="password")
-        if password == "1234": # FTP_PASSWORD:
+        if password == st.secrets["FTP_PASSWORD"]:
+            
             st.success("Erfolgreich eingeloggt.")
             st.session_state.userIsLoggedIn = True
-        else:
-            st.error("Falsches Passwort.")
    
     # Select slider
     selected_file = st.select_slider(
@@ -201,6 +201,8 @@ def main():
     # delta = df['Signal Quality'].iloc[index] - df['Signal Quality'].iloc[index-1]
     col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
 
+    st.write("")
+    
     # Last startup relative to now
     # TODO Tage, Monate etc. anzeigen
     lastStartup = df['Timestamp'].iloc[-1]
@@ -231,6 +233,77 @@ def main():
     st.write(nextStartText)
 
     st.divider()
+
+    # If openweathermap API key is set in secrets.toml
+    if st.secrets["OPENWEATHER_API_KEY"] != "":
+        # Get the weather data from openweathermap
+        import requests
+        import json
+
+        # Lat/lon = 46°51'55.8"N 9°32'32.3"E
+        lat = 46.8655
+        lon = 9.5423
+
+        # Get the weather data
+        base_url = "http://api.openweathermap.org/data/2.5/weather?"
+
+        # Complete url
+        complete_url = base_url + "appid=" + st.secrets["OPENWEATHER_API_KEY"] + "&lat=" + str(lat) + "&lon=" + str(lon) + "&units=metric&lang=de"
+
+        # Get the response
+        response = requests.get(complete_url)
+
+        # Convert the response to json
+        weather_data = response.json()
+
+        if weather_data["cod"] != "404":
+
+            # Convert temperature to celsius
+            current_temperature = weather_data["main"]["temp"]
+            current_pressure = weather_data["main"]["pressure"]
+            current_humidity = weather_data["main"]["humidity"]
+
+            # Get icon 
+            icon = weather_data["weather"][0]["icon"]
+
+            # Get the icon from openweathermap
+            icon_url = f"http://openweathermap.org/img/wn/{icon}@2x.png"
+            
+            # Download the icon
+            icon_data = BytesIO()
+            icon_response = requests.get(icon_url)
+            icon_data.write(icon_response.content)
+            icon_image = Image.open(icon_data)
+
+            # Geo location
+            geo_location = weather_data["name"]
+
+            # Description
+            weather_description = weather_data["weather"][0]["description"]
+
+            # Write header and location
+
+            st.header(f"Wetter {geo_location}")
+            st.caption(weather_description)
+
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Temperatur", f"{current_temperature}°C")
+            col2.metric("Luftdruck", f"{current_pressure}hPa")
+            col3.metric("Luftfeuchtigkeit", f"{current_humidity}%")
+            col4.image(icon_image)
+
+            # Get location id
+            location_id = weather_data["id"]
+
+            st.markdown(f"Daten bereitgestellt von [OpenWeatherMap](https://openweathermap.org/city/{location_id}).")
+
+            sun = Sun(lat, lon)
+            today_sr = sun.get_local_sunrise_time().strftime('%H:%M')
+            today_ss = sun.get_local_sunset_time().strftime('%H:%M')
+
+            st.write(f"Sonnenaufgang: {today_sr} Uhr - Sonnenuntergang {today_ss} Uhr")
+            
+            st.divider()
 
     # Battery Voltage
     st.header("Batterie")
