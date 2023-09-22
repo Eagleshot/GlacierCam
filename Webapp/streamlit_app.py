@@ -11,7 +11,7 @@ from yaml import safe_load
 from datetime import datetime
 import altair as alt
 import pytz
-from suntime import Sun, SunTimeException
+from suntime import Sun
 
 # FTP server credentials
 FTP_HOST = st.secrets["FTP_HOST"]
