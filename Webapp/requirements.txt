@@ -1,6 +1,5 @@
 streamlit
-matplotlib
 pandas
 numpy
 pyyaml
-matplotlib
+suntime
