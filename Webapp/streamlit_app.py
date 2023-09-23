@@ -12,6 +12,7 @@ from datetime import datetime
 import altair as alt
 import pytz
 from suntime import Sun
+# import geopy
 
 # FTP server credentials
 FTP_HOST = st.secrets["FTP_HOST"]
@@ -153,15 +154,18 @@ def main():
             st.success("Erfolgreich eingeloggt.")
             st.session_state.userIsLoggedIn = True
    
-    # Select slider
-    selected_file = st.select_slider(
-        "Wähle ein Bild aus",
-        label_visibility="hidden", # Hide the label
-        options=files,
-        value=files[-1],
-        # Format the timestamp and dont show date if it is today
-        format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(timezone).strftime("%d%m%Y") else f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]} Uhr",
-    )
+    # Select slider if multiple images are available
+    if len(files) > 1:
+        selected_file = st.select_slider(
+            "Wähle ein Bild aus",
+            label_visibility="hidden", # Hide the label
+            options=files,
+            value=files[-1],
+            # Format the timestamp and dont show date if it is today
+            format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(timezone).strftime("%d%m%Y") else f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]} Uhr",
+        )
+    else:
+        selected_file = files[0]
 
     # Get the image file from the FTP server
     image_data = BytesIO()
@@ -275,15 +279,12 @@ def main():
             icon_data.write(icon_response.content)
             icon_image = Image.open(icon_data)
 
-            # Geo location
-            geo_location = weather_data["name"]
-
             # Description
             weather_description = weather_data["weather"][0]["description"]
 
             # Write header and location
 
-            st.header(f"Wetter {geo_location}")
+            st.header("Wetter")
             st.caption(weather_description)
 
             col1, col2, col3, col4 = st.columns(4)
@@ -356,8 +357,9 @@ def main():
    
     # Show a map with camera location
     st.header("Standort")
-    dfMap = df[df['Latitude'] != '-']
-    dfMap = dfMap[df['Longitude'] != '-']
+    
+    dfMap = dfMap[df['Latitude'].reset_index(drop=True).index != '-']
+    dfMap = dfMap[df['Longitude'].reset_index(drop=True).index != '-']
 
     if dfMap.empty:
         st.write("Keine Koordinaten in diesem Zeitraum vorhanden.")
@@ -365,6 +367,18 @@ def main():
         # Convert the latitude and longitude to float
         last_latitude = float(dfMap['Latitude'].iloc[-1])
         last_longitude = float(dfMap['Longitude'].iloc[-1])
+        
+        # GeoPy mit Nominatim
+
+        lat = "46.850000"
+        lon = "10.075000"
+        # geolocator = geopy.geocoders.Nominatim(user_agent="GlacierCam")
+        # location = geolocator.reverse(f"{lat}, {lon}", language='de')
+        # st.write(f"Standort: {location.address}")
+            
+        # Get country
+        # country = location.raw['address']['country']
+        
         st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
 
         # Print timestamp

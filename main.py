@@ -423,6 +423,8 @@ except Exception as e:
 ###########################
 # Upload to ftp server and then delete last image
 ###########################
+
+# TODO Limit upload if many images are saved locally
 try:
     if connectedToFTP:
         # Upload all images in filePath
