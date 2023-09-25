@@ -42,9 +42,10 @@ try:
 except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
 
-# TODO: Maybe use python timestamp for diagnostics.csv and use UTC time for easier time conversion
+# TODO: Maybe UTC time for easier time conversion
 cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
 currentTime = datetime.today().strftime('%d%m%Y_%H%M')
+currentTimeCSV = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
 imgFileName = f"{currentTime}_{cameraName}.jpg"
 error = ""
 
@@ -124,8 +125,6 @@ try:
 except Exception as e:
     print(f"Could not open settings.yaml: {str(e)}")
 
-# TODO: Maybe add option to upload witty pi logs for additional diagnostics
-
 ###########################
 # Time synchronization
 ###########################
@@ -161,6 +160,8 @@ except Exception as e:
 # See: https://github.com/sffjunkie/astral
 def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
 
+    startTimeHour = startTimeHour + 1
+    
     # Basic validity check of parameters
     if startTimeHour < 0 or startTimeHour > 24:
         startTimeHour = 8
@@ -294,6 +295,7 @@ def getCurrentSignalQuality():
         else:
             currentSignalQuality = rec_buff.decode()[8:10]
             currentSignalQuality = currentSignalQuality.replace("\n", "")
+            currentSignalQuality = ''.join(ch for ch in currentSignalQuality if ch.isdigit()) # Remove non-numeric characters
             return currentSignalQuality
     except Exception as e:
         error += f"Could not get current signal quality: {str(e)}"
@@ -373,12 +375,13 @@ except Exception as e:
 ###########################
 # Setup camera
 ###########################
-camera = Picamera2()
-cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
 
-# https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
-# Table 6. Stream- specific configuration parameters
 try:
+    camera = Picamera2()
+    cameraConfig = camera.create_still_configuration() # Automatically selects the highest resolution possible
+
+    # https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
+    # Table 6. Stream- specific configuration parameters
     min_resolution = 64
     max_resolution = (4608, 2592)
     resolution = settings["resolution"]
@@ -454,7 +457,8 @@ def getWittyPiTemperature():
         currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
         currentTemperature = currentTemperature.replace("\n", "")
         currentTemperature = currentTemperature.split(" / ")[0] # Remove the Farenheit reading
-        print(f"Temperature: {currentTemperature}")
+        currentTemperature = currentTemperature[:-2] # Remove °C
+        print(f"Temperature: {currentTemperature}°C")
         return currentTemperature
     except Exception as e:
         error += f"Could not get temperature: {str(e)}"
@@ -465,9 +469,9 @@ def getWittyPiTemperature():
 def getWittyPiBatteryVoltage():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
-        currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
+        currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
         currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
-        print(f"Battery voltage: {currentBatteryVoltage}")
+        print(f"Battery voltage: {currentBatteryVoltage}V")
         return currentBatteryVoltage
     except Exception as e:
         error += f"Could not get battery voltage: {str(e)}"
@@ -479,9 +483,9 @@ def getWittyPiBatteryVoltage():
 def getWittyPiVoltage():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
-        raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "V"
+        raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
         raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
-        print(f"Output voltage: {raspberryPiVoltage}")
+        print(f"Output voltage: {raspberryPiVoltage}V")
         return raspberryPiVoltage
     except Exception as e:
         error += f"Could not get Raspberry Pi voltage: {str(e)}"
@@ -493,9 +497,9 @@ def getWittyPiVoltage():
 # def getWittyPiCurrent():
 #     try:
 #         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True) + "A"
+#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
 #         currentPowerDraw = currentPowerDraw.replace("\n", "")
-#         print(f"Output current: {currentPowerDraw}")
+#         print(f"Output current: {currentPowerDraw}A")
 #         return currentPowerDraw
 #     except Exception as e:
 #         error += f"Could not get Raspberry Pi current: {str(e)}"
@@ -543,7 +547,7 @@ except Exception as e:
 try:
     with StringIO() as csvBuffer:
         writer = writer(csvBuffer)
-        newRow = [currentTime, nextStartupTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, currentGPSPosHeight, error]
+        newRow = [currentTimeCSV, nextStartupTime, currentBatteryVoltage, raspberryPiVoltage, currentPowerDraw, currentTemperature, currentSignalQuality, currentGPSPosLat, currentGPSPosLong, currentGPSPosHeight, error]
 
         # Check if is connected to FTP server
         if connectedToFTP:
@@ -575,6 +579,18 @@ try:
                 file.write(csvData.decode('utf-8'))
 except Exception as e:
     print(f"Could not append new measurements to log CSV: {str(e)}")
+
+try:
+    # Upload WittyPi diagnostics
+    if settings["uploadWittyPiDiagnostics"] == True and connectedToFTP:
+
+            with open("/home/pi/wittypi/wittyPi.log", 'rb') as wittyPiDiagnostics:
+                ftp.storbinary(f"APPE wittyPiDiagnostics.txt", wittyPiDiagnostics)
+
+            with open("/home/pi/wittypi/schedule.log", 'rb') as wittyPiDiagnostics:
+                ftp.storbinary(f"APPE wittyPiDiagnostics.txt", wittyPiDiagnostics)
+except Exception as e:
+    print(f"Could not upload WittyPi diagnostics: {str(e)}")
 
 ###########################
 # Quit FTP session

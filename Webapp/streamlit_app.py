@@ -88,14 +88,15 @@ def main():
     # TODO Improve naming
     df.rename(columns={df.columns[0]: 'Timestamp'}, inplace=True)
     df.rename(columns={df.columns[1]: 'Next Startup'}, inplace=True)
-    df.rename(columns={df.columns[2]: 'Battery Voltage'}, inplace=True)
-    df.rename(columns={df.columns[3]: 'Internal Voltage'}, inplace=True)
-    df.rename(columns={df.columns[4]: 'Internal Current'}, inplace=True)
-    df.rename(columns={df.columns[5]: 'Temperature'}, inplace=True)
-    df.rename(columns={df.columns[6]: 'Signal Quality'}, inplace=True)
-    df.rename(columns={df.columns[7]: 'Longitude'}, inplace=True)
-    df.rename(columns={df.columns[8]: 'Latitude'}, inplace=True)
-    df.rename(columns={df.columns[9]: 'Error'}, inplace=True)
+    df.rename(columns={df.columns[2]: 'Battery Voltage (V)'}, inplace=True)
+    df.rename(columns={df.columns[3]: 'Internal Voltage (V)'}, inplace=True)
+    df.rename(columns={df.columns[4]: 'Internal Current (A)'}, inplace=True)
+    df.rename(columns={df.columns[5]: 'Temperature (°C)'}, inplace=True)
+    df.rename(columns={df.columns[6]: 'Signal Quality (arb. units)'}, inplace=True)
+    df.rename(columns={df.columns[7]: 'Latitude'}, inplace=True)
+    df.rename(columns={df.columns[8]: 'Longitude'}, inplace=True)
+    df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
+    df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
 
     # Modify the columns
     df['Battery Voltage'] = df['Battery Voltage'].str[:-1]
@@ -104,6 +105,7 @@ def main():
     df['Internal Voltage'] = df['Internal Voltage'].astype(float)
     df['Temperature'] = df['Temperature'].str[:-2]
     df['Temperature'] = df['Temperature'].astype(float)
+    
     try:
         df['Signal Quality'] = df['Signal Quality'].astype(int)
     except:
