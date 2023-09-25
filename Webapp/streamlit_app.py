@@ -99,12 +99,12 @@ def main():
     df.rename(columns={df.columns[9]: 'Error'}, inplace=True)
 
     # Modify the columns
-    df['Battery Voltage'] = df['Battery Voltage'].str[:-1]
-    df['Battery Voltage'] = df['Battery Voltage'].astype(float)
-    df['Internal Voltage'] = df['Internal Voltage'].str[:-1]
-    df['Internal Voltage'] = df['Internal Voltage'].astype(float)
-    df['Temperature'] = df['Temperature'].str[:-2]
-    df['Temperature'] = df['Temperature'].astype(float)
+    df['Battery Voltage (V)'] = df['Battery Voltage (V)'].str[:-1]
+    df['Battery Voltage (V)'] = df['Battery Voltage (V)'].astype(float)
+    df['Internal Voltage (V)'] = df['Internal Voltage (V)'].str[:-1]
+    df['Internal Voltage (V)'] = df['Internal Voltage (V)'].astype(float)
+    df['Temperature (°C)'] = df['Temperature (°C)'].str[:-2]
+    df['Temperature (°C)'] = df['Temperature (°C)'].astype(float)
     
     try:
         df['Signal Quality'] = df['Signal Quality'].astype(int)
@@ -195,14 +195,14 @@ def main():
     timestampSelectedImage = datetime.strptime(selected_file[0:13], '%d%m%Y_%H%M')
     index = df[df['Timestamp'] == timestampSelectedImage].index[0]
 
-    delta = df['Battery Voltage'].iloc[index] - df['Battery Voltage'].iloc[index-1]
-    col1.metric("Batterie", f"{df['Battery Voltage'].iloc[index]}V")
+    delta = df['Battery Voltage (V)'].iloc[index] - df['Battery Voltage (V)'].iloc[index-1]
+    col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]}V")
 
-    delta = df['Internal Voltage'].iloc[index] - df['Internal Voltage'].iloc[index-1]
-    col2.metric("Interne Spannung", f"{df['Internal Voltage'].iloc[index]}V", f"{delta}V")
+    delta = df['Internal Voltage (V)'].iloc[index] - df['Internal Voltage (V)'].iloc[index-1]
+    col2.metric("Interne Spannung", f"{df['Internal Voltage (V)'].iloc[index]}V", f"{delta}V")
 
-    delta = df['Temperature'].iloc[index] - df['Temperature'].iloc[index-1]
-    col3.metric("Temperatur", f"{df['Temperature'].iloc[index]}°C", f"{delta}°C")
+    delta = df['Temperature (°C)'].iloc[index] - df['Temperature (°C)'].iloc[index-1]
+    col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C", f"{delta}°C")
 
     # delta = df['Signal Quality'].iloc[index] - df['Signal Quality'].iloc[index-1]
     col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
@@ -310,7 +310,7 @@ def main():
 
     # Battery Voltage
     st.header("Batterie")
-    st.write(f"Letzte Messung: {str(df['Battery Voltage'].iloc[-1])}V")
+    st.write(f"Letzte Messung: {str(df['Battery Voltage (V)'].iloc[-1])}V")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
@@ -321,7 +321,7 @@ def main():
 
     # Internal Voltage
     st.header("Interne Spannung")
-    st.write(f"Letzte Messung: {str(df['Internal Voltage'].iloc[-1])}V")
+    st.write(f"Letzte Messung: {str(df['Internal Voltage (V)'].iloc[-1])}V")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
@@ -332,7 +332,7 @@ def main():
 
     # Temperature
     st.header("Temperatur")
-    st.write(f"Letzte Messung: {str(df['Temperature'].iloc[-1])}°C")
+    st.write(f"Letzte Messung: {str(df['Temperature (°C)'].iloc[-1])}°C")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
