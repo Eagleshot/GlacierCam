@@ -107,11 +107,11 @@ def main():
     df['Temperature (°C)'] = df['Temperature (°C)'].astype(float)
     
     try:
-        df['Signal Quality'] = df['Signal Quality'].astype(int)
+        df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].astype(int)
     except:
         # Remove all non numeric characters
-        df['Signal Quality'] = df['Signal Quality'].str.replace(r'\D', '')
-        # df['Signal Quality'] = df['Signal Quality'].astype(int)
+        df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].str.replace(r'\D', '')
+        # df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].astype(int)
 
 
     # Format timestamp
@@ -204,8 +204,8 @@ def main():
     delta = df['Temperature (°C)'].iloc[index] - df['Temperature (°C)'].iloc[index-1]
     col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C", f"{delta}°C")
 
-    # delta = df['Signal Quality'].iloc[index] - df['Signal Quality'].iloc[index-1]
-    col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
+    # delta = df['Signal Quality (arb. units)'].iloc[index] - df['Signal Quality (arb. units)'].iloc[index-1]
+    col4.metric("Signalqualität", df['Signal Quality (arb. units)'].iloc[index], delta)
 
     st.write("")
     
@@ -345,9 +345,9 @@ def main():
     # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
     st.header("Signalqualität")
     try:
-        st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1].astype(str))}")
+        st.write(f"Letzte Messung: {str(df['Signal Quality (arb. units)'].iloc[-1].astype(str))}")
     except:
-        st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1])}")
+        st.write(f"Letzte Messung: {str(df['Signal Quality (arb. units)'].iloc[-1])}")
 
 
     chart = alt.Chart(df).mark_line().encode(
