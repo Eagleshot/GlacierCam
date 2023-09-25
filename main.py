@@ -161,7 +161,7 @@ except Exception as e:
 def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
 
     startTimeHour = startTimeHour + 1
-    
+
     # Basic validity check of parameters
     if startTimeHour < 0 or startTimeHour > 24:
         startTimeHour = 8
@@ -584,11 +584,13 @@ try:
     # Upload WittyPi diagnostics
     if settings["uploadWittyPiDiagnostics"] == True and connectedToFTP:
 
+            # Witty Pi log 
             with open("/home/pi/wittypi/wittyPi.log", 'rb') as wittyPiDiagnostics:
                 ftp.storbinary(f"APPE wittyPiDiagnostics.txt", wittyPiDiagnostics)
 
+            # Witty Pi schedule
             with open("/home/pi/wittypi/schedule.log", 'rb') as wittyPiDiagnostics:
-                ftp.storbinary(f"APPE wittyPiDiagnostics.txt", wittyPiDiagnostics)
+                ftp.storbinary(f"APPE wittyPiSchedule.txt", wittyPiDiagnostics)
 except Exception as e:
     print(f"Could not upload WittyPi diagnostics: {str(e)}")
 
