@@ -95,8 +95,8 @@ def main():
     df.rename(columns={df.columns[6]: 'Signal Quality (arb. units)'}, inplace=True)
     df.rename(columns={df.columns[7]: 'Latitude'}, inplace=True)
     df.rename(columns={df.columns[8]: 'Longitude'}, inplace=True)
-    df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
-    df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
+    # df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
+    df.rename(columns={df.columns[9]: 'Error'}, inplace=True)
 
     # Modify the columns
     df['Battery Voltage'] = df['Battery Voltage'].str[:-1]
