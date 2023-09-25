@@ -109,6 +109,7 @@ def main():
     try:
         df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].astype(int)
     except:
+        break
         # Remove all non numeric characters
         # df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].str.replace(r'\D', '')
         # df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].astype(int)
