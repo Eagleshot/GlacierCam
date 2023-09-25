@@ -81,11 +81,13 @@ def main():
     # Placeholder for the image
     imagePlaceholder = st.empty()
 
-    # Download diagnosticsf.csv as file with utf-8 encoding
+    # Download diagnostics.csv as file with utf-8 encoding
+    # TODO Also read first line
     ftp.retrbinary('RETR diagnostics.csv', open('df.csv', 'wb').write)
     df = pd.read_csv('df.csv', encoding='utf-8')
 
-    # TODO Improve naming
+    # Rename the columns
+    # TODO: Maybe do column naming in the main.py script
     df.rename(columns={df.columns[0]: 'Timestamp'}, inplace=True)
     df.rename(columns={df.columns[1]: 'Next Startup'}, inplace=True)
     df.rename(columns={df.columns[2]: 'Battery Voltage (V)'}, inplace=True)
@@ -95,37 +97,11 @@ def main():
     df.rename(columns={df.columns[6]: 'Signal Quality (arb. units)'}, inplace=True)
     df.rename(columns={df.columns[7]: 'Latitude'}, inplace=True)
     df.rename(columns={df.columns[8]: 'Longitude'}, inplace=True)
-    # df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
-    df.rename(columns={df.columns[9]: 'Error'}, inplace=True)
-
-    # Modify the columns
-    df['Battery Voltage (V)'] = df['Battery Voltage (V)'].str[:-1]
-    df['Battery Voltage (V)'] = df['Battery Voltage (V)'].astype(float)
-    df['Internal Voltage (V)'] = df['Internal Voltage (V)'].str[:-1]
-    df['Internal Voltage (V)'] = df['Internal Voltage (V)'].astype(float)
-    df['Temperature (°C)'] = df['Temperature (°C)'].str[:-2]
-    df['Temperature (°C)'] = df['Temperature (°C)'].astype(float)
-    
-    try:
-        df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].astype(int)
-    except:
-        pass
-        # Remove all non numeric characters
-        # df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].str.replace(r'\D', '')
-        # df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].astype(int)
-
-
-    # Format timestamp
-    df["Day"] = df["Timestamp"].str[:2]
-    df["Month"] = df["Timestamp"].str[2:4]
-    df["Year"] = df["Timestamp"].str[4:8]  
-    df["Hour"] = df["Timestamp"].str[9:11]
-    df["Minute"] = df["Timestamp"].str[11:13]
-
-    df["Timestamp"] = pd.to_datetime(df[["Year", "Month", "Day", "Hour", "Minute"]])
-
-    # Drop the columns
-    df.drop(columns=["Day", "Month", "Year", "Hour", "Minute"], inplace=True)
+    df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
+    df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
+   
+    # Convert the timestamp to datetime
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%S')
 
     with st.sidebar:
 
@@ -193,8 +169,14 @@ def main():
     # Overview of the last measurements
     # TODO Maybe add delta
     col1, col2, col3, col4 = st.columns(4)
-    timestampSelectedImage = datetime.strptime(selected_file[0:13], '%d%m%Y_%H%M')
-    index = df[df['Timestamp'] == timestampSelectedImage].index[0]
+
+    try:
+        timestampSelectedImage = datetime.strptime(selected_file[0:13], '%d%m%Y_%H%M')
+        # Remove seconds from timestamp
+        df['Timestamp'] = df['Timestamp'].dt.floor('min')
+        index = df[df['Timestamp'] == timestampSelectedImage].index[0]
+    except:
+        index = -1
 
     delta = df['Battery Voltage (V)'].iloc[index] - df['Battery Voltage (V)'].iloc[index-1]
     col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]}V")
@@ -238,6 +220,15 @@ def main():
     else:
         nextStartText = nextStartText + "weniger als einer Minute."
     st.write(nextStartText)
+    
+    # Sunrise and sunset
+    lat = 46.8655
+    lon = 9.5423
+    sun = Sun(lat, lon)
+    sunrise = sun.get_local_sunrise_time().strftime('%H:%M')
+    sunset = sun.get_local_sunset_time().strftime('%H:%M')
+    st.write(f"Sonnenaufgang: {sunrise} Uhr - Sonnenuntergang {sunset} Uhr")
+    # TODO: Exception handling if no sunrise or sunset is available
 
     st.divider()
 
@@ -298,15 +289,8 @@ def main():
 
             # Get location id
             location_id = weather_data["id"]
-
             st.markdown(f"Daten bereitgestellt von [OpenWeatherMap](https://openweathermap.org/city/{location_id}).")
 
-            sun = Sun(lat, lon)
-            today_sr = sun.get_local_sunrise_time().strftime('%H:%M')
-            today_ss = sun.get_local_sunset_time().strftime('%H:%M')
-
-            st.write(f"Sonnenaufgang: {today_sr} Uhr - Sonnenuntergang {today_ss} Uhr")
-            
             st.divider()
 
     # Battery Voltage
@@ -315,7 +299,7 @@ def main():
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
-        y=alt.Y('Battery Voltage:Q', axis=alt.Axis(title='Battery Voltage (V)')),
+        y=alt.Y('Battery Voltage (V):Q', axis=alt.Axis(title='Battery Voltage (V)')),
         tooltip=['Timestamp:T', 'Battery Voltage:Q']
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
@@ -326,7 +310,7 @@ def main():
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
-        y=alt.Y('Internal Voltage:Q', axis=alt.Axis(title='Internal Voltage (V)')),
+        y=alt.Y('Internal Voltage (V):Q', axis=alt.Axis(title='Internal Voltage (V)')),
         tooltip=['Timestamp:T', 'Internal Voltage:Q']
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
@@ -337,7 +321,7 @@ def main():
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
-        y=alt.Y('Temperature:Q', axis=alt.Axis(title='Temperature (°C)')),
+        y=alt.Y('Temperature (°C):Q', axis=alt.Axis(title='Temperature (°C)')),
         tooltip=['Timestamp:T', 'Temperature:Q']
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
@@ -345,15 +329,11 @@ def main():
     # Signal Quality
     # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
     st.header("Signalqualität")
-    try:
-        st.write(f"Letzte Messung: {str(df['Signal Quality (arb. units)'].iloc[-1].astype(str))}")
-    except:
-        st.write(f"Letzte Messung: {str(df['Signal Quality (arb. units)'].iloc[-1])}")
-
+    st.write(f"Letzte Messung: {str(df['Signal Quality (arb. units)'].iloc[-1])}")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
-        y=alt.Y('Signal Quality:Q', axis=alt.Axis(title='Signal Quality (arb. units)')),
+        y=alt.Y('Signal Quality (arb. units):Q', axis=alt.Axis(title='Signal Quality (arb. units)')),
         tooltip=['Timestamp:T', 'Signal Quality:Q']
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
@@ -383,7 +363,7 @@ def main():
         # Get country
         # country = location.raw['address']['country']
         
-        st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
+        st.map(pd.DataFrame({'lat': [last_longitude], 'lon': [last_latitude]}))
 
         # Print timestamp
         st.markdown(f"Letztes Update: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')} - [Google Maps](https://www.google.com/maps/search/?api=1&query={last_latitude},{last_longitude})" )
@@ -405,6 +385,32 @@ def main():
             mime="text/csv",
             use_container_width=True
         )
+
+        files = ftp.nlst()
+
+        # TODO: Add upload date/latest change date
+
+        # Check if wittyPiDiagnostics.txt exists
+        if "wittyPiDiagnostics.txt" in files:
+            # Download wittyPiDiagnostics.txt
+            st.download_button(
+                label="WittyPi Diagnostics herunterladen 📝",
+                data=ftp.retrbinary('RETR wittyPiDiagnostics.txt', open('wittyPiDiagnostics.txt', 'wb').write),
+                file_name="wittyPiDiagnostics.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+        
+        # Check if wittyPiSchedule.txt exists
+        if "wittyPiSchedule.txt" in files:
+            # Download wittyPiSchedule.txt
+            st.download_button(
+                label="WittyPi Schedule herunterladen 📝",
+                data=ftp.retrbinary('RETR wittyPiSchedule.txt', open('wittyPiSchedule.txt', 'wb').write),
+                file_name="wittyPiSchedule.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
 
     # Read settings.yaml and display it
     ftp.retrbinary('RETR settings.yaml', open('settings.yaml', 'wb').write)
