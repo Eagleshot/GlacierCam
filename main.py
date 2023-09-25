@@ -575,7 +575,7 @@ try:
             csvData = csvBuffer.getvalue().encode('utf-8')
 
             # Append new row to local CSV file        
-            with open("diagnostics.csv", 'a', newline='') as file:
+            with open(f"{filePath}diagnostics.csv", 'a', newline='') as file:
                 file.write(csvData.decode('utf-8'))
 except Exception as e:
     print(f"Could not append new measurements to log CSV: {str(e)}")
