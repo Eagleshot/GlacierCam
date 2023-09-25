@@ -357,10 +357,11 @@ def main():
    
     # Show a map with camera location
     st.header("Standort")
-    
-    dfMap = dfMap[df['Latitude'].reset_index(drop=True).index != '-']
-    dfMap = dfMap[df['Longitude'].reset_index(drop=True).index != '-']
 
+    # Remove rows with "-" as coordinates
+    dfMap = df[df['Latitude'] != "-"]
+    dfMap = dfMap[dfMap['Longitude'] != "-"]
+    
     if dfMap.empty:
         st.write("Keine Koordinaten in diesem Zeitraum vorhanden.")
     else:
