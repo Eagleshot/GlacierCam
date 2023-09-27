@@ -94,14 +94,14 @@ def main():
     df.rename(columns={df.columns[3]: 'Internal Voltage (V)'}, inplace=True)
     df.rename(columns={df.columns[4]: 'Internal Current (A)'}, inplace=True)
     df.rename(columns={df.columns[5]: 'Temperature (°C)'}, inplace=True)
-    df.rename(columns={df.columns[6]: 'Signal Quality (arb. units)'}, inplace=True)
+    df.rename(columns={df.columns[6]: 'Signal Quality'}, inplace=True)
     df.rename(columns={df.columns[7]: 'Latitude'}, inplace=True)
     df.rename(columns={df.columns[8]: 'Longitude'}, inplace=True)
     df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
     df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
 
     # Signal quality as float
-    df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].astype(float)
+    df['Signal Quality'] = df['Signal Quality'].astype(float)
    
     # Convert the timestamp to datetime
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%S')
@@ -190,8 +190,8 @@ def main():
     delta = df['Temperature (°C)'].iloc[index] - df['Temperature (°C)'].iloc[index-1]
     col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C", f"{delta}°C")
 
-    delta = df['Signal Quality (arb. units)'].iloc[index] - df['Signal Quality (arb. units)'].iloc[index-1]
-    col4.metric("Signalqualität", df['Signal Quality (arb. units)'].iloc[index], delta)
+    delta = df['Signal Quality'].iloc[index] - df['Signal Quality'].iloc[index-1]
+    col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
 
     st.write("")
     
@@ -332,11 +332,11 @@ def main():
     # Signal Quality
     # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
     st.header("Signalqualität")
-    st.write(f"Letzte Messung: {str(df['Signal Quality (arb. units)'].iloc[-1])}")
+    st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1])}")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
-        y=alt.Y('Signal Quality (arb. units):Q', axis=alt.Axis(title='Signal Quality (arb. units)')),
+        y=alt.Y('Signal Quality (arb. units):Q', axis=alt.Axis(title='Signal Quality')),
         tooltip=['Timestamp:T', 'Signal Quality:Q']
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
