@@ -99,6 +99,9 @@ def main():
     df.rename(columns={df.columns[8]: 'Longitude'}, inplace=True)
     df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
     df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
+
+    # Signal quality as float
+    df['Signal Quality (arb. units)'] = df['Signal Quality (arb. units)'].astype(float)
    
     # Convert the timestamp to datetime
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%S')
@@ -187,7 +190,7 @@ def main():
     delta = df['Temperature (°C)'].iloc[index] - df['Temperature (°C)'].iloc[index-1]
     col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C", f"{delta}°C")
 
-    # delta = df['Signal Quality (arb. units)'].iloc[index] - df['Signal Quality (arb. units)'].iloc[index-1]
+    delta = df['Signal Quality (arb. units)'].iloc[index] - df['Signal Quality (arb. units)'].iloc[index-1]
     col4.metric("Signalqualität", df['Signal Quality (arb. units)'].iloc[index], delta)
 
     st.write("")
