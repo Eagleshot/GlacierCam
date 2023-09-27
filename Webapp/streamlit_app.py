@@ -336,7 +336,7 @@ def main():
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X('Timestamp:T', axis=alt.Axis(title='Timestamp', labelAngle=-45)),
-        y=alt.Y('Signal Quality (arb. units):Q', axis=alt.Axis(title='Signal Quality')),
+        y=alt.Y('Signal Quality:Q', axis=alt.Axis(title='Signal Quality')),
         tooltip=['Timestamp:T', 'Signal Quality:Q']
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
