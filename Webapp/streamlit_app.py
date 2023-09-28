@@ -68,7 +68,10 @@ def main():
     ftp.cwd(FTP_FOLDER)
 
     # Get the list of files from the FTP server
+    # TODO Remove
+    ftp.cwd("save")
     files = ftp.nlst()
+    ftp.cwd("..")
 
     # Only show the image files
     files = [file for file in files if file.endswith(".jpg")]
@@ -398,10 +401,7 @@ def main():
             use_container_width=True
         )
 
-        # TODO Remove
-        ftp.cwd("save")
-        files = ftp.nlst()
-        ftp.cwd("..")
+        files = ftp.nlst()    
 
         # TODO: Add upload date/latest change date
 
