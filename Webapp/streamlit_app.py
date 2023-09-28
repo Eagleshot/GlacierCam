@@ -146,8 +146,10 @@ def main():
             # Format the timestamp and dont show date if it is today
             format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(timezone).strftime("%d%m%Y") else f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]} Uhr",
         )
-    else:
+    elif len(files) == 1:
         selected_file = files[0]
+    else:
+        st.write("Keine Bilder vorhanden.")
 
     # Get the image file from the FTP server
     image_data = BytesIO()
@@ -184,14 +186,17 @@ def main():
     delta = df['Battery Voltage (V)'].iloc[index] - df['Battery Voltage (V)'].iloc[index-1]
     col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]}V")
 
-    delta = df['Internal Voltage (V)'].iloc[index] - df['Internal Voltage (V)'].iloc[index-1]
-    col2.metric("Interne Spannung", f"{df['Internal Voltage (V)'].iloc[index]}V", f"{delta}V")
+    # delta = df['Internal Voltage (V)'].iloc[index] - df['Internal Voltage (V)'].iloc[index-1]
+    # col2.metric("Interne Spannung", f"{df['Internal Voltage (V)'].iloc[index]}V", f"{delta}V")
+    col2.metric("Interne Spannung", f"{df['Internal Voltage (V)'].iloc[index]}V")
 
-    delta = df['Temperature (°C)'].iloc[index] - df['Temperature (°C)'].iloc[index-1]
-    col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C", f"{delta}°C")
+    # delta = df['Temperature (°C)'].iloc[index] - df['Temperature (°C)'].iloc[index-1]
+    # col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C", f"{delta}°C")
+    col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C")
 
-    delta = df['Signal Quality'].iloc[index] - df['Signal Quality'].iloc[index-1]
-    col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
+    # delta = df['Signal Quality'].iloc[index] - df['Signal Quality'].iloc[index-1]
+    # col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
+    col4.metric("Signalqualität", df['Signal Quality'].iloc[index])
 
     st.write("")
     
@@ -228,8 +233,8 @@ def main():
     lat = 46.8655
     lon = 9.5423
     sun = Sun(lat, lon)
-    sunrise = sun.get_local_sunrise_time().strftime('%H:%M')
-    sunset = sun.get_local_sunset_time().strftime('%H:%M')
+    sunrise = sun.get_sunrise_time().strftime('%H:%M')
+    sunset = sun.get_sunset_time().strftime('%H:%M')
     st.write(f"Sonnenaufgang: {sunrise} Uhr - Sonnenuntergang {sunset} Uhr")
     # TODO: Exception handling if no sunrise or sunset is available
 
