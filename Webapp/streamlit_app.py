@@ -103,9 +103,6 @@ def main():
     df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
     df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
 
-    # Signal quality as float
-    df['Signal Quality'] = df['Signal Quality'].astype(float)
-   
     # Convert the timestamp to datetime
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%S')
 
