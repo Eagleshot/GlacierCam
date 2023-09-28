@@ -74,7 +74,10 @@ def main():
     files = [file for file in files if file.endswith(".jpg")]
 
     # Camera name
-    cameraname = files[-1][14:-21]
+    if len(files) > 0:
+        cameraname = files[-1][14:-21]
+    else:
+        cameraname = FTP_FOLDER
 
     st.title(cameraname)
 
