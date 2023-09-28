@@ -155,24 +155,25 @@ def main():
         st.write("Keine Bilder vorhanden.")
 
     # Get the image file from the FTP server
-    image_data = BytesIO()
-    ftp.retrbinary(f"RETR {selected_file}", image_data.write)
-    image = Image.open(image_data)
+    if len(files) > 0:
+        image_data = BytesIO()
+        ftp.retrbinary(f"RETR {selected_file}", image_data.write)
+        image = Image.open(image_data)
 
-    # Rotate the image
-    image = image.rotate(180, expand=True)
+        # Rotate the image
+        image = image.rotate(180, expand=True)
 
-    # Display the image with the corresponding timestamp
-    imagePlaceholder.image(image, use_column_width=True)
+        # Display the image with the corresponding timestamp
+        imagePlaceholder.image(image, use_column_width=True)
 
-    # Download button for image
-    st.download_button(
-        label="Bild herunterladen 📷",
-        data=image_data,
-        file_name=selected_file,
-        mime="image/jpeg",
-        use_container_width=True
-    )
+        # Download button for image
+        st.download_button(
+            label="Bild herunterladen 📷",
+            data=image_data,
+            file_name=selected_file,
+            mime="image/jpeg",
+            use_container_width=True
+        )
 
     # Overview of the last measurements
     # TODO Maybe add delta
