@@ -231,12 +231,13 @@ def main():
     st.write(nextStartText)
     
     # Sunrise and sunset
-    lat = 46.8655
-    lon = 9.5423
-    sun = Sun(lat, lon)
-    sunrise = sun.get_sunrise_time().strftime('%H:%M')
-    sunset = sun.get_sunset_time().strftime('%H:%M')
-    st.write(f"Sonnenaufgang: {sunrise} Uhr - Sonnenuntergang {sunset} Uhr")
+    # lat = 46.8655
+    # lon = 9.5423
+    # sun = Sun(lat, lon)
+    # sunrise = sun.get_local_sunrise_time().strftime('%H:%M')
+    # sunset = sun.get_local_sunset_time().strftime('%H:%M')
+
+    # st.write(f"Sonnenaufgang: {sunrise} Uhr - Sonnenuntergang {sunset} Uhr")
     # TODO: Exception handling if no sunrise or sunset is available
 
     st.divider()
