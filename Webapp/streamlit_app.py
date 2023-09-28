@@ -396,10 +396,9 @@ def main():
         )
 
         # TODO Remove
-        ftp.cwd(f"{FTP_FOLDER}/save")
+        ftp.cwd("save")
         files = ftp.nlst()
-        ftp.cwd(FTP_FOLDER)
-
+        ftp.cwd("..")
 
         # TODO: Add upload date/latest change date
 
