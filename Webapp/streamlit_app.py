@@ -154,7 +154,9 @@ def main():
     # Get the image file from the FTP server
     if len(files) > 0:
         image_data = BytesIO()
+        ftp.cwd("save")
         ftp.retrbinary(f"RETR {selected_file}", image_data.write)
+        ftp.cwd("..")
         image = Image.open(image_data)
 
         # Rotate the image
