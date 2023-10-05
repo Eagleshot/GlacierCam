@@ -12,7 +12,6 @@ from datetime import datetime
 import altair as alt
 import pytz
 from suntime import Sun
-# import geopy
 
 # FTP server credentials
 FTP_HOST = st.secrets["FTP_HOST"]
@@ -235,16 +234,6 @@ def main():
         nextStartText = nextStartText + "weniger als einer Minute."
     st.write(nextStartText)
     
-    # Sunrise and sunset
-    # lat = 46.8655
-    # lon = 9.5423
-    # sun = Sun(lat, lon)
-    # sunrise = sun.get_local_sunrise_time().strftime('%H:%M')
-    # sunset = sun.get_local_sunset_time().strftime('%H:%M')
-
-    # st.write(f"Sonnenaufgang: {sunrise} Uhr - Sonnenuntergang {sunset} Uhr")
-    # TODO: Exception handling if no sunrise or sunset is available
-
     st.divider()
 
     ##############################################
@@ -293,15 +282,12 @@ def main():
 
         if weather_data["cod"] == 200:
 
-            st.header(f"Wetter in {name}, {country}", divider="gray", anchor=False)
-
             # Convert temperature to celsius
             current_temperature = int(weather_data["main"]["temp"])
             current_pressure = weather_data["main"]["pressure"]
             current_humidity = weather_data["main"]["humidity"]
 
-            # Wind
-            wind_data = weather_data["wind"]
+            # Wind speed and direction
             wind_speed = weather_data["wind"]["speed"].__round__(1)
             wind_direction = weather_data["wind"]["deg"]
 
@@ -337,29 +323,36 @@ def main():
             icon_data.write(icon_response.content)
             icon_image = Image.open(icon_data)
 
+            # Cut off all invisible pixels
+            icon_image = icon_image.crop(icon_image.getbbox())
+
             # Description
             weather_description = weather_data["weather"][0]["description"]
 
             # Visibility
-            visibility = weather_data["visibility"].__round__(1)
+            visibility = weather_data["visibility"]
             
             if visibility < 1000:
                 visibility = f"{visibility}m"
             else:
                 visibility = f"{visibility/1000}km"
             
+
             col1, col2 = st.columns([1.5, 1])
 
-            col1.subheader("")
-            col1.subheader("")
-            col1.subheader(f"Zustand: {weather_description}")
+            col1.header("Wetter")
+            col1.caption(f"{name}, {country}")
             col1.subheader(f"Temperatur: {current_temperature}°C")
-            col2.image(icon_image)
+            col2.text("")
+            col2.text("")
+            col2.text("")
+            col2.text("")
+            col2.image(icon_image, caption=weather_description)
 
             st.text("")
 
             col1, col2, col3, col4 = st.columns(4, gap="medium")
-            col1.metric("Wind", f"{wind_speed}m/s {wind_direction_text}")
+            col1.metric("Wind", f"{wind_speed}m/s", delta=wind_direction_text, delta_color="off")
             col2.metric("Luftdruck", f"{current_pressure}hPa")
             col3.metric("Feuchtigkeit", f"{current_humidity}%")
             col4.metric("Sichtbarkeit", f"{visibility}")
@@ -368,6 +361,33 @@ def main():
             st.markdown(f"Daten von [OpenWeatherMap](https://openweathermap.org).")
 
             st.divider()
+
+    ##############################################
+    # Sunrise and sunset
+    ##############################################
+
+    try:
+        sun = Sun(lat, lon)
+        sunrise = sun.get_local_sunrise_time().strftime('%H:%M')
+        sunset = sun.get_local_sunset_time().strftime('%H:%M')
+
+        st.header("Sonnenauf- und untergang")
+        st.text("")
+
+        col1, col2, col3 = st.columns([0.5, 1, 1])
+        col2.image("https://openweathermap.org/img/wn/01d@2x.png")
+        col2.metric("Sonnenaufgang", f"{sunrise} Uhr")
+        col3.image("https://openweathermap.org/img/wn/01n@2x.png")
+        col3.metric("Sonnenuntergang", f"{sunset} Uhr")
+
+        st.divider()
+
+    except:
+        pass
+
+    ##############################################
+    # Charts
+    ##############################################
 
     # Battery Voltage
     st.header("Batterie")
@@ -428,13 +448,7 @@ def main():
         last_latitude = float(dfMap['Latitude'].iloc[-1])
         last_longitude = float(dfMap['Longitude'].iloc[-1])
         
-        # GeoPy mit Nominatim
-        # geolocator = geopy.geocoders.Nominatim(user_agent="GlacierCam")
-        # location = geolocator.reverse(f"{lat}, {lon}", language='de')
-        # st.write(f"Standort: {location.address}")
-            
-        # Get country
-        # country = location.raw['address']['country']
+        # 
         
         st.map(pd.DataFrame({'lat': [last_longitude], 'lon': [last_latitude]}))
 
