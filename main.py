@@ -44,9 +44,9 @@ except Exception as e:
 
 # TODO: Maybe UTC time for easier time conversion
 cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
-currentTime = datetime.today().strftime('%d%m%Y_%H%M')
 currentTimeCSV = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-imgFileName = f"{currentTime}_{cameraName}.jpg"
+currentTimeFilename = datetime.today().strftime('%Y%m%d_%H%M')
+imgFileName = f"{currentTimeFilename}_{cameraName}.jpg"
 error = ""
 
 ###########################
@@ -343,6 +343,7 @@ def getGPSPos():
                 FinalLong = -FinalLong
 
             # Height
+            # TODO Sometimes heigth is not correctly extracted
             Height = Cleaned[45:49]
 
             global currentGPSPosLat
@@ -350,7 +351,7 @@ def getGPSPos():
             global currentGPSPosHeight
             currentGPSPosLat = str(round(FinalLong, 5))
             currentGPSPosLong = str(round(FinalLat, 5))
-            currentGPSPosHeight = str(round(float(Height), 1))
+            currentGPSPosHeight = str(Height)
 
             print(f"GPS position: LAT {currentGPSPosLat}, LON {currentGPSPosLong}, HEIGHT {currentGPSPosHeight}")
             return 1

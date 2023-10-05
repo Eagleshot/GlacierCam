@@ -247,66 +247,127 @@ def main():
 
     st.divider()
 
-    # If openweathermap API key is set in secrets.toml
-    # if st.secrets["OPENWEATHER_API_KEY"] != "":
-    #     # Get the weather data from openweathermap
-    #     import requests
-    #     import json
+    ##############################################
+    # Weather widget
+    ##############################################
 
-    #     # Lat/lon = 46°51'55.8"N 9°32'32.3"E
-    #     lat = 46.8655
-    #     lon = 9.5423
+    dfMap = df[df['Latitude'] != "-"]
+    dfMap = dfMap[dfMap['Longitude'] != "-"]
 
-    #     # Get the weather data
-    #     base_url = "http://api.openweathermap.org/data/2.5/weather?"
 
-    #     # Complete url
-    #     complete_url = base_url + "appid=" + st.secrets["OPENWEATHER_API_KEY"] + "&lat=" + str(lat) + "&lon=" + str(lon) + "&units=metric&lang=de"
+    # Get the latitude and longitude
+    lon = float(dfMap['Latitude'].iloc[-1])
+    lat = float(dfMap['Longitude'].iloc[-1])
 
-    #     # Get the response
-    #     response = requests.get(complete_url)
+    # Check if OpenWeather API key is set
+    if st.secrets["OPENWEATHER_API_KEY"] != "":
 
-    #     # Convert the response to json
-    #     weather_data = response.json()
+        import requests
 
-    #     if weather_data["cod"] != "404":
+        # Reverse geocoding with OpenWeatherMap
+        base_url = "http://api.openweathermap.org/geo/1.0/reverse?"
 
-    #         # Convert temperature to celsius
-    #         current_temperature = weather_data["main"]["temp"]
-    #         current_pressure = weather_data["main"]["pressure"]
-    #         current_humidity = weather_data["main"]["humidity"]
+        complete_url = base_url + "lat=" + str(lat) + "&lon=" + str(lon) + "&limit=1&appid=" + st.secrets["OPENWEATHER_API_KEY"]
 
-    #         # Get icon 
-    #         icon = weather_data["weather"][0]["icon"]
+        # Get the response
+        response = requests.get(complete_url)
 
-    #         # Get the icon from openweathermap
-    #         icon_url = f"http://openweathermap.org/img/wn/{icon}@2x.png"
+        # Convert the response to json
+        reverse_geocoding_data = response.json()
+
+        name = reverse_geocoding_data[0]["name"]
+        country = reverse_geocoding_data[0]["country"]
+
+        # Get weather data from OpenWeatherMap
+        base_url = "http://api.openweathermap.org/data/2.5/weather?"
+
+        complete_url = base_url + "appid=" + \
+            st.secrets["OPENWEATHER_API_KEY"] + "&lat=" + \
+            str(lat) + "&lon=" + str(lon) + "&units=metric&lang=de"
+        
+        # Get the response
+        response = requests.get(complete_url)
+
+        # Convert the response to json
+        weather_data = response.json()
+
+        if weather_data["cod"] == 200:
+
+            st.header(f"Wetter in {name}, {country}", divider="gray", anchor=False)
+
+            # Convert temperature to celsius
+            current_temperature = int(weather_data["main"]["temp"])
+            current_pressure = weather_data["main"]["pressure"]
+            current_humidity = weather_data["main"]["humidity"]
+
+            # Wind
+            wind_data = weather_data["wind"]
+            wind_speed = weather_data["wind"]["speed"].__round__(1)
+            wind_direction = weather_data["wind"]["deg"]
+
+            # Convert wind direction to text
+            if wind_direction > 337.5:
+                wind_direction_text = "N"
+            elif wind_direction > 292.5:
+                wind_direction_text = "NW"
+            elif wind_direction > 247.5:
+                wind_direction_text = "W"
+            elif wind_direction > 202.5:
+                wind_direction_text = "SW"
+            elif wind_direction > 157.5:
+                wind_direction_text = "S"
+            elif wind_direction > 122.5:
+                wind_direction_text = "SE"
+            elif wind_direction > 67.5:
+                wind_direction_text = "E"
+            elif wind_direction > 22.5:
+                wind_direction_text = "NE"
+            else:
+                wind_direction_text = "N"
+
+            # Get icon
+            icon = weather_data["weather"][0]["icon"]
+
+            # Get the icon from openweathermap
+            icon_url = f"http://openweathermap.org/img/wn/{icon}@4x.png"
+
+            # Download the icon
+            icon_data = BytesIO()
+            icon_response = requests.get(icon_url)
+            icon_data.write(icon_response.content)
+            icon_image = Image.open(icon_data)
+
+            # Description
+            weather_description = weather_data["weather"][0]["description"]
+
+            # Visibility
+            visibility = weather_data["visibility"].__round__(1)
             
-    #         # Download the icon
-    #         icon_data = BytesIO()
-    #         icon_response = requests.get(icon_url)
-    #         icon_data.write(icon_response.content)
-    #         icon_image = Image.open(icon_data)
+            if visibility < 1000:
+                visibility = f"{visibility}m"
+            else:
+                visibility = f"{visibility/1000}km"
+            
+            col1, col2 = st.columns([1.5, 1])
 
-    #         # Description
-    #         weather_description = weather_data["weather"][0]["description"]
+            col1.subheader("")
+            col1.subheader("")
+            col1.subheader(f"Zustand: {weather_description}")
+            col1.subheader(f"Temperatur: {current_temperature}°C")
+            col2.image(icon_image)
 
-    #         # Write header and location
+            st.text("")
 
-    #         st.header("Wetter")
-    #         st.caption(weather_description)
+            col1, col2, col3, col4 = st.columns(4, gap="medium")
+            col1.metric("Wind", f"{wind_speed}m/s {wind_direction_text}")
+            col2.metric("Luftdruck", f"{current_pressure}hPa")
+            col3.metric("Feuchtigkeit", f"{current_humidity}%")
+            col4.metric("Sichtbarkeit", f"{visibility}")
 
-    #         col1, col2, col3, col4 = st.columns(4)
-    #         col1.metric("Temperatur", f"{current_temperature}°C")
-    #         col2.metric("Luftdruck", f"{current_pressure}hPa")
-    #         col3.metric("Luftfeuchtigkeit", f"{current_humidity}%")
-    #         col4.image(icon_image)
+            st.text("")
+            st.markdown(f"Daten von [OpenWeatherMap](https://openweathermap.org).")
 
-    #         # Get location id
-    #         location_id = weather_data["id"]
-    #         st.markdown(f"Daten bereitgestellt von [OpenWeatherMap](https://openweathermap.org/city/{location_id}).")
-
-    #         st.divider()
+            st.divider()
 
     # Battery Voltage
     st.header("Batterie")
