@@ -338,7 +338,7 @@ def main():
                 visibility = f"{visibility/1000}km"
             
 
-            col1, col2 = st.columns([1.5, 1])
+            col1, col2 = st.columns([1.75, 1])
 
             col1.header("Wetter")
             col1.caption(f"{name}, {country}")
@@ -372,17 +372,22 @@ def main():
 
     try:
         sun = Sun(lat, lon)
-        sunrise = sun.get_local_sunrise_time().strftime('%H:%M')
-        sunset = sun.get_local_sunset_time().strftime('%H:%M')
+        sunrise = sun.get_sunrise_time()
+        sunrise = sunrise.astimezone(timezone)
+        sunrise = sunrise.strftime('%H:%M Uhr')
+
+        sunset = sun.get_sunset_time()
+        sunset = sunset.astimezone(timezone)
+        sunset = sunset.strftime('%H:%M Uhr')
 
         st.header("Sonnenauf- und untergang")
         st.text("")
 
         col1, col2, col3 = st.columns([0.5, 1, 1])
         col2.image("https://openweathermap.org/img/wn/01d@2x.png")
-        col2.metric("Sonnenaufgang", f"{sunrise} Uhr")
+        col2.metric("Sonnenaufgang", sunrise)
         col3.image("https://openweathermap.org/img/wn/01n@2x.png")
-        col3.metric("Sonnenuntergang", f"{sunset} Uhr")
+        col3.metric("Sonnenuntergang", sunset)
 
         st.divider()
 
