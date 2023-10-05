@@ -81,7 +81,7 @@ def main():
     else:
         cameraname = FTP_FOLDER
 
-    st.title(cameraname)
+    st.title(cameraname, anchor = False)
 
     # Placeholder for the image
     imagePlaceholder = st.empty()
@@ -340,9 +340,9 @@ def main():
 
             col1, col2 = st.columns([1.75, 1])
 
-            col1.header("Wetter")
+            col1.header("Wetter", anchor = False)
             col1.caption(f"{name}, {country}")
-            col1.subheader(f"Temperatur: {current_temperature}°C")
+            col1.subheader(f"Temperatur: {current_temperature}°C", anchor = False)
             col2.text("")
             col2.text("")
             col2.text("")
@@ -358,7 +358,7 @@ def main():
             col4.metric("Sichtbarkeit", f"{visibility}")
 
             st.text("")
-            st.markdown(f"Daten von [OpenWeatherMap](https://openweathermap.org).")
+            st.markdown(f"Daten von [OpenWeatherMap](https://openweathermap.org)")
 
             st.divider()
 
@@ -380,7 +380,7 @@ def main():
         sunset = sunset.astimezone(timezone)
         sunset = sunset.strftime('%H:%M Uhr')
 
-        st.header("Sonnenauf- und untergang")
+        st.header("Sonnenauf- und Untergang", anchor = False)
         st.text("")
 
         col1, col2, col3 = st.columns([0.5, 1, 1])
@@ -399,7 +399,7 @@ def main():
     ##############################################
 
     # Battery Voltage
-    st.header("Batterie")
+    st.header("Batterie", anchor = False)
     st.write(f"Letzte Messung: {str(df['Battery Voltage (V)'].iloc[-1])}V")
 
     chart = alt.Chart(df).mark_line().encode(
@@ -410,7 +410,7 @@ def main():
     st.altair_chart(chart, use_container_width=True)
 
     # Internal Voltage
-    st.header("Interne Spannung")
+    st.header("Interne Spannung", anchor = False)
     st.write(f"Letzte Messung: {str(df['Internal Voltage (V)'].iloc[-1])}V")
 
     chart = alt.Chart(df).mark_line().encode(
@@ -421,7 +421,7 @@ def main():
     st.altair_chart(chart, use_container_width=True)
 
     # Temperature
-    st.header("Temperatur")
+    st.header("Temperatur", anchor = False)
     st.write(f"Letzte Messung: {str(df['Temperature (°C)'].iloc[-1])}°C")
 
     chart = alt.Chart(df).mark_line().encode(
@@ -433,7 +433,7 @@ def main():
 
     # Signal Quality
     # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
-    st.header("Signalqualität")
+    st.header("Signalqualität", anchor = False)
     st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1])}")
 
     chart = alt.Chart(df).mark_line().encode(
@@ -444,7 +444,7 @@ def main():
     st.altair_chart(chart, use_container_width=True)
    
     # Show a map with camera location
-    st.header("Standort")
+    st.header("Standort", anchor = False)
 
     # Remove rows with "-" as coordinates
     dfMap = df[df['Latitude'] != "-"]
