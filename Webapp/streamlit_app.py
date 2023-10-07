@@ -108,6 +108,10 @@ def main():
     # Convert the timestamp to datetime
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%S')
 
+    ##############################################
+    # Sidebar
+    ##############################################
+
     with st.sidebar:
 
         # Zeitraum auswählen
@@ -132,7 +136,7 @@ def main():
         # Login
         # TODO Improve security (e.g. multiple login attempts)
         st.header("Login")
-        password = st.text_input("Bitte loggen Sie sich ein um die Einstellungen anzupassen.", type="password")
+        password = st.text_input("Bitte loggen Sie sich ein um die Einstellungen anzupassen.", placeholder= "Passwort eingeben",type="password")
         if password == st.secrets["FTP_PASSWORD"]:
             
             st.success("Erfolgreich eingeloggt.")
@@ -176,35 +180,33 @@ def main():
             use_container_width=True
         )
 
+    st.text("")
+
+    ##############################################
     # Overview of the last measurements
+    ##############################################
+
     # TODO Maybe add delta
     col1, col2, col3, col4 = st.columns(4)
 
     try:
         timestampSelectedImage = datetime.strptime(selected_file[0:13], '%d%m%Y_%H%M')
-        # Remove seconds from timestamp
-        df['Timestamp'] = df['Timestamp'].dt.floor('min')
+        df['Timestamp'] = df['Timestamp'].dt.floor('min') # Remove seconds from timestamp
         index = df[df['Timestamp'] == timestampSelectedImage].index[0]
     except:
         index = -1
 
-    delta = df['Battery Voltage (V)'].iloc[index] - df['Battery Voltage (V)'].iloc[index-1]
     col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]}V")
-
-    # delta = df['Internal Voltage (V)'].iloc[index] - df['Internal Voltage (V)'].iloc[index-1]
-    # col2.metric("Interne Spannung", f"{df['Internal Voltage (V)'].iloc[index]}V", f"{delta}V")
     col2.metric("Interne Spannung", f"{df['Internal Voltage (V)'].iloc[index]}V")
-
-    # delta = df['Temperature (°C)'].iloc[index] - df['Temperature (°C)'].iloc[index-1]
-    # col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C", f"{delta}°C")
     col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C")
-
-    # delta = df['Signal Quality'].iloc[index] - df['Signal Quality'].iloc[index-1]
-    # col4.metric("Signalqualität", df['Signal Quality'].iloc[index], delta)
     col4.metric("Signalqualität", df['Signal Quality'].iloc[index])
 
     st.write("")
     
+    ##############################################
+    # Next and last startup
+    ##############################################
+
     # Last startup relative to now
     # TODO Tage, Monate etc. anzeigen
     lastStartup = df['Timestamp'].iloc[-1]
@@ -243,7 +245,6 @@ def main():
     dfMap = df[df['Latitude'] != "-"]
     dfMap = dfMap[dfMap['Longitude'] != "-"]
 
-
     # Get the latitude and longitude
     lon = float(dfMap['Latitude'].iloc[-1])
     lat = float(dfMap['Longitude'].iloc[-1])
@@ -253,19 +254,19 @@ def main():
 
         import requests
 
-        # Reverse geocoding with OpenWeatherMap
-        base_url = "http://api.openweathermap.org/geo/1.0/reverse?"
+        # # Reverse geocoding with OpenWeatherMap
+        # base_url = "http://api.openweathermap.org/geo/1.0/reverse?"
 
-        complete_url = base_url + "lat=" + str(lat) + "&lon=" + str(lon) + "&limit=1&appid=" + st.secrets["OPENWEATHER_API_KEY"]
+        # complete_url = base_url + "lat=" + str(lat) + "&lon=" + str(lon) + "&limit=1&appid=" + st.secrets["OPENWEATHER_API_KEY"]
 
-        # Get the response
-        response = requests.get(complete_url)
+        # # Get the response
+        # response = requests.get(complete_url)
 
-        # Convert the response to json
-        reverse_geocoding_data = response.json()
+        # # Convert the response to json
+        # reverse_geocoding_data = response.json()
 
-        name = reverse_geocoding_data[0]["name"]
-        country = reverse_geocoding_data[0]["country"]
+        # location_name = reverse_geocoding_data[0]["name"]
+        # country = reverse_geocoding_data[0]["country"]
 
         # Get weather data from OpenWeatherMap
         base_url = "http://api.openweathermap.org/data/2.5/weather?"
@@ -335,14 +336,15 @@ def main():
             if visibility < 1000:
                 visibility = f"{visibility}m"
             else:
-                visibility = f"{visibility/1000}km"
+                visibility = f"{int(visibility/1000)}km"
             
 
-            col1, col2 = st.columns([1.75, 1])
+            col1, col2 = st.columns([1.5, 1])
 
             col1.header("Wetter", anchor = False)
-            col1.caption(f"{name}, {country}")
-            col1.subheader(f"Temperatur: {current_temperature}°C", anchor = False)
+            # col1.caption(f"{name}, {country}")
+            col1.text("")
+            col1.markdown(f"### :grey[Temperatur: {current_temperature}°C]")
             col2.text("")
             col2.text("")
             col2.text("")
@@ -354,8 +356,8 @@ def main():
             col1, col2, col3, col4 = st.columns(4, gap="medium")
             col1.metric("Wind", f"{wind_speed}m/s", delta=wind_direction_text, delta_color="off")
             col2.metric("Luftdruck", f"{current_pressure}hPa")
-            col3.metric("Feuchtigkeit", f"{current_humidity}%")
-            col4.metric("Sichtbarkeit", f"{visibility}")
+            col3.metric("Luftfeuchtigkeit", f"{current_humidity}%")
+            col4.metric("Sichtweite", f"{visibility}")
 
             st.text("")
             st.markdown(f"Daten von [OpenWeatherMap](https://openweathermap.org)")
@@ -443,10 +445,13 @@ def main():
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
    
-    # Show a map with camera location
+    ##############################################
+    # Map
+    ##############################################
+
     st.header("Standort", anchor = False)
 
-    # Remove rows with "-" as coordinates
+    # Remove rows with no coordinates
     dfMap = df[df['Latitude'] != "-"]
     dfMap = dfMap[dfMap['Longitude'] != "-"]
     
@@ -454,18 +459,17 @@ def main():
         st.write("Keine Koordinaten in diesem Zeitraum vorhanden.")
     else:
         # Convert the latitude and longitude to float
-        last_latitude = float(dfMap['Latitude'].iloc[-1])
-        last_longitude = float(dfMap['Longitude'].iloc[-1])
+        # TODO Latitude and longitude are switched in camera
+        last_latitude = float(dfMap['Longitude'].iloc[-1])
+        last_longitude = float(dfMap['Latitude'].iloc[-1])
         
-        # 
-        
-        st.map(pd.DataFrame({'lat': [last_longitude], 'lon': [last_latitude]}))
+        st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
 
         # Print coordinates
-        st.write(f"Breitengrad: {last_latitude}°N - Längengrad: {last_longitude}°E, Höhe: {dfMap['Heigth'].iloc[-1]}m")
+        st.write(f"Breitengrad: {last_latitude}, Längengrad: {last_longitude}, Höhe: {dfMap['Heigth'].iloc[-1]}m - [Google Maps](https://www.google.com/maps/search/?api=1&query={last_latitude},{last_longitude})")
 
         # Print timestamp
-        st.markdown(f"Letztes Update: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')} - [Google Maps](https://www.google.com/maps/search/?api=1&query={last_latitude},{last_longitude})" )
+        st.markdown(f"Letztes Standortupdate: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
 
     # Add a linebreak
     st.write("")
