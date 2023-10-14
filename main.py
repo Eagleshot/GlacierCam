@@ -2,15 +2,15 @@
 # -*- coding:utf-8 -*-
 
 # Import required libraries
-from picamera2 import Picamera2
-from libcamera import controls
-from ftplib import FTP
-from datetime import datetime
-from time import sleep
-from csv import writer, reader
-from os import system, remove, listdir, path
 from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
+from os import system, remove, listdir, path
+from time import sleep
+from csv import writer, reader
+from datetime import datetime
+from ftplib import FTP
+from picamera2 import Picamera2
+from libcamera import controls
 from yaml import safe_load
 
 ###########################
@@ -24,9 +24,9 @@ def getCPUSerial():
     cpuserial = "0000000000000000"
     try:
         with open('/proc/cpuinfo', 'r') as f:
-            for line in f:
-                if line[0:6] == 'Serial':
-                    cpuserial = line[10:26]
+            for cpu_line in f:
+                if cpu_line[0:6] == 'Serial':
+                    cpuserial = cpu_line[10:26]
                     break
     except:
         cpuserial = "ERROR000000000"
@@ -570,7 +570,7 @@ try:
             csvData = csvBuffer.getvalue().encode('utf-8')
 
             # Upload CSV file to FTP server
-            ftp.storbinary(f"APPE diagnostics.csv", BytesIO(csvData))
+            ftp.storbinary("APPE diagnostics.csv", BytesIO(csvData))
         else:
             writer.writerow(newRow)
             csvData = csvBuffer.getvalue().encode('utf-8')
@@ -591,7 +591,7 @@ try:
 
             # Witty Pi schedule
             with open("/home/pi/wittypi/schedule.log", 'rb') as wittyPiDiagnostics:
-                ftp.storbinary(f"APPE wittyPiSchedule.txt", wittyPiDiagnostics)
+                ftp.storbinary("APPE wittyPiSchedule.txt", wittyPiDiagnostics)
 except Exception as e:
     print(f"Could not upload WittyPi diagnostics: {str(e)}")
 
