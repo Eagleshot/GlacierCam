@@ -385,10 +385,6 @@ if st.secrets["OPENWEATHER_API_KEY"] != "":
 
         st.divider()
 
-    else:
-        # Print raw weather data
-        print(weather_data)
-
 ##############################################
 # Sunrise and sunset
 ##############################################
