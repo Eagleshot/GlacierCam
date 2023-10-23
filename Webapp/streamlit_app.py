@@ -1,7 +1,3 @@
-# TODO Add settings after login
-# TODO Timelapse from images
-# TODO Image comparison of different timestamps
-
 from ftplib import FTP
 from io import BytesIO
 from datetime import datetime
@@ -520,11 +516,14 @@ with st.expander("Rohdaten"):
 
     # Check if wittyPiDiagnostics.txt exists
     if "wittyPiDiagnostics.txt" in files:
+        # Retrieve the file data
+        file_data = b""
+        ftp.retrbinary("RETR wittyPiDiagnostics.txt", lambda data: file_data += data)
+
         # Download wittyPiDiagnostics.txt
         st.download_button(
             label="WittyPi Diagnostics herunterladen 📝",
-            data=ftp.retrbinary('RETR wittyPiDiagnostics.txt', open(
-                'wittyPiDiagnostics.txt', 'wb').write),
+            data=file_data,
             file_name="wittyPiDiagnostics.txt",
             mime="text/plain",
             use_container_width=True
@@ -532,11 +531,14 @@ with st.expander("Rohdaten"):
 
     # Check if wittyPiSchedule.txt exists
     if "wittyPiSchedule.txt" in files:
+        # Retrieve the file data
+        file_data = b""
+        ftp.retrbinary("RETR wittyPiSchedule.txt", lambda data: file_data += data)
+
         # Download wittyPiSchedule.txt
         st.download_button(
             label="WittyPi Schedule herunterladen 📝",
-            data=ftp.retrbinary('RETR wittyPiSchedule.txt', open(
-                'wittyPiSchedule.txt', 'wb').write),
+            data=file_data,
             file_name="wittyPiSchedule.txt",
             mime="text/plain",
             use_container_width=True
@@ -573,7 +575,7 @@ with st.expander("Einstellungen"):
 #     "shutdown": true
 # }
 
-# Edit the settings
+# TODO Settings
 if st.session_state.userIsLoggedIn:
     with st.expander("Einstellungen anpassen"):
 
@@ -595,13 +597,12 @@ if st.session_state.userIsLoggedIn:
             "Shutdown", help="Kamera nach Bildaufnahme ausschalten.")
 
         # Zeitzone auswählen
-        # TODO
-        # st.header("Zeitzone auswählen")
-        # timezone_selection = st.selectbox(
-        #     "Bitte wählen Sie eine Zeitzone aus:",
-        #     options=pytz.all_timezones,
-        #     index=pytz.all_timezones.index('Europe/Zurich'),
-        # )
+        st.header("Zeitzone auswählen")
+        timezone_selection = st.selectbox(
+            "Bitte wählen Sie eine Zeitzone aus:",
+            options=pytz.all_timezones,
+            index=pytz.all_timezones.index('Europe/Zurich'),
+        )
         # timezone = pytz.timezone(timezone_selection)
 
 # Display the errors

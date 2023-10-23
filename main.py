@@ -23,7 +23,7 @@ def getCPUSerial():
     # Extract serial from cpuinfo file
     cpuserial = "0000000000000000"
     try:
-        with open('/proc/cpuinfo', 'r') as f:
+        with open('/proc/cpuinfo', 'r', encoding='utf-8') as f:
             for cpu_line in f:
                 if cpu_line[0:6] == 'Serial':
                     cpuserial = cpu_line[10:26]
@@ -42,7 +42,6 @@ try:
 except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
 
-# TODO: Maybe UTC time for easier time conversion
 cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
 currentTimeCSV = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
 currentTimeFilename = datetime.today().strftime('%Y%m%d_%H%M')
@@ -62,7 +61,7 @@ for i in range(5):
         print(f"Could not connect to FTP server: {str(e)}")
         connectedToFTP = False
     
-    if connectedToFTP == False:
+    if not connectedToFTP:
         # Wait 5 seconds and try again
         print(f". Attempt {i+1}/5 failed - trying again in 5 seconds.")
         error += f". Attempt {i+1}/5 failed - trying again in 5 seconds."
@@ -84,7 +83,7 @@ except Exception as e:
 
 # Go to folder with camera name + unique hardware serial number or create it
 try:
-    if config["multipleCamerasOnServer"] == True and connectedToFTP:
+    if config["multipleCamerasOnServer"] and connectedToFTP:
         try:
             ftp.cwd(cameraName)
         except:
@@ -97,9 +96,6 @@ except Exception as e:
 ###########################
 # Settings
 ###########################
-
-# TODO work with read only file system - OK?
-# TODO Do additional checks if downloaded settings were valid?
 
 # Try to download settings from server
 try:
@@ -129,13 +125,11 @@ except Exception as e:
 # Time synchronization
 ###########################
 
-# TODO: Maybe check if wittypi was started with button and only sync time then?
 def syncWittyPiTimeWithNetwork():
 
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
-    # TODO: Maybe use GPS time as a reference
     # Wait for 100s
-    sleep(100)
+    sleep(60)
 
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && net_to_system && system_to_rtc"
@@ -156,8 +150,6 @@ except Exception as e:
 ###########################
 # Schedule script
 ###########################
-# TODO Maybe take sunrise and sunset into account according to GPS position
-# See: https://github.com/sffjunkie/astral
 def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
 
     startTimeHour = startTimeHour + 1
@@ -231,8 +223,6 @@ except:
     with open("/home/pi/wittypi/schedule.wpi", "x") as f:
         f.write(schedule)
 
-# TODO: This could be circumvented by shutting down the Raspberry Pi with GPIO 4 so that the daemon.sh applies the schedule
-# However this way the next shutdown time would not directly be outputted
 try:
     # Apply new schedule
     command = "cd /home/pi/wittypi && sudo ./runScript.sh"
@@ -272,8 +262,6 @@ def sendATCommand(command, back, timeout):
     else:
         return rec_buff.decode()
     
-# TODO: Maybe move SIM7600G-H 4G and WittyPi code to separate file/library for easier readability
-
 # Get current signal quality
 # https://www.manualslib.com/download/1593302/Simcom-Sim7000-Series.html
 # 0 -115 dBm or less
@@ -349,8 +337,8 @@ def getGPSPos():
             global currentGPSPosLat
             global currentGPSPosLong
             global currentGPSPosHeight
-            currentGPSPosLat = str(round(FinalLong, 5))
-            currentGPSPosLong = str(round(FinalLat, 5))
+            currentGPSPosLong = str(round(FinalLong, 5))
+            currentGPSPosLat = str(round(FinalLat, 5))
             currentGPSPosHeight = str(Height)
 
             print(f"GPS position: LAT {currentGPSPosLat}, LON {currentGPSPosLong}, HEIGHT {currentGPSPosHeight}")
@@ -361,11 +349,12 @@ def getGPSPos():
 # See Waveshare documentation
 try:
     import serial
+    # TODO: Test timeout
     ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
     ser.flushInput()
 
     # Enable GPS to later read out position
-    if settings["enableGPS"]  == True:
+    if settings["enableGPS"]:
         print('Start GPS session.')
         sendATCommand('AT+CGPS=1,1', 'OK', 1)
 
@@ -409,7 +398,6 @@ except Exception as e:
 # Capture image
 ###########################
 try:
-    # TODO: Maybe save image to USB drive
     camera.start_and_capture_file(filePath + imgFileName, capture_mode=cameraConfig, delay=2, show_preview=False)
 except Exception as e:
     error += f"Could not start camera and capture image: {str(e)}"
@@ -428,7 +416,6 @@ except Exception as e:
 # Upload to ftp server and then delete last image
 ###########################
 
-# TODO Limit upload if many images are saved locally
 try:
     if connectedToFTP:
         # Upload all images in filePath
@@ -457,7 +444,7 @@ def getWittyPiTemperature():
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
         currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
         currentTemperature = currentTemperature.replace("\n", "")
-        currentTemperature = currentTemperature.split(" / ")[0] # Remove the Farenheit reading
+        currentTemperature = currentTemperature.split(" / ", maxsplit = 1)[0] # Remove the Farenheit reading
         currentTemperature = currentTemperature[:-2] # Remove °C
         print(f"Temperature: {currentTemperature}°C")
         return currentTemperature
@@ -510,7 +497,6 @@ def getWittyPiVoltage():
 ###########################
 # Get readings
 ###########################
-# TODO: Maybe only get readings like GPS once a day
 currentTemperature = getWittyPiTemperature()
 currentBatteryVoltage = getWittyPiBatteryVoltage()
 raspberryPiVoltage = getWittyPiVoltage()
@@ -521,7 +507,7 @@ currentSignalQuality = getCurrentSignalQuality()
 # Get GPS position
 ###########################
 try:
-    if settings["enableGPS"]  == True:
+    if settings["enableGPS"]:
         
         maxAttempts = 0
 
@@ -583,7 +569,7 @@ except Exception as e:
 
 try:
     # Upload WittyPi diagnostics
-    if settings["uploadWittyPiDiagnostics"] == True and connectedToFTP:
+    if settings["uploadWittyPiDiagnostics"] and connectedToFTP:
 
             # Witty Pi log 
             with open("/home/pi/wittypi/wittyPi.log", 'rb') as wittyPiDiagnostics:
