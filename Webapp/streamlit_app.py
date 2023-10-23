@@ -516,33 +516,35 @@ with st.expander("Rohdaten"):
 
     # Check if wittyPiDiagnostics.txt exists
     if "wittyPiDiagnostics.txt" in files:
-        # Retrieve the file data
-        file_data = b""
-        ftp.retrbinary("RETR wittyPiDiagnostics.txt", file_data)
 
-        # Download wittyPiDiagnostics.txt
-        st.download_button(
-            label="WittyPi Diagnostics herunterladen 📝",
-            data=file_data,
-            file_name="wittyPiDiagnostics.txt",
-            mime="text/plain",
-            use_container_width=True
-        )
+        # Retrieve the file data
+        with open('wittyPiDiagnostics.txt', 'wb') as file:
+            ftp.retrbinary("RETR wittyPiDiagnostics.txt", file)
+
+            # Download wittyPiDiagnostics.txt
+            st.download_button(
+                label="WittyPi Diagnostics herunterladen 📝",
+                data=file,
+                file_name="wittyPiDiagnostics.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
 
     # Check if wittyPiSchedule.txt exists
     if "wittyPiSchedule.txt" in files:
+        
         # Retrieve the file data
-        file_data = b""
-        ftp.retrbinary("RETR wittyPiSchedule.txt", file_data)
+        with open('wittyPiSchedule.txt', 'wb') as file_data:
+            ftp.retrbinary("RETR wittyPiSchedule.txt", file_data)
 
-        # Download wittyPiSchedule.txt
-        st.download_button(
-            label="WittyPi Schedule herunterladen 📝",
-            data=file_data,
-            file_name="wittyPiSchedule.txt",
-            mime="text/plain",
-            use_container_width=True
-        )
+            # Download wittyPiSchedule.txt
+            st.download_button(
+                label="WittyPi Schedule herunterladen 📝",
+                data=file_data,
+                file_name="wittyPiSchedule.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
 
 # Read settings.yaml and display it
 ftp.retrbinary('RETR settings.yaml', open('settings.yaml', 'wb').write)
