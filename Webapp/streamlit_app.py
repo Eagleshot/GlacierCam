@@ -518,7 +518,7 @@ with st.expander("Rohdaten"):
     if "wittyPiDiagnostics.txt" in files:
         # Retrieve the file data
         file_data = b""
-        ftp.retrbinary("RETR wittyPiDiagnostics.txt", lambda data: file_data += data)
+        ftp.retrbinary("RETR wittyPiDiagnostics.txt", file_data)
 
         # Download wittyPiDiagnostics.txt
         st.download_button(
@@ -533,7 +533,7 @@ with st.expander("Rohdaten"):
     if "wittyPiSchedule.txt" in files:
         # Retrieve the file data
         file_data = b""
-        ftp.retrbinary("RETR wittyPiSchedule.txt", lambda data: file_data += data)
+        ftp.retrbinary("RETR wittyPiSchedule.txt", file_data)
 
         # Download wittyPiSchedule.txt
         st.download_button(
