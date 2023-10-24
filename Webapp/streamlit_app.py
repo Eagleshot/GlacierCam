@@ -518,9 +518,9 @@ with st.expander("Rohdaten"):
     if "wittyPiDiagnostics.txt" in files:
 
         # Retrieve the file data
-        with open('wittyPiDiagnostics.txt', 'wb') as file:
-            ftp.retrbinary("RETR wittyPiDiagnostics.txt", file)
+        ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
 
+        with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
             # Download wittyPiDiagnostics.txt
             st.download_button(
                 label="WittyPi Diagnostics herunterladen 📝",
@@ -530,21 +530,46 @@ with st.expander("Rohdaten"):
                 use_container_width=True
             )
 
+        # Get last modification date
+        lastModified = ftp.sendcmd("MDTM wittyPiDiagnostics.txt")
+
+        # Convert last modification date to datetime
+        lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S')
+
+        # Convert last modification date to local timezone
+        lastModified = timezone.localize(lastModified)
+
+        # Print last modification date
+        st.write(f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}")
+        st.write("")
+
     # Check if wittyPiSchedule.txt exists
     if "wittyPiSchedule.txt" in files:
         
         # Retrieve the file data
-        with open('wittyPiSchedule.txt', 'wb') as file_data:
-            ftp.retrbinary("RETR wittyPiSchedule.txt", file_data)
+        ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
 
+        with open('wittyPiSchedule.txt', encoding='utf-8') as file:
             # Download wittyPiSchedule.txt
             st.download_button(
                 label="WittyPi Schedule herunterladen 📝",
-                data=file_data,
+                data=file,
                 file_name="wittyPiSchedule.txt",
                 mime="text/plain",
                 use_container_width=True
             )
+
+        # Get last modification date
+        lastModified = ftp.sendcmd("MDTM wittyPiSchedule.txt")
+
+        # Convert last modification date to datetime
+        lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S')
+
+        # Convert last modification date to local timezone
+        lastModified = timezone.localize(lastModified)
+
+        # Print last modification date
+        st.write(f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}")
 
 # Read settings.yaml and display it
 ftp.retrbinary('RETR settings.yaml', open('settings.yaml', 'wb').write)
