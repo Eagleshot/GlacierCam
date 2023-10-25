@@ -96,8 +96,9 @@ df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
 df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
 
 # Convert the timestamp to datetime
-df['Timestamp'] = pd.to_datetime(
-df['Timestamp'], format='%Y-%m-%d %H:%M:%S')
+# TODO Timestamp is UTC
+df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
+
 
 ##############################################
 # Sidebar
@@ -145,8 +146,10 @@ if len(files) > 1:
         options=files,
         value=files[-1],
         # Format the timestamp and dont show date if it is today
+        # '%Y%m%d_%H%M' -e.g. 20230825_1220
+
         format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(
-            timezone).strftime("%d%m%Y") else f"{x[:2]}.{x[2:4]}.{x[4:8]} {x[9:11]}:{x[11:13]} Uhr",
+        timezone).strftime("%Y%m%d") else f"{x[:4]}.{x[4:6]}.{x[6:8]} {x[9:11]}:{x[11:13]} Uhr"
     )
 elif len(files) == 1:
     selected_file = files[0]
