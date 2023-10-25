@@ -38,6 +38,7 @@
 - [ ] Add image upload to webserver
 - [ ] Customization (e.g. logo, colors, etc.)
 - [ ] Error notifications
+- [ ] Package webserver as a executable (electron?)
 
 # In the media
 * [FHGR News](https://www.fhgr.ch/news/newsdetail/photonics-bachelorarbeit-wird-praemiert/)
