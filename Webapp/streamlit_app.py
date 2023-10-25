@@ -572,51 +572,51 @@ with st.expander("Diagnosedaten"):
         use_container_width=True
     )
 
-    files = ftp.nlst()
+    # files = ftp.nlst()
 
-    # Check if wittyPiDiagnostics.txt exists
-    if "wittyPiDiagnostics.txt" in files:
+    # # Check if wittyPiDiagnostics.txt exists
+    # if "wittyPiDiagnostics.txt" in files:
 
-        # Retrieve the file data
-        ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
+    #     # Retrieve the file data
+    #     ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
 
-        # Get last modification date
-        lastModified = ftp.sendcmd("MDTM wittyPiDiagnostics.txt")
-        lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
-        lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
+    #     # Get last modification date
+    #     lastModified = ftp.sendcmd("MDTM wittyPiDiagnostics.txt")
+    #     lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
+    #     lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
 
-        with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
-            # Download wittyPiDiagnostics.txt
-            st.download_button(
-                label="WittyPi Diagnostics herunterladen 📝",
-                data=file,
-                file_name="wittyPiDiagnostics.txt",
-                mime="text/plain",
-                use_container_width=True,
-                help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
-            )
+    #     with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
+    #         # Download wittyPiDiagnostics.txt
+    #         st.download_button(
+    #             label="WittyPi Diagnostics herunterladen 📝",
+    #             data=file,
+    #             file_name="wittyPiDiagnostics.txt",
+    #             mime="text/plain",
+    #             use_container_width=True,
+    #             help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
+    #         )
 
-    # Check if wittyPiSchedule.txt exists
-    if "wittyPiSchedule.txt" in files:
+    # # Check if wittyPiSchedule.txt exists
+    # if "wittyPiSchedule.txt" in files:
         
-        # Retrieve the file data
-        ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
+    #     # Retrieve the file data
+    #     ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
 
-        # Get last modification date
-        lastModified = ftp.sendcmd("MDTM wittyPiSchedule.txt")
-        lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
-        lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
+    #     # Get last modification date
+    #     lastModified = ftp.sendcmd("MDTM wittyPiSchedule.txt")
+    #     lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
+    #     lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
 
-        with open('wittyPiSchedule.txt', encoding='utf-8') as file:
-            # Download wittyPiSchedule.txt
-            st.download_button(
-                label="WittyPi Schedule herunterladen 📝",
-                data=file,
-                file_name="wittyPiSchedule.txt",
-                mime="text/plain",
-                use_container_width=True,
-                help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
-            )
+    #     with open('wittyPiSchedule.txt', encoding='utf-8') as file:
+    #         # Download wittyPiSchedule.txt
+    #         st.download_button(
+    #             label="WittyPi Schedule herunterladen 📝",
+    #             data=file,
+    #             file_name="wittyPiSchedule.txt",
+    #             mime="text/plain",
+    #             use_container_width=True,
+    #             help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
+    #         )
 
 # Display the errors
 with st.expander("Fehlermeldungen"):
