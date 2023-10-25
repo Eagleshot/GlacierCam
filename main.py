@@ -43,8 +43,8 @@ except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
 
 cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
-currentTimeCSV = datetime.today().strftime('%Y-%m-%d %H:%M:%SZ')
-currentTimeFilename = datetime.today().strftime('%Y%m%d_%H%M')
+currentTimeCSV = datetime.today().strftime('%Y-%m-%d %H:%M:%SZ') # UTC-Time
+currentTimeFilename = datetime.today().strftime('%Y%m%d_%H%M') # UTC-Time
 imgFileName = f"{currentTimeFilename}Z_{cameraName}.jpg"
 error = ""
 

@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+# TODO Set camera to UTC time
+
 # Check if script is being run with sudo
 if [ "$(id -u)" != 0 ]; then
   echo 'This script must be run as sudo or as root!'
