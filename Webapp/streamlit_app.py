@@ -66,8 +66,9 @@ ftp.cwd("..")
 files = [file for file in files if file.endswith(".jpg")]
 
 # Camera name
+# TODO Display camera id
 if len(files) > 0:
-    cameraname = files[-1][14:-21]
+    cameraname = files[-1][15:-21]
 else:
     cameraname = FTP_FOLDER
 
@@ -97,7 +98,7 @@ df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
 
 # Convert the timestamp to datetime
 # TODO Timestamp is UTC
-df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
+df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%S')
 
 
 ##############################################
@@ -125,8 +126,9 @@ with st.sidebar:
         endDateTime = datetime.combine(endDate, endTime)
 
         # Filter the dataframe
-        df = df[(df['Timestamp'] >= startDateTime)
-                & (df['Timestamp'] <= endDateTime)]
+        # TODO
+        # df = df[(df['Timestamp'] >= startDateTime)
+        #         & (df['Timestamp'] <= endDateTime)]
 
     # Login
     # TODO Improve security (e.g. multiple login attempts)
@@ -266,12 +268,17 @@ st.divider()
 dfMap = df[df['Latitude'] != "-"]
 dfMap = dfMap[dfMap['Longitude'] != "-"]
 
-# Get the latitude and longitude
-lon = float(dfMap['Latitude'].iloc[-1])
-lat = float(dfMap['Longitude'].iloc[-1])
+lat = 0.0
+lon = 0.0
+try:
+    # Get the latitude and longitude
+    lon = float(dfMap['Latitude'].iloc[-1])
+    lat = float(dfMap['Longitude'].iloc[-1])
+except:
+    pass
 
 # Check if OpenWeather API key is set
-if st.secrets["OPENWEATHER_API_KEY"] != "":
+if st.secrets["OPENWEATHER_API_KEY"] != "" and lat != 0.0:
 
     # # Reverse geocoding with OpenWeatherMap
     # base_url = "http://api.openweathermap.org/geo/1.0/reverse?"
