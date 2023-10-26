@@ -50,17 +50,15 @@ with st.sidebar:
     )
 
 # Connect to the FTP server
-ftp = FTP(FTP_HOST)
-ftp.login(user=FTP_USERNAME, passwd=FTP_PASSWORD)
+ftp = FTP(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
 
 # Change the working directory to the FTP folder
 ftp.cwd(FTP_FOLDER)
 
 # Get the list of files from the FTP server
-# TODO Remove
-ftp.cwd("save")
+ftp.cwd("save") # TODO Remove
 files = ftp.nlst()
-ftp.cwd("..")
+ftp.cwd("..") # TODO Remove
 
 # Only show the image files
 files = [file for file in files if file.endswith(".jpg")]
@@ -69,8 +67,10 @@ files = [file for file in files if file.endswith(".jpg")]
 # TODO Display camera id
 if len(files) > 0:
     cameraname = files[-1][15:-21]
+    cameraID = files[-1][-20:-4]
 else:
     cameraname = FTP_FOLDER
+    cameraID = "ERROR000000000"
 
 st.title(cameraname, anchor=False)
 
@@ -98,7 +98,7 @@ df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
 
 # Convert the timestamp to datetime
 # TODO Timestamp is UTC
-df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%S')
+df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
 
 
 ##############################################
@@ -161,7 +161,7 @@ else:
 @st.cache_data(show_spinner=False)
 def getImageFromFTP(selected_file):
     # Get the image file from the FTP server
-    # TOD Cleanup
+    # TODO Cleanup
     image_data = BytesIO()
     ftp.cwd("save")
     ftp.retrbinary(f"RETR {selected_file}", image_data.write)
@@ -648,3 +648,8 @@ with st.expander("Fehlermeldungen"):
     # Easteregg button which lets it snow with snow emojis
     if st.button("❄️⛄"):
         st.snow()
+
+
+# TODO Move to better location
+st.write("")
+st.write(f"Kamera ID: {cameraID}")
