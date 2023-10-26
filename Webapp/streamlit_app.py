@@ -158,8 +158,10 @@ elif len(files) == 1:
 else:
     st.write("Keine Bilder vorhanden.")
 
-# Get the image file from the FTP server
-if len(files) > 0:
+@st.cache_data(show_spinner=False)
+def getImageFromFTP(selected_file):
+    # Get the image file from the FTP server
+    # TOD Cleanup
     image_data = BytesIO()
     ftp.cwd("save")
     ftp.retrbinary(f"RETR {selected_file}", image_data.write)
@@ -167,7 +169,13 @@ if len(files) > 0:
     image = Image.open(image_data)
 
     # Rotate the image
-    image = image.rotate(180, expand=True)
+    # image = image.rotate(180, expand=True)
+
+    return image_data, image
+
+# Get the image file from the FTP server
+if len(files) > 0:
+    image_data, image = getImageFromFTP(selected_file)
 
     # Display the image with the corresponding timestamp
     imagePlaceholder.image(image, use_column_width=True)
