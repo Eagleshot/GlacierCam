@@ -582,15 +582,6 @@ with st.expander("Diagnosedaten"):
 
     st.dataframe(df)
 
-    # Download diagnostics.csv
-    st.download_button(
-        label="Rohdaten herunterladen 📝",
-        data=df.to_csv().encode("utf-8"),
-        file_name="diagnostics.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
-
     # files = ftp.nlst()
 
     # # Check if wittyPiDiagnostics.txt exists
