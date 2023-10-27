@@ -2,9 +2,11 @@
 
 # TODOs
 ## Hardware
-- [ ] Update to Raspberry Pi Zero 2 W
 - [ ] Update to Witty Pi 4 non mini
 - [ ] Create 3D printed case
+- [ ] Create 2/3 additiinal cameras for testing
+- [ ] Update to Raspberry Pi Zero 2 W
+- [ ] Test different antennas to use inside case
 
 ## Software
 - [ ] Update to Raspberry Pi OS bookworm
@@ -19,9 +21,15 @@
 ## Time and Scheduling
 - [ ] Take sunrise and sunset into account for scheduling
 - [ ] Take battery level into account for scheduling
-- [ ] Take weather forecast into account for scheduling (optional)
 - [ ] Timezone handling (maybe automatic timezones with GPS)
 - [ ] Advanced scheduling (start and end date)
+
+- [] wlan einfacher setup
+- datenübertragung über satellit
+
+neue energiemessung -> mit allem dimensionierung
+
+bildverarbeitung -> in webserver einbauen oder gletscherabbruchfrontüberwachung
 
 ## Sensors and data
 - [ ] Only get readings like GPS once a day
@@ -30,6 +38,8 @@
 ## General
 - [ ] Extend documentation + improve installation script
 - [ ] Open source the project
+
+
 
 ## Webserver (optional)
 - [ ] Add settings page (after login)

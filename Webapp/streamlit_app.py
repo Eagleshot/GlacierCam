@@ -20,6 +20,7 @@ if "userIsLoggedIn" not in st.session_state:
     st.session_state.userIsLoggedIn = False
 
 timezone = pytz.timezone('Europe/Zurich')
+timezoneUTC = pytz.timezone('UTC')
 
 # Set page title and favicon
 st.set_page_config(
@@ -42,12 +43,16 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 # Change the camera selection
 with st.sidebar:
 
-    st.header("Kamera auswählen")
-    FTP_FOLDER = st.selectbox(
-        "Bitte wählen Sie eine Kamera aus:",
-        options=st.secrets["FTP_FOLDER"],
-        index=0,
-    )
+    # Select the camera if multiple cameras are available
+    if len(st.secrets["FTP_FOLDER"]) > 1:
+        st.header("Kamera auswählen")
+        FTP_FOLDER = st.selectbox(
+            "Bitte wählen Sie eine Kamera aus:",
+            options=st.secrets["FTP_FOLDER"],
+            index=0,
+        )
+    else:
+        FTP_FOLDER = st.secrets["FTP_FOLDER"][0]
 
 # Connect to the FTP server
 ftp = FTP(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
@@ -129,6 +134,16 @@ with st.sidebar:
         # TODO
         # df = df[(df['Timestamp'] >= startDateTime)
         #         & (df['Timestamp'] <= endDateTime)]
+
+    # Zeitzone auswählen
+    # TODO
+    st.header("Zeitzone auswählen", help="Zeitzone der Kamera auswählen.")
+    timezone_selection = st.selectbox(
+        "Bitte wählen Sie eine Zeitzone aus:",
+        options=pytz.all_timezones,
+        index=pytz.all_timezones.index('Europe/Zurich'),
+    )
+    timezone = pytz.timezone(timezone_selection)
 
     # Login
     # TODO Improve security (e.g. multiple login attempts)
@@ -221,7 +236,7 @@ st.write("")
 
 # Last startup relative to now
 lastStartup = df['Timestamp'].iloc[-1]
-now = datetime.now(timezone).replace(tzinfo=None)
+now = datetime.now(timezoneUTC).replace(tzinfo=None)
 timeDifference = now - lastStartup.replace(tzinfo=None)
 
 # Write difference in hours and minutes
@@ -273,20 +288,18 @@ st.divider()
 # Weather widget
 ##############################################
 
+
 dfMap = df[df['Latitude'] != "-"]
 dfMap = dfMap[dfMap['Longitude'] != "-"]
 
-lat = 0.0
-lon = 0.0
-try:
-    # Get the latitude and longitude
-    lon = float(dfMap['Latitude'].iloc[-1])
-    lat = float(dfMap['Longitude'].iloc[-1])
-except:
-    pass
+# If location is available
+if not dfMap.empty:
+    last_latitude = float(dfMap['Latitude'].iloc[-1])
+    last_longitude = float(dfMap['Longitude'].iloc[-1])
+
 
 # Check if OpenWeather API key is set
-if st.secrets["OPENWEATHER_API_KEY"] != "" and lat != 0.0:
+if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
 
     # # Reverse geocoding with OpenWeatherMap
     # base_url = "http://api.openweathermap.org/geo/1.0/reverse?"
@@ -495,10 +508,6 @@ dfMap = dfMap[dfMap['Longitude'] != "-"]
 if dfMap.empty:
     st.write("Keine Koordinaten in diesem Zeitraum vorhanden.")
 else:
-    # Convert the latitude and longitude to float
-    # TODO Latitude and longitude are switched in camera
-    last_latitude = float(dfMap['Longitude'].iloc[-1])
-    last_longitude = float(dfMap['Latitude'].iloc[-1])
 
     st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
 
@@ -567,14 +576,6 @@ if st.session_state.userIsLoggedIn:
         shutdown = st.toggle(
             "Shutdown", help="Kamera nach Bildaufnahme ausschalten.")
 
-        # Zeitzone auswählen
-        st.header("Zeitzone auswählen")
-        timezone_selection = st.selectbox(
-            "Bitte wählen Sie eine Zeitzone aus:",
-            options=pytz.all_timezones,
-            index=pytz.all_timezones.index('Europe/Zurich'),
-        )
-        # timezone = pytz.timezone(timezone_selection)
 
 # Display the dataframe
 with st.expander("Diagnosedaten"):
@@ -636,6 +637,9 @@ with st.expander("Diagnosedaten"):
     #             help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
     #         )
 
+    st.write("")
+    st.write(f"Kamera ID: {cameraID}")
+
 # Display the errors
 with st.expander("Fehlermeldungen"):
     # Display the errors (not nan)
@@ -649,7 +653,3 @@ with st.expander("Fehlermeldungen"):
     if st.button("❄️⛄"):
         st.snow()
 
-
-# TODO Move to better location
-st.write("")
-st.write(f"Kamera ID: {cameraID}")
