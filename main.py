@@ -12,6 +12,7 @@ from ftplib import FTP
 from picamera2 import Picamera2
 from libcamera import controls
 from yaml import safe_load
+import serial
 
 ###########################
 # Configuration and filenames
@@ -37,7 +38,7 @@ filePath = "/home/pi/"  # Path where files are saved
 
 # Read config.yaml file
 try:
-    with open(f"{filePath}config.yaml", 'r') as file:
+    with open(f"{filePath}config.yaml", 'r', encoding='utf-8') as file:
         config = safe_load(file)
 except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
@@ -57,14 +58,16 @@ for i in range(5):
         ftp.login(user=config["username"], passwd=config["password"])
         connectedToFTP = True
     except Exception as e:
-        error += f"Could not connect to FTP server: {str(e)}"
+        if i > 1:
+            error += f"Could not connect to FTP server: {str(e)}"
         print(f"Could not connect to FTP server: {str(e)}")
         connectedToFTP = False
     
     if not connectedToFTP:
         # Wait 5 seconds and try again
         print(f". Attempt {i+1}/5 failed - trying again in 5 seconds.")
-        error += f". Attempt {i+1}/5 failed - trying again in 5 seconds."
+        if i > 1:
+            error += f". Attempt {i+1}/5 failed - trying again in 5 seconds."
         sleep(5)
     else:
         break
@@ -116,7 +119,7 @@ except Exception as e:
 
 # Read settings file
 try:
-    with open(f"{filePath}settings.yaml", 'r') as file:
+    with open(f"{filePath}settings.yaml", 'r', encoding='utf-8') as file:
         settings = safe_load(file)
 except Exception as e:
     print(f"Could not open settings.yaml: {str(e)}")
@@ -151,8 +154,6 @@ except Exception as e:
 # Schedule script
 ###########################
 def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
-
-    startTimeHour = startTimeHour + 1
 
     # Basic validity check of parameters
     if startTimeHour < 0 or startTimeHour > 24:
@@ -204,8 +205,9 @@ except Exception as e:
     schedule = generate_schedule(8, 0, 30, 5, 8)
 
 # Compare old schedule file to new one
+# TODO Rewrite with better RWX permissions
 try:
-    with open("/home/pi/wittypi/schedule.wpi", "r") as f:
+    with open("/home/pi/wittypi/schedule.wpi", "r", encoding='utf-8') as f:
         oldSchedule = f.read()
         
         if oldSchedule != schedule:
@@ -213,14 +215,14 @@ try:
             # Write new schedule file
             print("Writing and applying new schedule file.")
             
-            with open("/home/pi/wittypi/schedule.wpi", "w") as f:
+            with open("/home/pi/wittypi/schedule.wpi", "w", encoding='utf-8') as f:
                 f.write(schedule)
 
         else:
             print("Schedule did not change.")
 except:
     # Write a new file if it doesn't exist
-    with open("/home/pi/wittypi/schedule.wpi", "x") as f:
+    with open("/home/pi/wittypi/schedule.wpi", "x", encoding='utf-8') as f:
         f.write(schedule)
 
 try:
@@ -235,7 +237,6 @@ try:
         output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
         output = output.split("\n")[1:3]
 
-    # TODO: Maybe extra field in CSV
     print(f"{output[0]}\n{output[1]}")
     nextStartupTime = output[1][-19:]
 except Exception as e:
@@ -259,8 +260,8 @@ def sendATCommand(command, back, timeout):
         print(command + ' ERROR')
         print(command + ' back:\t' + rec_buff.decode())
         return 0
-    else:
-        return rec_buff.decode()
+    
+    return rec_buff.decode()
     
 # Get current signal quality
 # https://www.manualslib.com/download/1593302/Simcom-Sim7000-Series.html
@@ -280,11 +281,11 @@ def getCurrentSignalQuality():
         if 'OK' not in rec_buff.decode():
             print('Error getting signal quality - back:\t' + rec_buff.decode())
             return ""
-        else:
-            currentSignalQuality = rec_buff.decode()[8:10]
-            currentSignalQuality = currentSignalQuality.replace("\n", "")
-            currentSignalQuality = ''.join(ch for ch in currentSignalQuality if ch.isdigit()) # Remove non-numeric characters
-            return currentSignalQuality
+        
+        currentSignalQuality = rec_buff.decode()[8:10]
+        currentSignalQuality = currentSignalQuality.replace("\n", "")
+        currentSignalQuality = ''.join(ch for ch in currentSignalQuality if ch.isdigit()) # Remove non-numeric characters
+        return currentSignalQuality
     except Exception as e:
         error += f"Could not get current signal quality: {str(e)}"
         print(f"Could not get current signal quality: {str(e)}")
@@ -348,7 +349,6 @@ def getGPSPos():
     
 # See Waveshare documentation
 try:
-    import serial
     # TODO: Test timeout
     ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
     ser.flushInput()

@@ -128,16 +128,23 @@ sudo ufw enable
 # Add main.py to automatically run before wittyPi script
 # echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
 
+# TODO Remove UWI
+# See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
+# sudo update-rc.d uwi remove
+# sudo rm /etc/init.d/uwi
+# sudo rm -r ~/uwi
+
+
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
 echo '|              Glacier Camera Software Installation Completed!  :)             |'
+echo '|                         Rebooting in 5 seconds...                            |'
 echo '|                                                                              |'
 echo '================================================================================'
 echo ''
 # TODO Maybe add some nice ASCII art
 
 # Reboot to apply changes
-echo 'Rebooting in 5 seconds...'
 sleep 5
 sudo reboot
