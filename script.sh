@@ -21,18 +21,17 @@ echo '==========================================================================
 echo ''
 
 # Install required packages
-PACKAGES="minicom p7zip-full python3-pip ufw" # picamera2 is preinstalled
+PACKAGES="minicom p7zip-full ufw python3.11-venv" # picamera2 is preinstalled
 
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
 
-# Install pyserial with pip
-sudo pip3 install pyserial
-
-# Install pyyaml with pip
-sudo pip3 install pyyaml
+python3 -m venv /home/pi/venv # Create virtual environment
+source /home/pi/venv/bin/activate # Activate virtual environment
+pip install pyserial # Install pyserial with pip
+sudo pip3 install pyyaml # Install pyyaml with pip
 
 echo ''
 echo '================================================================================'
@@ -126,7 +125,7 @@ sudo ufw enable
 # sudo sh install.sh
 
 # Add main.py to automatically run before wittyPi script
-# echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
+# echo "sudo /home/pi/venv/bin/python /home/pi/main.py" >> /home/pi/wittypi/runScript.sh
 
 # TODO Remove UWI
 # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
