@@ -89,13 +89,13 @@ sudo raspi-config nonint do_i2c 0
 sudo raspi-config nonint do_onewire 1
 
 # Disable LED and other unused hardware
-# echo "boot_delay=0" | sudo tee -a /boot/config.txt
-# echo "disable_splash=1" | sudo tee -a /boot/config.txt
+echo "boot_delay=0" | sudo tee -a /boot/config.txt
+echo "disable_splash=1" | sudo tee -a /boot/config.txt
 echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
 # echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 
 # Add quiet flag to cmdline.txt to mute boot messages
-# sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
+sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
 
 # Change the DNS server to Cloudflare and Google
 echo "static domain_name_servers=1.1.1.1 8.8.8.8" | sudo tee -a /etc/dhcpcd.conf
@@ -112,22 +112,19 @@ sudo ufw enable
 
 # This was disabled, because it currently doesn't work because of permission
 # TODO Maybe reenable in the future, once the root cause is found
-# TODO: Disable UWI after installation - see https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
 
 # Install WittyPi Software
 # See: https://www.uugear.com/product/witty-pi-4-mini/
-# cd /home/pi
-# wget https://www.uugear.com/repo/WittyPi4/install.sh
-# sudo sh install.sh
+wget -O - https://www.uugear.com/repo/WittyPi4/install.sh | sudo bash
 
-# Add main.py to automatically run before wittyPi script
-# echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/runScript.sh
+# Add main.py to automatically run before Witty Pi script
+echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/runScript.sh
 
-# TODO Remove UWI
+# Remove UUGear Web Interface (UWI)
 # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
-# sudo update-rc.d uwi remove
-# sudo rm /etc/init.d/uwi
-# sudo rm -r ~/uwi
+sudo update-rc.d uwi remove
+sudo rm /etc/init.d/uwi
+sudo rm -r ~/uwi
 
 
 echo ''

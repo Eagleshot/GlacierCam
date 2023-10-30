@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 
+# TODO Better exception handling
+
 # Import required libraries
 from io import BytesIO, StringIO
 from subprocess import check_output, STDOUT
