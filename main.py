@@ -136,7 +136,7 @@ def syncWittyPiTimeWithNetwork():
 
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && net_to_system && system_to_rtc"
-        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
         output = output.replace("\n", "")
         print(f"Time synchronized with network: {output}")
     except Exception as e:
@@ -221,6 +221,7 @@ try:
         else:
             print("Schedule did not change.")
 except:
+    # TODO: What if folder does not exist?
     # Write a new file if it doesn't exist
     with open("/home/pi/wittypi/schedule.wpi", "x", encoding='utf-8') as f:
         f.write(schedule)
@@ -228,13 +229,13 @@ except:
 try:
     # Apply new schedule
     command = "cd /home/pi/wittypi && sudo ./runScript.sh"
-    output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+    output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
     output = output.split("\n")[1:3]
 
     # If output contains warning
     if "Warning" in output[1]:
         syncWittyPiTimeWithNetwork() # Sync time and try again
-        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
         output = output.split("\n")[1:3]
 
     print(f"{output[0]}\n{output[1]}")
@@ -350,7 +351,7 @@ def getGPSPos():
 # See Waveshare documentation
 try:
     # TODO: Test timeout
-    ser = serial.Serial('/dev/ttyUSB2', 115200)  # USB connection
+    ser = serial.Serial('/dev/ttyUSB2', 115200, parity=serial.PARITY_EVEN, timeout=10)  # USB connection
     ser.flushInput()
 
     # Enable GPS to later read out position
@@ -442,7 +443,7 @@ except Exception as e:
 def getWittyPiTemperature():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
-        currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
         currentTemperature = currentTemperature.replace("\n", "")
         currentTemperature = currentTemperature.split(" / ", maxsplit = 1)[0] # Remove the Farenheit reading
         currentTemperature = currentTemperature[:-2] # Remove °C
@@ -457,7 +458,7 @@ def getWittyPiTemperature():
 def getWittyPiBatteryVoltage():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
-        currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
         currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
         print(f"Battery voltage: {currentBatteryVoltage}V")
         return currentBatteryVoltage
@@ -471,7 +472,7 @@ def getWittyPiBatteryVoltage():
 def getWittyPiVoltage():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
-        raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+        raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
         raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
         print(f"Output voltage: {raspberryPiVoltage}V")
         return raspberryPiVoltage
@@ -485,7 +486,7 @@ def getWittyPiVoltage():
 # def getWittyPiCurrent():
 #     try:
 #         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True)
+#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
 #         currentPowerDraw = currentPowerDraw.replace("\n", "")
 #         print(f"Output current: {currentPowerDraw}A")
 #         return currentPowerDraw
