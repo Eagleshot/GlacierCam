@@ -131,7 +131,6 @@ except Exception as e:
 def syncWittyPiTimeWithNetwork():
 
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
-    # Wait for 100s
     sleep(60)
 
     try:
