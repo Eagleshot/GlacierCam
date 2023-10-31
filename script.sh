@@ -21,13 +21,18 @@ echo '==========================================================================
 echo ''
 
 # Install required packages
-# With Pi OS Bookworm python packages need to be installed with apt or venv
-PACKAGES="minicom p7zip-full ufw python3-serial python3-yaml python3-picamera2"
+PACKAGES="minicom p7zip-full python3-pip ufw" # picamera2 is preinstalled
 
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
+
+# Install pyserial with pip
+sudo pip3 install pyserial
+
+# Install pyyaml with pip
+sudo pip3 install pyyaml
 
 echo ''
 echo '================================================================================'
@@ -38,7 +43,7 @@ echo '==========================================================================
 echo ''
 # Install Waveshare SIM7600G-H 4G/LTE HAT driver
 # See: https://core-electronics.com.au/guides/raspberry-pi/raspberry-pi-4g-gps-hat/ (slightly modified to work with the (B) version)
-sudo raspi-config nonint do_serial_hw 0 # Enable serial port communication
+sudo raspi-config nonint do_serial 2 # Enable serial port communication
 
 wget "https://www.waveshare.com/w/upload/4/4e/SIM7600X-4G-HAT(B)-Demo.7z" -P /tmp # Download SIm-7600G-H code
 7z x /tmp/SIM7600X-4G-HAT\(B\)-Demo.7z -o/home/pi/ # Unzip code
@@ -88,16 +93,14 @@ sudo raspi-config nonint do_i2c 0
 # Disable 1-wire interface
 sudo raspi-config nonint do_onewire 1
 
-# Disable the splash screen
-sudo raspi-config nonint do_boot_splash 1
-
 # Disable LED and other unused hardware
-echo "boot_delay=0" | sudo tee -a /boot/config.txt
+# echo "boot_delay=0" | sudo tee -a /boot/config.txt
+# echo "disable_splash=1" | sudo tee -a /boot/config.txt
 echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
 # echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 
 # Add quiet flag to cmdline.txt to mute boot messages
-sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
+# sudo sed -i 's/$/ quiet/' /boot/cmdline.txt
 
 # Change the DNS server to Cloudflare and Google
 echo "static domain_name_servers=1.1.1.1 8.8.8.8" | sudo tee -a /etc/dhcpcd.conf
@@ -114,19 +117,22 @@ sudo ufw enable
 
 # This was disabled, because it currently doesn't work because of permission
 # TODO Maybe reenable in the future, once the root cause is found
+# TODO: Disable UWI after installation - see https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
 
 # Install WittyPi Software
 # See: https://www.uugear.com/product/witty-pi-4-mini/
-wget -O - https://www.uugear.com/repo/WittyPi4/install.sh | sudo bash
+# cd /home/pi
+# wget https://www.uugear.com/repo/WittyPi4/install.sh
+# sudo sh install.sh
 
-# Add main.py to automatically run before Witty Pi script
-echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/runScript.sh
+# Add main.py to automatically run before wittyPi script
+# echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
 
-# Remove UUGear Web Interface (UWI)
+# TODO Remove UWI
 # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
-sudo update-rc.d uwi remove
-sudo rm /etc/init.d/uwi
-sudo rm -r ~/uwi
+# sudo update-rc.d uwi remove
+# sudo rm /etc/init.d/uwi
+# sudo rm -r ~/uwi
 
 
 echo ''
