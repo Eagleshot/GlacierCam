@@ -1,3 +1,4 @@
+"""Webserver for the Eagleshot GlacierCam - https://github.com/Eagleshot/GlacierCam"""
 from ftplib import FTP
 from io import BytesIO
 from datetime import datetime
@@ -7,7 +8,7 @@ import pandas as pd
 from yaml import safe_load
 import altair as alt
 import pytz
-from suntime import Sun
+from suntime import Sun, SunTimeException
 import requests
 
 # FTP server credentials
@@ -37,8 +38,8 @@ st.set_page_config(
 
 # Hide footer and menu
 # See: https://discuss.streamlit.io/t/remove-made-with-streamlit-from-bottom-of-app/1370/2
-hide_streamlit_style = """<style>footer {visibility: hidden;}</style>"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+STREAMLIT_HIDE_FOOTER = """<style>footer {visibility: hidden;}</style>"""
+st.markdown(STREAMLIT_HIDE_FOOTER, unsafe_allow_html=True)
 
 # Change the camera selection
 with st.sidebar:
@@ -89,18 +90,18 @@ def getFileLastModifiedDate(filename: str) -> datetime:
 
     return last_modified
 
-@st.cache_data(show_spinner=False)
-def getFileFromFTP(filename: str, last_modified: datetime) -> None:
+@st.cache_data(show_spinner=False, ttl=60)
+def get_file_ftp(filename: str) -> None:
+    '''Download a file from the FTP server.'''
     # Retrieve the file data
     ftp.retrbinary(f"RETR {filename}", open(filename, 'wb').write)
 
-# Download diagnostics.csv as file with utf-8 encoding
-# TODO Also read first line
-# TODO Get file from ftp
-ftp.retrbinary('RETR diagnostics.csv', open('df.csv', 'wb').write)
-df = pd.read_csv('df.csv', encoding='utf-8')
+# Download diagnostics file
+get_file_ftp("diagnostics.csv")
+df = pd.read_csv('diagnostics.csv', encoding='utf-8')
 
 # Rename the columns
+# TODO Also read first line
 # TODO: Maybe do column naming in the main.py script
 df.rename(columns={df.columns[0]: 'Timestamp'}, inplace=True)
 df.rename(columns={df.columns[1]: 'Next Startup'}, inplace=True)
@@ -145,7 +146,7 @@ with st.sidebar:
 
         # Filter the dataframe
         # TODO
-        # df = df[(df['Timestamp'] >= startDateTime)
+        #df = df[(df['Timestamp'] >= startDateTime)
         #         & (df['Timestamp'] <= endDateTime)]
 
     # Zeitzone auswählen
@@ -294,27 +295,18 @@ st.divider()
 # Weather widget
 ##############################################
 
-
 dfMap = df[df['Latitude'] != "-"]
 dfMap = dfMap[dfMap['Longitude'] != "-"]
 
-# If location is available
-if not dfMap.empty:
-    last_latitude = float(dfMap['Latitude'].iloc[-1])
-    last_longitude = float(dfMap['Longitude'].iloc[-1])
-
-
-# Check if OpenWeather API key is set
+# Check if OpenWeather API key is set and location is available
 if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
+
+    latitude = float(dfMap['Latitude'].iloc[-1])
+    longitude = float(dfMap['Longitude'].iloc[-1])
 
     # Get weather data from OpenWeatherMap
     BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
-
-    complete_url = BASE_URL + "appid=" + \
-        st.secrets["OPENWEATHER_API_KEY"] + "&lat=" + \
-        str(lat) + "&lon=" + str(lon) + "&units=metric&lang=de"
-
-    # Get the response
+    complete_url = f"{BASE_URL}appid={st.secrets['OPENWEATHER_API_KEY']}&lat={latitude}&lon={longitude}&units=metric&lang=de"
     response = requests.get(complete_url, timeout=5)
 
     # Convert the response to json
@@ -409,28 +401,29 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
 ##############################################
 
 try:
-    sun = Sun(lat, lon)
-    sunrise = sun.get_sunrise_time()
-    sunrise = sunrise.astimezone(timezone)
-    sunrise = sunrise.strftime('%H:%M Uhr')
+    if not dfMap.empty:
+        sun = Sun(latitude, longitude)
+        sunrise = sun.get_sunrise_time()
+        sunrise = sunrise.astimezone(timezone)
+        sunrise = sunrise.strftime('%H:%M Uhr')
 
-    sunset = sun.get_sunset_time()
-    sunset = sunset.astimezone(timezone)
-    sunset = sunset.strftime('%H:%M Uhr')
+        sunset = sun.get_sunset_time()
+        sunset = sunset.astimezone(timezone)
+        sunset = sunset.strftime('%H:%M Uhr')
 
-    st.header("Sonnenauf- und Untergang", anchor=False)
-    st.text("")
+        st.header("Sonnenauf- und Untergang", anchor=False)
+        st.text("")
 
-    col1, col2, col3 = st.columns([0.5, 1, 1])
-    col2.image("https://openweathermap.org/img/wn/01d@2x.png")
-    col2.metric("Sonnenaufgang", sunrise)
-    col3.image("https://openweathermap.org/img/wn/01n@2x.png")
-    col3.metric("Sonnenuntergang", sunset)
+        col1, col2, col3 = st.columns([0.5, 1, 1])
+        col2.image("https://openweathermap.org/img/wn/01d@2x.png")
+        col2.metric("Sonnenaufgang", sunrise)
+        col3.image("https://openweathermap.org/img/wn/01n@2x.png")
+        col3.metric("Sonnenuntergang", sunset)
 
-    st.divider()
+        st.divider()
 
-except:
-    pass
+except SunTimeException as e:
+    print(f"Error with SunTime: {e}")
 
 ##############################################
 # Charts
@@ -491,21 +484,14 @@ st.altair_chart(chart, use_container_width=True)
 # Map
 ##############################################
 
-st.header("Standort", anchor=False)
+if not dfMap.empty:
 
-# Remove rows with no coordinates
-dfMap = df[df['Latitude'] != "-"]
-dfMap = dfMap[dfMap['Longitude'] != "-"]
-
-if dfMap.empty:
-    st.write("Keine Koordinaten in diesem Zeitraum vorhanden.")
-else:
-
-    st.map(pd.DataFrame({'lat': [last_latitude], 'lon': [last_longitude]}))
+    st.header("Standort", anchor=False)
+    st.map(pd.DataFrame({'lat': [latitude], 'lon': [longitude]}))
 
     # Print coordinates
     st.write(
-        f"Breitengrad: {last_latitude}, Längengrad: {last_longitude}, Höhe: {dfMap['Heigth'].iloc[-1]}m - [Google Maps](https://www.google.com/maps/search/?api=1&query={last_latitude},{last_longitude})")
+        f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['Heigth'].iloc[-1]}m - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
 
     # Print timestamp
     st.markdown(
@@ -515,41 +501,22 @@ else:
 st.write("")
 st.write("")
 
+##############################################
+# Settings and diagnostics
+##############################################
 
 # Read settings.yaml and display it
 ftp.retrbinary('RETR settings.yaml', open('settings.yaml', 'wb').write)
 
-# Display the settings
-with st.expander("Einstellungen"):
-
-    with open('settings.yaml', encoding='utf-8') as file:
-        settings = safe_load(file)
-
-    # Display the settings
-    st.write(settings)
-
-# settings.yaml
-# {
-#     "lensPosition": 0
-#     "resolution": [
-#         0:
-#         0
-#         1:
-#         0
-#     ]
-#     "startTimeHour": 6
-#     "startTimeMinute": 0
-#     "intervalMinutes": 10
-#     "maxDurationMinute": 5
-#     "repetitionsPerday": 96
-#     "timeSync": false
-#     "enableGPS": false
-#     "shutdown": true
-# }
-
 # TODO Settings
 if True: # st.session_state.userIsLoggedIn:
-    with st.expander("Einstellungen anpassen"):
+    with st.expander("Einstellungen"):
+
+        with open('settings.yaml', encoding='utf-8') as file:
+            settings = safe_load(file)
+
+        # Display the settings
+        st.write(settings)
 
         st.write("Kamera")
         autofocusON = st.toggle(
@@ -579,65 +546,63 @@ if True: # st.session_state.userIsLoggedIn:
         shutdown = st.toggle(
             "Shutdown", help="Kamera nach Bildaufnahme ausschalten.")
 
-# Display the dataframe
-with st.expander("Diagnosedaten"):
+    # Display the dataframe
+    with st.expander("Diagnosedaten"):
 
-    st.dataframe(df)
+        st.dataframe(df)
 
-    # Check if wittyPiDiagnostics.txt exists
-    if "wittyPiDiagnostics.txt" in files:
+        # Check if wittyPiDiagnostics.txt exists
+        if "wittyPiDiagnostics.txt" in files:
 
-        # Retrieve the file data
-        ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
+            # Retrieve the file data
+            ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
 
-        # Get last modification date
-        lastModified = ftp.sendcmd("MDTM wittyPiDiagnostics.txt")
-        lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
-        lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
+            # Get last modification date
+            lastModified = ftp.sendcmd("MDTM wittyPiDiagnostics.txt")
+            lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
+            lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
 
-        with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
-            # Download wittyPiDiagnostics.txt
-            st.download_button(
-                label="WittyPi Diagnostics herunterladen 📝",
-                data=file,
-                file_name="wittyPiDiagnostics.txt",
-                mime="text/plain",
-                use_container_width=True,
-                help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
-            )
+            with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
+                # Download wittyPiDiagnostics.txt
+                st.download_button(
+                    label="WittyPi Diagnostics herunterladen 📝",
+                    data=file,
+                    file_name="wittyPiDiagnostics.txt",
+                    mime="text/plain",
+                    use_container_width=True,
+                    help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
+                )
 
-    # # Check if wittyPiSchedule.txt exists
-    # if "wittyPiSchedule.txt" in files:
-        
-    #     # Retrieve the file data
-    #     ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
+        # # Check if wittyPiSchedule.txt exists
+        # if "wittyPiSchedule.txt" in files:
+            
+        #     # Retrieve the file data
+        #     ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
 
-    #     # Get last modification date
-    #     lastModified = ftp.sendcmd("MDTM wittyPiSchedule.txt")
-    #     lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
-    #     lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
+        #     # Get last modification date
+        #     lastModified = ftp.sendcmd("MDTM wittyPiSchedule.txt")
+        #     lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
+        #     lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
 
-    #     with open('wittyPiSchedule.txt', encoding='utf-8') as file:
-    #         # Download wittyPiSchedule.txt
-    #         st.download_button(
-    #             label="WittyPi Schedule herunterladen 📝",
-    #             data=file,
-    #             file_name="wittyPiSchedule.txt",
-    #             mime="text/plain",
-    #             use_container_width=True,
-    #             help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
-    #         )
+        #     with open('wittyPiSchedule.txt', encoding='utf-8') as file:
+        #         # Download wittyPiSchedule.txt
+        #         st.download_button(
+        #             label="WittyPi Schedule herunterladen 📝",
+        #             data=file,
+        #             file_name="wittyPiSchedule.txt",
+        #             mime="text/plain",
+        #             use_container_width=True,
+        #             help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
+        #         )
 
-    st.write("")
-    st.write(f"Kamera ID: {camera_ID}")
+        st.write("")
+        st.write(f"Kamera ID: {camera_ID}")
 
-# Display the errors
-with st.expander("Fehlermeldungen"):
-    # Display the errors (not nan)
-    dfError = df[df['Error'].notna()]
-    # Display error message and timestamp as text in reverse order
-    for index, row in dfError[::-1].iterrows():
-        st.write(row['Timestamp'].strftime(
-            "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
-
-
+    # Display the errors
+    with st.expander("Fehlermeldungen"):
+        # Display the errors (not nan)
+        dfError = df[df['Error'].notna()]
+        # Display error message and timestamp as text in reverse order
+        for index, row in dfError[::-1].iterrows():
+            st.write(row['Timestamp'].strftime(
+                "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
