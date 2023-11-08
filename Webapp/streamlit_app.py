@@ -82,6 +82,7 @@ st.title(cameraname, anchor=False)
 # Placeholder for the image
 imagePlaceholder = st.empty()
 
+@st.cache_data(show_spinner=False, ttl=60)
 def getFileLastModifiedDate(filename: str) -> datetime:
     '''Get the last modification date of a file on the FTP server.'''
     last_modified = ftp.sendcmd(f"MDTM {filename}")
@@ -144,10 +145,13 @@ with st.sidebar:
         startDateTime = datetime.combine(startDate, startTime)
         endDateTime = datetime.combine(endDate, endTime)
 
-        # Filter the dataframe
-        # TODO
-        #df = df[(df['Timestamp'] >= startDateTime)
-        #         & (df['Timestamp'] <= endDateTime)]
+        # Check if the start date is before the end date
+        if startDateTime >= endDateTime:
+            st.error("Das Enddatum muss nach dem Startdatum liegen.")
+        else:
+            # Filter the dataframe
+            df = df[(df['Timestamp'] >= startDateTime)
+                    & (df['Timestamp'] <= endDateTime)]
 
     # Zeitzone auswählen
     # TODO
