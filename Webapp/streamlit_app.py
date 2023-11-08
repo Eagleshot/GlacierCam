@@ -241,10 +241,10 @@ try:
 except:
     index = -1
 
-col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]}V")
+col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]} V")
 col2.metric("Interne Spannung",
-            f"{df['Internal Voltage (V)'].iloc[index]}V")
-col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]}°C")
+            f"{df['Internal Voltage (V)'].iloc[index]} V")
+col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]} °C")
 col4.metric("Signalqualität", df['Signal Quality'].iloc[index])
 
 st.write("")
@@ -343,7 +343,7 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
         current_humidity = weather_data["main"]["humidity"]
 
         # Wind speed and direction
-        wind_speed = weather_data["wind"]["speed"].__round__(1)
+        wind_speed = round(weather_data["wind"]["speed"], 1)
         wind_direction = weather_data["wind"]["deg"]
 
         # Convert wind direction to text
@@ -386,16 +386,16 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
         visibility = weather_data["visibility"]
 
         if visibility < 1000:
-            visibility = f"{visibility}m"
+            visibility = f"{visibility} m"
         else:
-            visibility = f"{int(visibility/1000)}km"
+            visibility = f"{int(visibility/1000)} km"
 
         col1, col2 = st.columns([1.5, 1])
 
         col1.header("Wetter", anchor=False)
         # col1.caption(f"{name}, {country}")
         col1.text("")
-        col1.markdown(f"### :grey[Temperatur: {current_temperature}°C]")
+        col1.markdown(f"### :grey[Temperatur: {current_temperature} °C]")
         col2.text("")
         col2.text("")
         col2.text("")
@@ -404,10 +404,10 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
         st.text("")
 
         col1, col2, col3, col4 = st.columns(4, gap="medium")
-        col1.metric("Wind", f"{wind_speed}m/s",
+        col1.metric("Wind", f"{wind_speed} m/s",
                     delta=WIND_DIRECTION_TEXT, delta_color="off")
-        col2.metric("Luftdruck", f"{current_pressure}hPa")
-        col3.metric("Luftfeuchtigkeit", f"{current_humidity}%")
+        col2.metric("Luftdruck", f"{current_pressure} hPa")
+        col3.metric("Luftfeuchtigkeit", f"{current_humidity} %")
         col4.metric("Sichtweite", f"{visibility}")
 
         st.text("")
@@ -415,9 +415,6 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
             "Daten von [OpenWeatherMap](https://openweathermap.org).")
 
         st.divider()
-
-    else:
-        print(f"Error with OpenWeatherMap: {weather_data['cod']}")
 
 ##############################################
 # Sunrise and sunset
@@ -454,7 +451,7 @@ except SunTimeException as e:
 
 # Battery Voltage
 st.header("Batterie", anchor=False)
-st.write(f"Letzte Messung: {str(df['Battery Voltage (V)'].iloc[-1])}V")
+st.write(f"Letzte Messung: {str(df['Battery Voltage (V)'].iloc[-1])} V")
 
 chart = alt.Chart(df).mark_line().encode(
     x=alt.X('Timestamp:T', axis=alt.Axis(
@@ -467,7 +464,7 @@ st.altair_chart(chart, use_container_width=True)
 
 # Internal Voltage
 st.header("Interne Spannung", anchor=False)
-st.write(f"Letzte Messung: {str(df['Internal Voltage (V)'].iloc[-1])}V")
+st.write(f"Letzte Messung: {str(df['Internal Voltage (V)'].iloc[-1])} V")
 
 chart = alt.Chart(df).mark_line().encode(
     x=alt.X('Timestamp:T', axis=alt.Axis(
@@ -480,7 +477,7 @@ st.altair_chart(chart, use_container_width=True)
 
 # Temperature
 st.header("Temperatur", anchor=False)
-st.write(f"Letzte Messung: {str(df['Temperature (°C)'].iloc[-1])}°C")
+st.write(f"Letzte Messung: {str(df['Temperature (°C)'].iloc[-1])} °C")
 
 chart = alt.Chart(df).mark_line().encode(
     x=alt.X('Timestamp:T', axis=alt.Axis(
@@ -582,9 +579,7 @@ if True: # st.session_state.userIsLoggedIn:
             ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
 
             # Get last modification date
-            lastModified = ftp.sendcmd("MDTM wittyPiDiagnostics.txt")
-            lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
-            lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
+            lastModified = getFileLastModifiedDate("wittyPiDiagnostics.txt")
 
             with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
                 # Download wittyPiDiagnostics.txt
@@ -597,27 +592,25 @@ if True: # st.session_state.userIsLoggedIn:
                     help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
                 )
 
-        # # Check if wittyPiSchedule.txt exists
-        # if "wittyPiSchedule.txt" in files:
+        # Check if wittyPiSchedule.txt exists
+        if "wittyPiSchedule.txt" in files:
             
-        #     # Retrieve the file data
-        #     ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
+            # Retrieve the file data
+            ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
 
-        #     # Get last modification date
-        #     lastModified = ftp.sendcmd("MDTM wittyPiSchedule.txt")
-        #     lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
-        #     lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
+            # Get last modification date
+            lastModified = getFileLastModifiedDate("wittyPiSchedule.txt")
 
-        #     with open('wittyPiSchedule.txt', encoding='utf-8') as file:
-        #         # Download wittyPiSchedule.txt
-        #         st.download_button(
-        #             label="WittyPi Schedule herunterladen 📝",
-        #             data=file,
-        #             file_name="wittyPiSchedule.txt",
-        #             mime="text/plain",
-        #             use_container_width=True,
-        #             help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
-        #         )
+            with open('wittyPiSchedule.txt', encoding='utf-8') as file:
+                # Download wittyPiSchedule.txt
+                st.download_button(
+                    label="WittyPi Schedule herunterladen 📝",
+                    data=file,
+                    file_name="wittyPiSchedule.txt",
+                    mime="text/plain",
+                    use_container_width=True,
+                    help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
+                )
 
         st.write("")
         st.write(f"Kamera ID: {camera_ID}")
