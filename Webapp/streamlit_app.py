@@ -313,12 +313,9 @@ if location_overwrite:
 dfMap = df[df['Latitude'] != "-"]
 dfMap = dfMap[dfMap['Longitude'] != "-"]
 
-# Check if OpenWeather API key is set and location is available
-if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
-
-    latitude = float(dfMap['Latitude'].iloc[-1])
-    longitude = float(dfMap['Longitude'].iloc[-1])
-
+@st.cache_data(show_spinner=False, ttl=300)
+def get_weather_data(latitude: float, longitude: float) -> dict:
+    '''Get weather data from OpenWeatherMap.'''
     # Get weather data from OpenWeatherMap
     BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
     complete_url = f"{BASE_URL}appid={st.secrets['OPENWEATHER_API_KEY']}&lat={latitude}&lon={longitude}&units=metric&lang=de"
@@ -326,6 +323,17 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
 
     # Convert the response to json
     weather_data = response.json()
+
+    return weather_data
+
+# Check if OpenWeather API key is set and location is available
+if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
+
+    latitude = float(dfMap['Latitude'].iloc[-1])
+    longitude = float(dfMap['Longitude'].iloc[-1])
+
+    # Get weather data from OpenWeatherMap
+    weather_data = get_weather_data(latitude, longitude)
 
     if weather_data["cod"] == 200:
 
@@ -358,7 +366,7 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
         else:
             WIND_DIRECTION_TEXT = "N"
 
-        # Get the icon from openweathermap
+        # Get the icon from OpenWeatherMap
         icon = weather_data["weather"][0]["icon"]
         icon_url = f"http://openweathermap.org/img/wn/{icon}@4x.png"
 
@@ -407,6 +415,9 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
             "Daten von [OpenWeatherMap](https://openweathermap.org).")
 
         st.divider()
+
+    else:
+        print(f"Error with OpenWeatherMap: {weather_data['cod']}")
 
 ##############################################
 # Sunrise and sunset
