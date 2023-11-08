@@ -506,8 +506,9 @@ if not dfMap.empty:
         f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['Heigth'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
 
     # Print timestamp
-    st.markdown(
-        f"Letztes Standortupdate: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
+    if not location_overwrite:
+        st.markdown(
+            f"Letztes Standortupdate: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
 
 # Add a linebreak
 st.write("")
