@@ -66,24 +66,37 @@ files = ftp.nlst()
 ftp.cwd("..") # TODO Remove
 
 # Only show the image files
-files = [file for file in files if file.endswith(".jpg")]
+imgFiles = [file for file in files if file.endswith(".jpg")]
 
 # Camera name
-# TODO Display camera id
-if len(files) > 0:
-    cameraname = files[-1][15:-21]
-    cameraID = files[-1][-20:-4]
+if len(imgFiles) > 0:
+    cameraname = imgFiles[-1][15:-21]
+    camera_ID = imgFiles[-1][-20:-4]
 else:
     cameraname = FTP_FOLDER
-    cameraID = "ERROR000000000"
+    camera_ID = "ERROR000000000"
 
 st.title(cameraname, anchor=False)
 
 # Placeholder for the image
 imagePlaceholder = st.empty()
 
+def getFileLastModifiedDate(filename: str) -> datetime:
+    '''Get the last modification date of a file on the FTP server.'''
+    last_modified = ftp.sendcmd(f"MDTM {filename}")
+    last_modified = datetime.strptime(last_modified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
+    last_modified = timezone.localize(last_modified) # Convert last modification date to local timezone
+
+    return last_modified
+
+@st.cache_data(show_spinner=False)
+def getFileFromFTP(filename: str, last_modified: datetime) -> None:
+    # Retrieve the file data
+    ftp.retrbinary(f"RETR {filename}", open(filename, 'wb').write)
+
 # Download diagnostics.csv as file with utf-8 encoding
 # TODO Also read first line
+# TODO Get file from ftp
 ftp.retrbinary('RETR diagnostics.csv', open('df.csv', 'wb').write)
 df = pd.read_csv('df.csv', encoding='utf-8')
 
@@ -156,31 +169,28 @@ with st.sidebar:
         st.session_state.userIsLoggedIn = True
 
 # Select slider if multiple images are available
-if len(files) > 1:
+if len(imgFiles) > 1:
     selected_file = st.select_slider(
         "Wähle ein Bild aus",
         label_visibility="hidden",  # Hide the label
-        options=files,
-        value=files[-1],
+        options=imgFiles,
+        value=imgFiles[-1],
         # Format the timestamp and dont show date if it is today
-        # '%Y%m%d_%H%M' -e.g. 20230825_1220
-
         format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(
         timezone).strftime("%Y%m%d") else f"{x[:4]}.{x[4:6]}.{x[6:8]} {x[9:11]}:{x[11:13]} Uhr"
     )
-elif len(files) == 1:
-    selected_file = files[0]
+elif len(imgFiles) == 1:
+    selected_file = imgFiles[0]
 else:
     st.write("Keine Bilder vorhanden.")
 
 @st.cache_data(show_spinner=False)
 def getImageFromFTP(selected_file):
     # Get the image file from the FTP server
-    # TODO Cleanup
-    image_data = BytesIO()
-    ftp.cwd("save")
+    image_data = BytesIO() 
+    ftp.cwd("save") # TODO Cleanup
     ftp.retrbinary(f"RETR {selected_file}", image_data.write)
-    ftp.cwd("..")
+    ftp.cwd("..") # TODO Cleanup
     image = Image.open(image_data)
 
     # Rotate the image
@@ -210,7 +220,6 @@ st.text("")
 # Overview of the last measurements
 ##############################################
 
-# TODO Maybe add delta
 col1, col2, col3, col4 = st.columns(4)
 
 try:
@@ -240,24 +249,23 @@ now = datetime.now(timezoneUTC).replace(tzinfo=None)
 timeDifference = now - lastStartup.replace(tzinfo=None)
 
 # Write difference in hours and minutes
-nextLastStartupText = "Letzter Start vor "
+next_last_startup_text = "Letzter Start vor "
 
+# Days
 if timeDifference.days > 1:
-    nextLastStartupText = nextLastStartupText + \
-        str(timeDifference.days) + " Tagen, "
+    next_last_startup_text += f"{timeDifference.days} Tagen, "
 elif timeDifference.days == 1:
-    nextLastStartupText = nextLastStartupText + \
-        str(timeDifference.days) + " Tag, "
+    next_last_startup_text += "1 Tag, "
 
+# Hours
 if timeDifference.seconds//3600 > 0:
-    nextLastStartupText = nextLastStartupText + \
-        str(timeDifference.seconds//3600) + " Stunden und "
+    next_last_startup_text += f"{timeDifference.seconds//3600} Stunden und "
 
+# Minutes
 if (timeDifference.seconds//60) % 60 > 1:
-    nextLastStartupText = nextLastStartupText + \
-        str((timeDifference.seconds//60) % 60) + " Minuten"
+    next_last_startup_text += f"{(timeDifference.seconds//60) % 60} Minuten"
 else:
-    nextLastStartupText = nextLastStartupText + "weniger als eine Minute"
+    next_last_startup_text += "weniger als eine Minute"
 
 # Print next startup relative to now
 nextStartup = df['Next Startup'].iloc[-1]
@@ -266,21 +274,19 @@ nextStartup = nextStartup + pd.Timedelta(minutes=1)
 
 # Check if next startup is in the future
 if nextStartup < now:
-    nextLastStartupText += "."
+    next_last_startup_text += "."
 else:
     timeDifference = nextStartup - now
-    nextLastStartupText = nextLastStartupText + " - nächster Start in "
-    if timeDifference.seconds//3600 > 0:
-        nextLastStartupText = nextLastStartupText + \
-            str(timeDifference.seconds//3600) + " Stunden und " + \
-            str((timeDifference.seconds//60) % 60) + " Minuten."
-    elif (timeDifference.seconds//60) % 60 > 1:
-        nextLastStartupText = nextLastStartupText + \
-            str((timeDifference.seconds//60) % 60) + " Minuten."
-    else:
-        nextLastStartupText = nextLastStartupText + "weniger als einer Minute."
+    next_last_startup_text += " - nächster Start in "
 
-st.write(nextLastStartupText)
+    if timeDifference.seconds//3600 > 0:
+        next_last_startup_text += f"{timeDifference.seconds//3600} Stunden und {(timeDifference.seconds//60) % 60} Minuten."
+    elif (timeDifference.seconds//60) % 60 > 1:
+        next_last_startup_text += f"{(timeDifference.seconds//60) % 60} Minuten."
+    else:
+        next_last_startup_text += "weniger als einer Minute."
+
+st.write(next_last_startup_text)
 
 st.divider()
 
@@ -301,24 +307,10 @@ if not dfMap.empty:
 # Check if OpenWeather API key is set
 if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
 
-    # # Reverse geocoding with OpenWeatherMap
-    # base_url = "http://api.openweathermap.org/geo/1.0/reverse?"
-
-    # complete_url = base_url + "lat=" + str(lat) + "&lon=" + str(lon) + "&limit=1&appid=" + st.secrets["OPENWEATHER_API_KEY"]
-
-    # # Get the response
-    # response = requests.get(complete_url)
-
-    # # Convert the response to json
-    # reverse_geocoding_data = response.json()
-
-    # location_name = reverse_geocoding_data[0]["name"]
-    # country = reverse_geocoding_data[0]["country"]
-
     # Get weather data from OpenWeatherMap
-    base_url = "http://api.openweathermap.org/data/2.5/weather?"
+    BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
 
-    complete_url = base_url + "appid=" + \
+    complete_url = BASE_URL + "appid=" + \
         st.secrets["OPENWEATHER_API_KEY"] + "&lat=" + \
         str(lat) + "&lon=" + str(lon) + "&units=metric&lang=de"
 
@@ -556,55 +548,63 @@ with st.expander("Einstellungen"):
 # }
 
 # TODO Settings
-if st.session_state.userIsLoggedIn:
+if True: # st.session_state.userIsLoggedIn:
     with st.expander("Einstellungen anpassen"):
 
-        st.write("Einstellungen anpassen")
-        st.write("")
-        st.write("Autofokus einstellen")
-        autofocus = st.toggle(
+        st.write("Kamera")
+        autofocusON = st.toggle(
             "Autofokus", help="Aktiviert den automatischen Autofokus der Kamera. Kann deaktiviert werden um den Fokus manuell einzustellen.")
 
-        if not autofocus:
-            lensPosition = st.slider("Linsenposition", 0, 1023, 0)
+        
+        lensPosition = st.slider("Manueller Fokus", 0, 1023, 0, disabled=autofocusON)
 
-        st.write("")
+        st.divider()
+        st.write("Zeit")
+        col1, col2 = st.columns([1, 1])
+
+        # Start time
+        startTime = col1.time_input('Startzeit', datetime.strptime(
+            "06:00", "%H:%M").time(), help="Startzeit der Aufnahme.")
+     
+        # Interval
+        intervalTime = col2.number_input("Aufnahmeintervall", 5, 720, 10, 5, help="Aufnahmeintervall in Minuten.")
+
         timeSync = st.toggle(
-            "Zeitsynchronisation", help="Aktiviert die Zeitsynchronisation der Kamera.")
+            "Zeitsynchronisation", help="Aktiviert die automatische Zeitsynchronisation der Kamera mit dem Internet.")
+        
+        st.divider()
+        st.write("Weitere Einstellungen")
         enableGPS = st.toggle(
-            "GPS aktivieren", help="Aktiviert die GPS Funktion der Kamera.")
+            "GPS aktivieren", help="Aktiviert die GPS-Funktion der Kamera. Die GPS-Antenne muss dafür angeschlossen sein!")
         shutdown = st.toggle(
             "Shutdown", help="Kamera nach Bildaufnahme ausschalten.")
-
 
 # Display the dataframe
 with st.expander("Diagnosedaten"):
 
     st.dataframe(df)
 
-    # files = ftp.nlst()
+    # Check if wittyPiDiagnostics.txt exists
+    if "wittyPiDiagnostics.txt" in files:
 
-    # # Check if wittyPiDiagnostics.txt exists
-    # if "wittyPiDiagnostics.txt" in files:
+        # Retrieve the file data
+        ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
 
-    #     # Retrieve the file data
-    #     ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
+        # Get last modification date
+        lastModified = ftp.sendcmd("MDTM wittyPiDiagnostics.txt")
+        lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
+        lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
 
-    #     # Get last modification date
-    #     lastModified = ftp.sendcmd("MDTM wittyPiDiagnostics.txt")
-    #     lastModified = datetime.strptime(lastModified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
-    #     lastModified = timezone.localize(lastModified) # Convert last modification date to local timezone
-
-    #     with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
-    #         # Download wittyPiDiagnostics.txt
-    #         st.download_button(
-    #             label="WittyPi Diagnostics herunterladen 📝",
-    #             data=file,
-    #             file_name="wittyPiDiagnostics.txt",
-    #             mime="text/plain",
-    #             use_container_width=True,
-    #             help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
-    #         )
+        with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
+            # Download wittyPiDiagnostics.txt
+            st.download_button(
+                label="WittyPi Diagnostics herunterladen 📝",
+                data=file,
+                file_name="wittyPiDiagnostics.txt",
+                mime="text/plain",
+                use_container_width=True,
+                help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
+            )
 
     # # Check if wittyPiSchedule.txt exists
     # if "wittyPiSchedule.txt" in files:
@@ -629,7 +629,7 @@ with st.expander("Diagnosedaten"):
     #         )
 
     st.write("")
-    st.write(f"Kamera ID: {cameraID}")
+    st.write(f"Kamera ID: {camera_ID}")
 
 # Display the errors
 with st.expander("Fehlermeldungen"):
@@ -640,7 +640,4 @@ with st.expander("Fehlermeldungen"):
         st.write(row['Timestamp'].strftime(
             "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
 
-    # Easteregg button which lets it snow with snow emojis
-    if st.button("❄️⛄"):
-        st.snow()
 
