@@ -16,6 +16,12 @@ FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
 
+# TODO: Latitude and longitude overwrite
+location_overwrite = True
+latitude = 46.87
+longitude = 9.88
+heigth = 1200
+
 # Login status
 if "userIsLoggedIn" not in st.session_state:
     st.session_state.userIsLoggedIn = False
@@ -117,7 +123,6 @@ df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
 df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
 
 # Convert the timestamp to datetime
-# TODO Timestamp is UTC
 df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
 
 
@@ -189,9 +194,9 @@ elif len(imgFiles) == 1:
 else:
     st.write("Keine Bilder vorhanden.")
 
-@st.cache_data(show_spinner=False)
-def getImageFromFTP(selected_file):
-    # Get the image file from the FTP server
+@st.cache_data(show_spinner=False, ttl=3600)
+def get_image_ftp(selected_file):
+    '''Get an image from the FTP server'''
     image_data = BytesIO() 
     ftp.cwd("save") # TODO Cleanup
     ftp.retrbinary(f"RETR {selected_file}", image_data.write)
@@ -205,7 +210,7 @@ def getImageFromFTP(selected_file):
 
 # Get the image file from the FTP server
 if len(files) > 0:
-    image_data, image = getImageFromFTP(selected_file)
+    image_data, image = get_image_ftp(selected_file)
 
     # Display the image with the corresponding timestamp
     imagePlaceholder.image(image, use_column_width=True)
@@ -299,6 +304,12 @@ st.divider()
 # Weather widget
 ##############################################
 
+# Overwrite latitude and longitude if available
+if location_overwrite:
+    df['Latitude'] = latitude
+    df['Longitude'] = longitude
+    df['Heigth'] = heigth
+
 dfMap = df[df['Latitude'] != "-"]
 dfMap = dfMap[dfMap['Longitude'] != "-"]
 
@@ -329,28 +340,26 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
 
         # Convert wind direction to text
         if wind_direction > 337.5:
-            wind_direction_text = "N"
+            WIND_DIRECTION_TEXT = "N"
         elif wind_direction > 292.5:
-            wind_direction_text = "NW"
+            WIND_DIRECTION_TEXT = "NW"
         elif wind_direction > 247.5:
-            wind_direction_text = "W"
+            WIND_DIRECTION_TEXT = "W"
         elif wind_direction > 202.5:
-            wind_direction_text = "SW"
+            WIND_DIRECTION_TEXT = "SW"
         elif wind_direction > 157.5:
-            wind_direction_text = "S"
+            WIND_DIRECTION_TEXT = "S"
         elif wind_direction > 122.5:
-            wind_direction_text = "SE"
+            WIND_DIRECTION_TEXT = "SE"
         elif wind_direction > 67.5:
-            wind_direction_text = "E"
+            WIND_DIRECTION_TEXT = "E"
         elif wind_direction > 22.5:
-            wind_direction_text = "NE"
+            WIND_DIRECTION_TEXT = "NE"
         else:
-            wind_direction_text = "N"
-
-        # Get icon
-        icon = weather_data["weather"][0]["icon"]
+            WIND_DIRECTION_TEXT = "N"
 
         # Get the icon from openweathermap
+        icon = weather_data["weather"][0]["icon"]
         icon_url = f"http://openweathermap.org/img/wn/{icon}@4x.png"
 
         # Download the icon
@@ -384,12 +393,11 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
         col2.text("")
         col2.text("")
         col2.image(icon_image, caption=weather_description)
-
         st.text("")
 
         col1, col2, col3, col4 = st.columns(4, gap="medium")
         col1.metric("Wind", f"{wind_speed}m/s",
-                    delta=wind_direction_text, delta_color="off")
+                    delta=WIND_DIRECTION_TEXT, delta_color="off")
         col2.metric("Luftdruck", f"{current_pressure}hPa")
         col3.metric("Luftfeuchtigkeit", f"{current_humidity}%")
         col4.metric("Sichtweite", f"{visibility}")
@@ -495,7 +503,7 @@ if not dfMap.empty:
 
     # Print coordinates
     st.write(
-        f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['Heigth'].iloc[-1]}m - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
+        f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['Heigth'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
 
     # Print timestamp
     st.markdown(
