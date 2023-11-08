@@ -527,45 +527,72 @@ st.write("")
 ##############################################
 
 # Read settings.yaml and display it
-ftp.retrbinary('RETR settings.yaml', open('settings.yaml', 'wb').write)
-
-# TODO Settings
+# TODO Settings (incl. validation)
 if True: # st.session_state.userIsLoggedIn:
     with st.expander("Einstellungen"):
+
+        get_file_ftp("settings.yaml")
 
         with open('settings.yaml', encoding='utf-8') as file:
             settings = safe_load(file)
 
-        # Display the settings
-        st.write(settings)
-
         st.write("Kamera")
-        autofocusON = st.toggle(
-            "Autofokus", help="Aktiviert den automatischen Autofokus der Kamera. Kann deaktiviert werden um den Fokus manuell einzustellen.")
 
+        autofocusON = False
+        if settings["lensPosition"] == -1:
+            autofocusON = True
+
+        col1, col2 = st.columns([3,1])
         
-        lensPosition = st.slider("Manueller Fokus", 0, 1023, 0, disabled=autofocusON)
+        # Focus range slider from 0m to inf
+        col2.write("")
+        col2.write("")
+        autofocusON = col2.toggle(
+            "Autofokus", value=autofocusON, help="Aktiviert den automatischen Autofokus der Kamera. Kann deaktiviert werden um den Fokus manuell einzustellen.")
 
+        focus = col1.slider(
+            "Manueller Fokus", min_value=0, max_value=100, value=0, step=1, disabled=autofocusON, help="Fokus der Kamera. Kann zwischen 0.1m und ∞ eingestellt werden.", format="%d m")
+        
+
+        # Resolution
+        # TODO
+        resolution = st.selectbox(
+            "Auflösung", options=["Automatisch", "2592x1944", "1920x1080", "1280x720", "640x480"], index=0, help="Bildauflösung der Kamera.")
+        
         st.divider()
         st.write("Zeit")
-        col1, col2 = st.columns([1, 1])
+        col1, col2 = st.columns(2)
 
         # Start time
-        startTime = col1.time_input('Startzeit', datetime.strptime(
-            "06:00", "%H:%M").time(), help="Startzeit der Aufnahme.")
+        startTime = col1.time_input('Startzeit', datetime.strptime(f"{settings['startTimeHour']}:{settings['startTimeMinute']}", "%H:%M").time(), help="Startzeit der Aufnahme.")
      
         # Interval
-        intervalTime = col2.number_input("Aufnahmeintervall", 5, 720, 10, 5, help="Aufnahmeintervall in Minuten.")
+        intervalTime = col2.number_input("Aufnahmeintervall", min_value=5, max_value=720, value=settings['intervalMinutes'], step=5, help="Aufnahmeintervall in Minuten.")
 
+        # Repetitions per day
+        repetitionsPerday = col1.number_input("Aufnahmen pro Tag", min_value=1, max_value=100, value=settings['repetitionsPerday'], step=1, help="Anzahl Aufnahmen pro Tag.")
+        # Duration
+        durationTime = col2.number_input("Max. Aufnahmedauer", min_value=1, max_value=10, value=settings['maxDurationMinute'], step=1, help="Maximale Aufnahmedauer in Minuten. Das Kamerasystem wird spätestens nach dieser Zeitdauer ausgeschaltet.")
         timeSync = st.toggle(
-            "Zeitsynchronisation", help="Aktiviert die automatische Zeitsynchronisation der Kamera mit dem Internet.")
+            "Zeitsynchronisation", value=settings["timeSync"], help="Aktiviert die automatische Zeitsynchronisation der Kamera mit dem Internet.")
         
         st.divider()
         st.write("Weitere Einstellungen")
-        enableGPS = st.toggle(
-            "GPS aktivieren", help="Aktiviert die GPS-Funktion der Kamera. Die GPS-Antenne muss dafür angeschlossen sein!")
-        shutdown = st.toggle(
-            "Shutdown", help="Kamera nach Bildaufnahme ausschalten.")
+        enableGPS = st.toggle("GPS aktivieren", value = settings["enableGPS"],
+             help="Aktiviert die GPS-Funktion der Kamera. Die GPS-Antenne muss dafür angeschlossen sein!")
+        extendedDiagnostics = st.toggle(
+            "Erweiterte Diagnosedaten", value=settings["uploadWittyPiDiagnostics"], help="Hochladen von erweiterten Diagnosedaten. Kann bei schwerwiegenderen Problemen helfen.")
+        
+        st.divider()
+        st.write(":red[Danger Zone]")
+        shutdown = st.toggle("Shutdown", value=settings["shutdown"], help="Kamera nach Bildaufnahme ausschalten. Wird diese Option deaktiviert, schaltet sich die Kamera erst verspätet aus und der Stromverbrauch ist erhöht.")
+
+        # Save the settings
+        col1, col2 = st.columns([5,1])
+        col1.write("")
+        if col2.button("Speichern"):
+            # TODO: Save settings
+            st.write("Diese Funktion ist noch nicht verfügbar.")
 
     # Display the dataframe
     with st.expander("Diagnosedaten"):
@@ -619,7 +646,11 @@ if True: # st.session_state.userIsLoggedIn:
     with st.expander("Fehlermeldungen"):
         # Display the errors (not nan)
         dfError = df[df['Error'].notna()]
-        # Display error message and timestamp as text in reverse order
-        for index, row in dfError[::-1].iterrows():
-            st.write(row['Timestamp'].strftime(
-                "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
+
+        if not dfError.empty:
+            # Display error message and timestamp as text in reverse order
+            for index, row in dfError[::-1].iterrows():
+                st.write(row['Timestamp'].strftime(
+                    "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
+        else:
+            st.write("Keine Fehlermeldungen vorhanden 🥳.")
