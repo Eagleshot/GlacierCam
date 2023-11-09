@@ -22,8 +22,8 @@ import serial
 # Get unique hardware id of Raspberry Pi
 # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
 # and https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
-def getCPUSerial():
-    # Extract serial from cpuinfo file
+def get_cpu_serial():
+    '''Get the serial number of Raspberry Pi CPU'''
     cpuserial = "0000000000000000"
     try:
         with open('/proc/cpuinfo', 'r', encoding='utf-8') as f:
@@ -45,7 +45,7 @@ try:
 except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
 
-cameraName = f"{config['cameraName']}_{getCPUSerial()}" # Camera name + unique hardware serial
+cameraName = f"{config['cameraName']}_{get_cpu_serial()}" # Camera name + unique hardware serial
 currentTimeCSV = datetime.today().strftime('%Y-%m-%d %H:%M:%SZ') # UTC-Time
 currentTimeFilename = datetime.today().strftime('%Y%m%d_%H%M') # UTC-Time
 imgFileName = f"{currentTimeFilename}Z_{cameraName}.jpg"
@@ -54,21 +54,20 @@ error = ""
 ###########################
 # Connect to FTP server
 ###########################
-for i in range(5):
+MAX_RETRIES = 5
+
+for i in range(MAX_RETRIES):
     try:
         ftp = FTP(config["ftpServerAddress"], timeout=30)
         ftp.login(user=config["username"], passwd=config["password"])
         connectedToFTP = True
+        break
     except Exception as e:
         if i > 1:
             error += f"Could not connect to FTP server: {str(e)}, attempt {i+1}/5 failed - trying again in 5 seconds."
         print(f"Could not connect to FTP server: {str(e)}, attempt {i+1}/5 failed - trying again in 5 seconds.")
-        connectedToFTP = False
-    
-    if not connectedToFTP:  
+        connectedToFTP = False  
         sleep(5) # Wait 5 seconds and try again
-    else:
-        break
 
 # Go to custom directory in FTP server if specified
 try:
@@ -113,6 +112,7 @@ try:
             with open(f"{filePath}settings.yaml", 'rb') as fp:
                 ftp.storbinary('STOR settings.yaml', fp)
 except Exception as e:
+    error += f"Error with settings file: {str(e)}"
     print(f'Error with settings file: {str(e)}')
 
 # Read settings file
@@ -127,6 +127,7 @@ except Exception as e:
 ###########################
 
 def sync_witty_pi_time_with_network():
+    '''Sync WittyPi clock with network time'''
 
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
     sleep(60)
@@ -151,9 +152,10 @@ except Exception as e:
 # Schedule script
 ###########################
 def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
+    '''Generate a startup schedule file for WittyPi'''
 
     # Basic validity check of parameters
-    if startTimeHour < 0 or startTimeHour > 24:
+    if startTimeHour < 0 or startTimeHour >= 24:
         startTimeHour = 8
     
     if startTimeMinute < 0 or startTimeMinute > 60:
@@ -172,8 +174,8 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
         repetitionsPerday = 1
 
     # 2037 is the maximum year for WittyPi
-    formattedStartTime = "{:02d}:{:02d}".format(startTimeHour, startTimeMinute)
-    schedule = f"BEGIN\t2010-01-01 {formattedStartTime}:00\nEND\t2037-12-31 23:59:59\n"
+    formatted_start_time = f"{startTimeHour:02d}:{startTimeMinute:02d}"
+    schedule = f"BEGIN\t2020-01-01 {formatted_start_time}:00\nEND\t2037-12-31 23:59:59\n"
     
     for i in range(repetitionsPerday):
         schedule += f"ON\tM{maxDurationMinute}\n"
@@ -342,8 +344,8 @@ def getGPSPos(maxAttempts=7, delay=5):
                 global currentGPSPosLat
                 global currentGPSPosLong
                 global currentGPSPosHeight
-                currentGPSPosLong = str(round(FinalLong, 5))
                 currentGPSPosLat = str(round(FinalLat, 5))
+                currentGPSPosLong = str(round(FinalLong, 5))
                 currentGPSPosHeight = str(Height)
 
                 print(f"GPS position: LAT {currentGPSPosLat}, LON {currentGPSPosLong}, HEIGHT {currentGPSPosHeight}")
@@ -450,7 +452,7 @@ def getWittyPiTemperature():
         currentTemperature = currentTemperature.replace("\n", "")
         currentTemperature = currentTemperature.split(" / ", maxsplit = 1)[0] # Remove the Farenheit reading
         currentTemperature = currentTemperature[:-2] # Remove °C
-        print(f"Temperature: {currentTemperature}°C")
+        print(f"Temperature: {currentTemperature} °C")
         return currentTemperature
     except Exception as e:
         error += f"Could not get temperature: {str(e)}"
@@ -463,7 +465,7 @@ def getWittyPiBatteryVoltage():
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
         currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
         currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
-        print(f"Battery voltage: {currentBatteryVoltage}V")
+        print(f"Battery voltage: {currentBatteryVoltage} V")
         return currentBatteryVoltage
     except Exception as e:
         error += f"Could not get battery voltage: {str(e)}"
@@ -477,7 +479,7 @@ def getWittyPiVoltage():
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
         raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
         raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
-        print(f"Output voltage: {raspberryPiVoltage}V")
+        print(f"Output voltage: {raspberryPiVoltage} V")
         return raspberryPiVoltage
     except Exception as e:
         error += f"Could not get Raspberry Pi voltage: {str(e)}"
@@ -491,7 +493,7 @@ def getWittyPiVoltage():
 #         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
 #         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
 #         currentPowerDraw = currentPowerDraw.replace("\n", "")
-#         print(f"Output current: {currentPowerDraw}A")
+#         print(f"Output current: {currentPowerDraw} A")
 #         return currentPowerDraw
 #     except Exception as e:
 #         error += f"Could not get Raspberry Pi current: {str(e)}"

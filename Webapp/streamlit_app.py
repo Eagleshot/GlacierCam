@@ -600,6 +600,12 @@ if True: # st.session_state.userIsLoggedIn:
         # etc.
         # Save to database?
 
+        # Title
+        st.write("Titel")
+        # title = st.text_input("Titel", value=settings["title"], help="Titel der Webseite.")
+        title = st.text_input("Titel", max_chars=50, help="Titel der Webseite.")
+        description = st.text_area("Beschreibung", max_chars=1500, help="Beschreibung der Webseite.")
+
         # Save the settings
         col1, col2 = st.columns([5,1])
         if col2.button("Speichern"):
