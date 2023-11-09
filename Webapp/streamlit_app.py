@@ -589,7 +589,7 @@ if True: # st.session_state.userIsLoggedIn:
 
         # Save the settings
         col1, col2 = st.columns([5,1])
-        if col2.button("Speichern"):
+        if col2.button("Speichern", key="saveCameraSettings"):
             # TODO: Save settings
             st.write("Diese Funktion ist noch nicht verfügbar.")
 
@@ -604,7 +604,7 @@ if True: # st.session_state.userIsLoggedIn:
         col1, col2 = st.columns([5,1])
         if col2.button("Speichern"):
             # TODO: Save settings
-            st.write("Diese Funktion ist noch nicht verfügbar.")
+            st.write("Diese Funktion ist noch nicht verfügbar.", key="saveWebSettings")
 
     # Display the dataframe
     with st.expander("Diagnosedaten"):
