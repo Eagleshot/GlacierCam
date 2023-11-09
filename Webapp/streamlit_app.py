@@ -529,7 +529,7 @@ st.write("")
 # Read settings.yaml and display it
 # TODO Settings (incl. validation)
 if True: # st.session_state.userIsLoggedIn:
-    with st.expander("Einstellungen"):
+    with st.expander("Kameraeinstellungen"):
 
         get_file_ftp("settings.yaml")
 
@@ -538,20 +538,20 @@ if True: # st.session_state.userIsLoggedIn:
 
         st.write("Kamera")
 
-        autofocusON = False
+        autofocus_ON = False
         if settings["lensPosition"] == -1:
-            autofocusON = True
+            autofocus_ON = True
 
         col1, col2 = st.columns([3,1])
         
         # Focus range slider from 0m to inf
         col2.write("")
         col2.write("")
-        autofocusON = col2.toggle(
-            "Autofokus", value=autofocusON, help="Aktiviert den automatischen Autofokus der Kamera. Kann deaktiviert werden um den Fokus manuell einzustellen.")
+        autofocus_ON = col2.toggle(
+            "Autofokus", value=autofocus_ON, help="Aktiviert den automatischen Autofokus der Kamera oder kann deaktiviert werden um den Fokus manuell zwischen 0.1m und ∞ einzustellen.")
 
         focus = col1.slider(
-            "Manueller Fokus", min_value=0, max_value=100, value=0, step=1, disabled=autofocusON, help="Fokus der Kamera. Kann zwischen 0.1m und ∞ eingestellt werden.", format="%d m")
+            "Manueller Fokus", min_value=0, max_value=100, value=0, step=1, disabled=autofocus_ON, format="%d m")
         
 
         # Resolution
@@ -589,7 +589,19 @@ if True: # st.session_state.userIsLoggedIn:
 
         # Save the settings
         col1, col2 = st.columns([5,1])
-        col1.write("")
+        if col2.button("Speichern"):
+            # TODO: Save settings
+            st.write("Diese Funktion ist noch nicht verfügbar.")
+
+    with st.expander("Webeinstellungen"):
+        st.write("Diese Funktion ist noch nicht verfügbar.")
+        # Logo + Text
+        # Image flip
+        # etc.
+        # Save to database?
+
+        # Save the settings
+        col1, col2 = st.columns([5,1])
         if col2.button("Speichern"):
             # TODO: Save settings
             st.write("Diese Funktion ist noch nicht verfügbar.")
