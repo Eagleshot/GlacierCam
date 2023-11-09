@@ -61,16 +61,12 @@ for i in range(5):
         connectedToFTP = True
     except Exception as e:
         if i > 1:
-            error += f"Could not connect to FTP server: {str(e)}"
-        print(f"Could not connect to FTP server: {str(e)}")
+            error += f"Could not connect to FTP server: {str(e)}, attempt {i+1}/5 failed - trying again in 5 seconds."
+        print(f"Could not connect to FTP server: {str(e)}, attempt {i+1}/5 failed - trying again in 5 seconds.")
         connectedToFTP = False
     
-    if not connectedToFTP:
-        # Wait 5 seconds and try again
-        print(f". Attempt {i+1}/5 failed - trying again in 5 seconds.")
-        if i > 1:
-            error += f". Attempt {i+1}/5 failed - trying again in 5 seconds."
-        sleep(5)
+    if not connectedToFTP:  
+        sleep(5) # Wait 5 seconds and try again
     else:
         break
 
@@ -130,7 +126,7 @@ except Exception as e:
 # Time synchronization
 ###########################
 
-def syncWittyPiTimeWithNetwork():
+def sync_witty_pi_time_with_network():
 
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
     sleep(60)
@@ -146,7 +142,7 @@ def syncWittyPiTimeWithNetwork():
 
 try:
     if settings["timeSync"] and connectedToFTP:
-        syncWittyPiTimeWithNetwork()
+        sync_witty_pi_time_with_network()
 except Exception as e:
     error += f"Could not synchronize time with network: {str(e)}"
     print(f"Could not synchronize time with network: {str(e)}")
@@ -235,7 +231,7 @@ try:
 
     # If output contains warning
     if "Warning" in output[1]:
-        syncWittyPiTimeWithNetwork() # Sync time and try again
+        sync_witty_pi_time_with_network() # Sync time and try again
         output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
         output = output.split("\n")[1:3]
 
@@ -298,56 +294,62 @@ currentGPSPosLat = "-"
 currentGPSPosLong = "-"
 currentGPSPosHeight = "-"
 
-def getGPSPos():
-    rec_buff = ''
-    ser.write(('AT+CGPSINFO\r\n').encode())
-    sleep(1)
-    if ser.inWaiting():
-        sleep(0.01)
-        rec_buff = ser.read(ser.inWaiting())
-    if rec_buff != '':
-        if '+CGPSINFO: ' not in rec_buff.decode():
-            print('Error:\t' + rec_buff.decode())
-            return 0
-        elif ',,,,,,' in rec_buff.decode(): # GPS Not ready
-            return 0
-        else:
-            # Additions to Demo Code Written by Tim! -> Core Electronics
-            # https://core-electronics.com.au/guides/raspberry-pi/raspberry-pi-4g-gps-hat/
-            GPSDATA = str(rec_buff.decode())
-            Cleaned = GPSDATA[13:]
+def getGPSPos(maxAttempts=7, delay=5):
 
-            Lat = Cleaned[:2]
-            SmallLat = Cleaned[2:11]
-            NorthOrSouth = Cleaned[12]
+    currentAttempt = 0
 
-            Long = Cleaned[14:17]
-            SmallLong = Cleaned[17:26]
-            EastOrWest = Cleaned[27]
+    while (currentAttempt < maxAttempts):
 
-            FinalLat = float(Lat) + (float(SmallLat)/60)
-            FinalLong = float(Long) + (float(SmallLong)/60)
+        currentAttempt += 1
+        rec_buff = ''
+        ser.write(('AT+CGPSINFO\r\n').encode())
+        sleep(1)
+        if ser.inWaiting():
+            sleep(0.01)
+            rec_buff = ser.read(ser.inWaiting())
+        if rec_buff != '':
+            if '+CGPSINFO: ' not in rec_buff.decode():
+                print('Error:\t' + rec_buff.decode())
+                sleep(delay)
+            elif ',,,,,,' in rec_buff.decode(): # GPS Not ready
+                sleep(delay)
+            else:
+                # Additions to Demo Code Written by Tim! -> Core Electronics
+                # https://core-electronics.com.au/guides/raspberry-pi/raspberry-pi-4g-gps-hat/
+                GPSDATA = str(rec_buff.decode())
+                Cleaned = GPSDATA[13:]
 
-            if NorthOrSouth == 'S':
-                FinalLat = -FinalLat
-            if EastOrWest == 'W':
-                FinalLong = -FinalLong
+                Lat = Cleaned[:2]
+                SmallLat = Cleaned[2:11]
+                NorthOrSouth = Cleaned[12]
 
-            # Height
-            # TODO Sometimes heigth is not correctly extracted
-            Height = Cleaned[45:49]
+                Long = Cleaned[14:17]
+                SmallLong = Cleaned[17:26]
+                EastOrWest = Cleaned[27]
 
-            global currentGPSPosLat
-            global currentGPSPosLong
-            global currentGPSPosHeight
-            currentGPSPosLong = str(round(FinalLong, 5))
-            currentGPSPosLat = str(round(FinalLat, 5))
-            currentGPSPosHeight = str(Height)
+                FinalLat = float(Lat) + (float(SmallLat)/60)
+                FinalLong = float(Long) + (float(SmallLong)/60)
 
-            print(f"GPS position: LAT {currentGPSPosLat}, LON {currentGPSPosLong}, HEIGHT {currentGPSPosHeight}")
-            return 1
-    else: # No GPS data
-        return 0
+                if NorthOrSouth == 'S':
+                    FinalLat = -FinalLat
+                if EastOrWest == 'W':
+                    FinalLong = -FinalLong
+
+                # Height
+                # TODO Sometimes heigth is not correctly extracted
+                Height = Cleaned[45:49]
+
+                global currentGPSPosLat
+                global currentGPSPosLong
+                global currentGPSPosHeight
+                currentGPSPosLong = str(round(FinalLong, 5))
+                currentGPSPosLat = str(round(FinalLat, 5))
+                currentGPSPosHeight = str(Height)
+
+                print(f"GPS position: LAT {currentGPSPosLat}, LON {currentGPSPosLong}, HEIGHT {currentGPSPosHeight}")
+                return 1
+        
+    return 0
     
 # See Waveshare documentation
 try:
@@ -510,18 +512,7 @@ currentSignalQuality = getCurrentSignalQuality()
 ###########################
 try:
     if settings["enableGPS"]:
-        
-        maxAttempts = 0
-
-        while (maxAttempts < 7):
-            maxAttempts += 1
-            answer = getGPSPos()
-            if answer == 1:  # Success
-                break
-            else:
-                print(f"Attempt {maxAttempts}/7 failed - no signal yet. Trying again in 5 seconds.")
-                sleep(5)
-        
+        getGPSPos()
         print('Stopping GPS session.')
         sendATCommand('AT+CGPS=0', 'OK', 1)
 
@@ -575,7 +566,7 @@ try:
 
             # Witty Pi log 
             with open("/home/pi/wittypi/wittyPi.log", 'rb') as wittyPiDiagnostics:
-                ftp.storbinary(f"APPE wittyPiDiagnostics.txt", wittyPiDiagnostics)
+                ftp.storbinary("APPE wittyPiDiagnostics.txt", wittyPiDiagnostics)
 
             # Witty Pi schedule
             with open("/home/pi/wittypi/schedule.log", 'rb') as wittyPiDiagnostics:
