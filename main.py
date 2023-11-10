@@ -58,7 +58,7 @@ MAX_RETRIES = 5
 
 for i in range(MAX_RETRIES):
     try:
-        ftp = FTP(config["ftpServerAddress"], timeout=30)
+        ftp = FTP(config["ftpServerAddress"], timeout=5)
         ftp.login(user=config["username"], passwd=config["password"])
         connectedToFTP = True
         break
@@ -130,8 +130,6 @@ def sync_witty_pi_time_with_network():
     '''Sync WittyPi clock with network time'''
 
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
-    sleep(60)
-
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && net_to_system && system_to_rtc"
         output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
@@ -370,8 +368,8 @@ try:
         print('Start GPS session.')
         sendATCommand('AT+CGPS=1,1', 'OK', 1)
 except Exception as e:
-    error += f"Could not read GPS: {str(e)}"
-    print(f"Could not enable GPS: {str(e)}")
+    error += f"Could not start GPS: {str(e)}"
+    print(f"Could not start GPS: {str(e)}")
 
 ###########################
 # Setup camera
@@ -580,6 +578,14 @@ try:
                 ftp.storbinary("APPE wittyPiSchedule.txt", wittyPiDiagnostics)
 except Exception as e:
     print(f"Could not upload WittyPi diagnostics: {str(e)}")
+
+###########################
+# Close serial connection
+###########################
+try:
+    ser.close()
+except Exception as e:
+    print(f"Could not close serial connection: {str(e)}")
 
 ###########################
 # Quit FTP session
