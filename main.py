@@ -36,11 +36,11 @@ def get_cpu_serial():
 
     return cpuserial
 
-filePath = "/home/pi/"  # Path where files are saved
+FILE_PATH = "/home/pi/"  # Path where files are saved
 
-# Read config.yaml file
+# Read config.yaml file from SD card
 try:
-    with open(f"{filePath}config.yaml", 'r', encoding='utf-8') as file:
+    with open(f"{FILE_PATH}config.yaml", 'r', encoding='utf-8') as file:
         config = safe_load(file)
 except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
@@ -105,11 +105,11 @@ try:
 
         # Check if settings file exists
         if "settings.yaml" in fileList:
-            with open(f"{filePath}settings.yaml", 'wb') as fp:  # Download
+            with open(f"{FILE_PATH}settings.yaml", 'wb') as fp:  # Download
                 ftp.retrbinary('RETR settings.yaml', fp.write)
         else:
             print("No settings file found on FTP server. Creating new settings file with default settings.")
-            with open(f"{filePath}settings.yaml", 'rb') as fp:
+            with open(f"{FILE_PATH}settings.yaml", 'rb') as fp:
                 ftp.storbinary('STOR settings.yaml', fp)
 except Exception as e:
     error += f"Error with settings file: {str(e)}"
@@ -117,7 +117,7 @@ except Exception as e:
 
 # Read settings file
 try:
-    with open(f"{filePath}settings.yaml", 'r', encoding='utf-8') as file:
+    with open(f"{FILE_PATH}settings.yaml", 'r', encoding='utf-8') as file:
         settings = safe_load(file)
 except Exception as e:
     print(f"Could not open settings.yaml: {str(e)}")
@@ -287,7 +287,7 @@ def getCurrentSignalQuality():
         currentSignalQuality = ''.join(ch for ch in currentSignalQuality if ch.isdigit()) # Remove non-numeric characters
         return currentSignalQuality
     except Exception as e:
-        error += f"Could not get current signal quality: {str(e)}"
+        # error += f"Could not get current signal quality: {str(e)}" # TODO
         print(f"Could not get current signal quality: {str(e)}")
         return ""
 
@@ -348,6 +348,8 @@ def getGPSPos(maxAttempts=7, delay=5):
                 currentGPSPosLong = str(round(FinalLong, 5))
                 currentGPSPosHeight = str(Height)
 
+                # TODO Time
+
                 print(f"GPS position: LAT {currentGPSPosLat}, LON {currentGPSPosLong}, HEIGHT {currentGPSPosHeight}")
                 return 1
         
@@ -358,16 +360,19 @@ try:
     # TODO: Test timeout
     ser = serial.Serial('/dev/ttyUSB2', 115200, parity=serial.PARITY_EVEN, timeout=10)  # USB connection
     ser.flushInput()
+except Exception as e:
+    error += f"Could not open serial connection with 4G module: {str(e)}"
+    print (f"Could not open serial connection with 4G module: {str(e)}")
 
+try:
     # Enable GPS to later read out position
     if settings["enableGPS"]:
         print('Start GPS session.')
         sendATCommand('AT+CGPS=1,1', 'OK', 1)
-
 except Exception as e:
-    error += f"Could not open serial connection with 4G module: {str(e)}"
-    print (f"Could not open serial connection with 4G module: {str(e)}")
- 
+    error += f"Could not read GPS: {str(e)}"
+    print(f"Could not enable GPS: {str(e)}")
+
 ###########################
 # Setup camera
 ###########################
@@ -404,7 +409,7 @@ except Exception as e:
 # Capture image
 ###########################
 try:
-    camera.start_and_capture_file(filePath + imgFileName, capture_mode=cameraConfig, delay=2, show_preview=False)
+    camera.start_and_capture_file(FILE_PATH + imgFileName, capture_mode=cameraConfig, delay=2, show_preview=False)
 except Exception as e:
     error += f"Could not start camera and capture image: {str(e)}"
     print(f"Could not start camera and capture image: {str(e)}")
@@ -424,15 +429,15 @@ except Exception as e:
 
 try:
     if connectedToFTP:
-        # Upload all images in filePath
-        for file in listdir(filePath):
+        # Upload all images in FILE_PATH
+        for file in listdir(FILE_PATH):
             if file.endswith(".jpg"):
-                with open(filePath + file, 'rb') as imgFile:
+                with open(FILE_PATH + file, 'rb') as imgFile:
                     ftp.storbinary(f"STOR {file}", imgFile)
                     print(f"Successfully uploaded {file}")
 
                     # Delete uploaded image from Raspberry Pi
-                    remove(filePath + file)
+                    remove(FILE_PATH + file)
 except Exception as e:
     error += f"Could not open image: {str(e)}"
     print(f"Could not open image: {str(e)}")
@@ -535,13 +540,13 @@ try:
         if connectedToFTP:
             # Check if local CSV file exists
             try:
-                if path.exists(f"{filePath}diagnostics.csv"):
-                    with open(f"{filePath}diagnostics.csv", 'r') as file:
+                if path.exists(f"{FILE_PATH}diagnostics.csv"):
+                    with open(f"{FILE_PATH}diagnostics.csv", 'r') as file:
                         csvData = file.read()
                         # Write all lies to writer
                         for line in reader(StringIO(csvData)):
                             writer.writerow(line)
-                    remove(filePath + "diagnostics.csv")
+                    remove(FILE_PATH + "diagnostics.csv")
             except Exception as e:   
                 error += f"Could not open diagnostics.csv: {str(e)}"
                 print(f"Could not open diagnostics.csv: {str(e)}")
@@ -557,7 +562,7 @@ try:
             csvData = csvBuffer.getvalue().encode('utf-8')
 
             # Append new row to local CSV file        
-            with open(f"{filePath}diagnostics.csv", 'a', newline='') as file:
+            with open(f"{FILE_PATH}diagnostics.csv", 'a', newline='') as file:
                 file.write(csvData.decode('utf-8'))
 except Exception as e:
     print(f"Could not append new measurements to log CSV: {str(e)}")
