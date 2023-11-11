@@ -283,6 +283,7 @@ def getCurrentSignalQuality():
         currentSignalQuality = rec_buff.decode()[8:10]
         currentSignalQuality = currentSignalQuality.replace("\n", "")
         currentSignalQuality = ''.join(ch for ch in currentSignalQuality if ch.isdigit()) # Remove non-numeric characters
+        print(f"Current signal quality: {currentSignalQuality}")
         return currentSignalQuality
     except Exception as e:
         # error += f"Could not get current signal quality: {str(e)}" # TODO
@@ -355,8 +356,7 @@ def getGPSPos(maxAttempts=7, delay=5):
     
 # See Waveshare documentation
 try:
-    # TODO: Test timeout
-    ser = serial.Serial('/dev/ttyUSB2', 115200, parity=serial.PARITY_EVEN, timeout=10)  # USB connection
+    ser = serial.Serial('/dev/ttyUSB2', 115200, parity=serial.PARITY_EVEN, timeout=5)  # USB connection
     ser.flushInput()
 except Exception as e:
     error += f"Could not open serial connection with 4G module: {str(e)}"
