@@ -136,7 +136,7 @@ def sync_witty_pi_time_with_network():
         output = output.replace("\n", "")
         print(f"Time synchronized with network: {output}")
     except Exception as e:
-        error += f"Could not synchronize time with network: {str(e)}"
+        # error += f"Could not synchronize time with network: {str(e)}" # TODO Return error value
         print(f"Could not synchronize time with network: {str(e)}")
 
 try:
@@ -451,14 +451,14 @@ except Exception as e:
 def getWittyPiTemperature():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
-        currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
+        currentTemperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
         currentTemperature = currentTemperature.replace("\n", "")
         currentTemperature = currentTemperature.split(" / ", maxsplit = 1)[0] # Remove the Farenheit reading
         currentTemperature = currentTemperature[:-2] # Remove °C
         print(f"Temperature: {currentTemperature} °C")
         return currentTemperature
     except Exception as e:
-        error += f"Could not get temperature: {str(e)}"
+        # error += f"Could not get temperature: {str(e)}" # TODO Return error value
         print(f"Could not get temperature: {str(e)}")
         return "-"
 
@@ -466,12 +466,12 @@ def getWittyPiTemperature():
 def getWittyPiBatteryVoltage():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
-        currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
+        currentBatteryVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
         currentBatteryVoltage = currentBatteryVoltage.replace("\n", "")
         print(f"Battery voltage: {currentBatteryVoltage} V")
         return currentBatteryVoltage
     except Exception as e:
-        error += f"Could not get battery voltage: {str(e)}"
+        # error += f"Could not get battery voltage: {str(e)}" # TODO Return error value
         print(f"Could not get battery voltage: {str(e)}")
         return "-"
 
@@ -480,12 +480,12 @@ def getWittyPiBatteryVoltage():
 def getWittyPiVoltage():
     try:
         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
-        raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
+        raspberryPiVoltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
         raspberryPiVoltage = raspberryPiVoltage.replace("\n", "")
         print(f"Output voltage: {raspberryPiVoltage} V")
         return raspberryPiVoltage
     except Exception as e:
-        error += f"Could not get Raspberry Pi voltage: {str(e)}"
+        # error += f"Could not get Raspberry Pi voltage: {str(e)}" # TODO Return error value
         print(f"Could not get Raspberry Pi voltage: {str(e)}")
         return "-"
 
@@ -494,12 +494,12 @@ def getWittyPiVoltage():
 # def getWittyPiCurrent():
 #     try:
 #         command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
+#         currentPowerDraw = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
 #         currentPowerDraw = currentPowerDraw.replace("\n", "")
 #         print(f"Output current: {currentPowerDraw} A")
 #         return currentPowerDraw
 #     except Exception as e:
-#         error += f"Could not get Raspberry Pi current: {str(e)}"
+#         # error += f"Could not get Raspberry Pi current: {str(e)}" # TODO Return error value
 #         print(f"Could not get Raspberry Pi current: {str(e)}")
 #         return "-"
 
