@@ -156,7 +156,7 @@ except Exception as e:
 def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
     '''Generate a startup schedule file for Witty Pi 4'''
 
-    # Basic validity check of parameters    
+    # Basic validity check of parameters
     if not 0 < startTimeHour < 24:
         startTimeHour = 8
 
@@ -339,7 +339,7 @@ def get_gps_position(max_attempts=7, delay=5):
 
 # See Waveshare documentation
 try:
-    ser = serial.Serial('/dev/ttyUSB2', 115200, parity=serial.PARITY_EVEN, timeout=5)  # USB connection
+    ser = serial.Serial('/dev/ttyUSB2', 115200, timeout=5)  # USB connection
     ser.flushInput()
 except Exception as e:
     error += f"Could not open serial connection with 4G module: {str(e)}"
