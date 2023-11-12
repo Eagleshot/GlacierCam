@@ -10,7 +10,7 @@ from csv import writer, reader
 from datetime import datetime
 from ftplib import FTP
 from picamera2 import Picamera2
-from libcamera.controls import AfModeEnum
+from libcamera import controls
 from yaml import safe_load
 import serial
 
@@ -379,9 +379,9 @@ except Exception as e:
 # Focus settings
 try:
     if settings["lensPosition"] > -1:
-        camera.set_controls({"AfMode": AfModeEnum.Manual, "LensPosition": settings["lensPosition"]})
+        camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings["lensPosition"]})
     else:
-        camera.set_controls({"AfMode": AfModeEnum.Auto})
+        camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
 except Exception as e:
     error += f"Could not set lens position: {str(e)}"
     print(f"Could not set lens position: {str(e)}")
@@ -502,6 +502,10 @@ signal_quality = get_signal_quality()
 # Get GPS position
 ###########################
 try:
+    latitude = "-"
+    longitude = "-"
+    height = "-"
+
     if settings["enableGPS"]:
         latitude, longitude, height = get_gps_position()
         print('Stopping GPS session.')
