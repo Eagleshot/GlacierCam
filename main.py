@@ -571,14 +571,6 @@ except Exception as e:
     print(f"Could not upload WittyPi diagnostics: {str(e)}")
 
 ###########################
-# Close serial connection
-###########################
-try:
-    ser.close()
-except Exception as e:
-    print(f"Could not close serial connection: {str(e)}")
-
-###########################
 # Quit FTP session
 ###########################
 try:
