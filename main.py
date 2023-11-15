@@ -575,8 +575,8 @@ def set_recovery_voltage_treshold_witty_pi_4(voltage: float):
         return "-"
     
 # TODO
-set_low_voltage_treshold_witty_pi_4(2.5)
-set_recovery_voltage_treshold_witty_pi_4(3.0)
+set_low_voltage_treshold_witty_pi_4(4.0)
+set_recovery_voltage_treshold_witty_pi_4(5.0)
 get_low_voltage_treshold_witty_pi_4()
 get_recovery_voltage_treshold_witty_pi_4()
 
