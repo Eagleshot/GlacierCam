@@ -244,10 +244,13 @@ def apply_schedule_witty_pi_4(max_retries: int = 1) -> str:
         for i in range(max_retries):
             # Apply new schedule
             command = "cd /home/pi/wittypi && sudo ./runScript.sh"
-            output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=15)
-            print("SCHEDULE OUTPUT:")
+            output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
             print(output)
-            output = output.split("\n")[1:3]
+            output = output.split("\n") # [1:3]
+
+            for line in output:
+                # print line nr and line 
+                print(f"{output.index(line)}: {line}")
 
             # if not "Schedule next startup at:" in output[0]:
             #     print(f"Failed to apply schedule: {output[0]}")
