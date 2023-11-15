@@ -575,12 +575,19 @@ def set_recovery_voltage_treshold_witty_pi_4(voltage: float):
         # error += f"Could not set recovery voltage treshold: {str(e)}" # TODO Return error value
         print(f"Could not set recovery voltage treshold: {str(e)}")
         return "-"
-    
-# TODO
-set_low_voltage_treshold_witty_pi_4(4.5)
-set_recovery_voltage_treshold_witty_pi_4(6.9)
-get_low_voltage_treshold_witty_pi_4()
-get_recovery_voltage_treshold_witty_pi_4()
+
+try:
+    # If settings low voltage treshold exists
+    if 2.0 <= settings["low_voltage_treshold"] <= 25.0 or settings["low_voltage_treshold"] == 0:
+        set_low_voltage_treshold_witty_pi_4(settings["low_voltage_treshold"])
+
+    # If settings recovery voltage treshold exists
+    if 2.0 <= settings["recovery_voltage_treshold"] <= 25.0 or settings["recovery_voltage_treshold"] == 0:
+        set_recovery_voltage_treshold_witty_pi_4(settings["recovery_voltage_treshold"])
+
+except Exception as e:
+    error += f"Could not set voltage tresholds: {str(e)}"
+    print(f"Could not set voltage tresholds: {str(e)}")
 
 ###########################
 # Get readings

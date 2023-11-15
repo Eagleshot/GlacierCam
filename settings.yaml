@@ -34,5 +34,9 @@ shutdown: false
 # Extended diagnostics data
 uploadWittyPiDiagnostics: false
 
+# Voltage tresholds
+low_voltage_treshold: 0.0
+recovery_voltage_treshold: 0.0
+
 # TODO Detailed description of each setting
 # the lensPosition is controls the focus of the camera. TODO insert datasheet data. By selecting -1.0 the camera will use autofocus.
