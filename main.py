@@ -554,6 +554,7 @@ def get_recovery_voltage_treshold_witty_pi_4():
 def set_low_voltage_treshold_witty_pi_4(voltage: float):
     '''Sets the low voltage treshold from the Witty Pi 4'''
     try:
+        voltage = int(voltage*10)
         low_voltage_treshold = run_witty_pi_4_command(f"set_low_voltage_threshold {voltage}")
         print(f"Set low voltage treshold: {low_voltage_treshold} V")
         return low_voltage_treshold
@@ -566,6 +567,7 @@ def set_low_voltage_treshold_witty_pi_4(voltage: float):
 def set_recovery_voltage_treshold_witty_pi_4(voltage: float):
     '''Sets the recovery voltage treshold from the Witty Pi 4'''
     try:
+        voltage = int(voltage*10)
         recovery_voltage_treshold = run_witty_pi_4_command(f"set_recovery_voltage_threshold {voltage}")
         print(f"Set recovery voltage treshold: {recovery_voltage_treshold} V")
         return recovery_voltage_treshold
