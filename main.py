@@ -165,22 +165,21 @@ except Exception as e:
 
 # Get sunrise and sunset times
 try:
-    if settings["enableSunriseSunset"] and CONNECTED_TO_FTP:
+    if settings["enableSunriseSunset"] and settings["latitude"] != 0 and settings["longitude"] != 0:
         sun = suntime.Sun(settings["latitude"], settings["longitude"])
 
         # Sunrise and sunset times
         sunrise = sun.get_sunrise_time()
+        print(f"Next sunrise: {sunrise.hour}:{sunrise.minute:02d}")
         sunrise = sunrise.replace(minute=15 * round(sunrise.minute / 15)) # Round to nearest 15 minutes
         settings["startTimeHour"] = sunrise.hour
         settings["startTimeMinute"] = sunrise.minute
 
         sunset = sun.get_sunset_time()
+        print(f"Next sunset: {sunset.hour}:{sunset.minute:02d}")
         time_until_sunset = sunset - sunrise
         time_until_sunset = time_until_sunset.total_seconds() / 60 # Convert to minutes
         settings["repetitionsPerday"] = int(time_until_sunset / settings["intervalMinutes"])
-
-        print(f"Sunrise: {sunrise.hour}:{sunrise.minute:02d}")
-        print(f"Sunset: {sunset.hour}:{sunset.minute:02d}")
 
 except Exception as e:
     error += f"Could not get sunrise and sunset times: {str(e)}"
