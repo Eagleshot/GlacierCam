@@ -237,28 +237,23 @@ except Exception as e:
     error += f"Failed to write schedule file: {str(e)}"
     print(f"Failed to write schedule file: {str(e)}")
 
-# TODO
-def apply_schedule_witty_pi_4(max_retries: int = 1) -> str:
+def apply_schedule_witty_pi_4(max_retries: int = 5) -> str:
     '''Apply schedule to Witty Pi 4'''
     try:
         for i in range(max_retries):
             # Apply new schedule
             command = "cd /home/pi/wittypi && sudo ./runScript.sh"
             output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
+            output = output.split("\n")[1:3]
             print(output)
-            output = output.split("\n") # [1:3]
 
-            for line in output:
-                # print line nr and line 
-                print(f"{output.index(line)}: {line}")
-
-            # if not "Schedule next startup at:" in output[0]:
-            #     print(f"Failed to apply schedule: {output[0]}")
-            #     sync_witty_pi_time_with_network()
-            # else:
-            #     print(f"{output[0]}\n{output[1]}")
-            #     nextStartupTime = output[1][-19:]
-            #     return nextStartupTime
+            if not "Schedule next startup at:" in output[1]:
+                print(f"Failed to apply schedule: {output[0]}")
+                sync_witty_pi_time_with_network()
+            else:
+                print(f"{output[0]}\n{output[1]}")
+                nextStartupTime = output[1][-19:]
+                return nextStartupTime
 
     except Exception as e:
         print(f"Failed to apply schedule: {str(e)}")
