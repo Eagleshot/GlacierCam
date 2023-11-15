@@ -198,7 +198,7 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
     if not 0 < intervalMinutes < 1440:
         intervalMinutes = 30
 
-    if not 1 < maxDurationMinute < 60:
+    if not 2 < maxDurationMinute < 60:
         maxDurationMinute = 4
 
     if not 0 < repetitionsPerday < 250:
@@ -525,6 +525,34 @@ def get_internal_current_witty_pi_4():
         # error += f"Could not get Raspberry Pi current: {str(e)}" # TODO Return error value
         print(f"Could not get Raspberry Pi current: {str(e)}")
         return "-"
+
+# Get low voltage treshold
+def get_low_voltage_treshold_witty_pi_4():
+    '''Gets the low treshold from the Witty Pi 4'''
+    try:
+        low_voltage_treshold = run_witty_pi_4_command("get_low_voltage_threshold")
+        print(f"Low voltage treshold: {low_voltage_treshold} V")
+        return low_voltage_treshold
+    except Exception as e:
+        # error += f"Could not get low voltage treshold: {str(e)}" # TODO Return error value
+        print(f"Could not get low voltage treshold: {str(e)}")
+        return "-"
+
+# Get recovery voltage treshold
+def get_recovery_voltage_treshold_witty_pi_4():
+    '''Gets the recovery treshold from the Witty Pi 4'''
+    try:
+        recovery_voltage_treshold = run_witty_pi_4_command("get_recovery_voltage_threshold")
+        print(f"Recovery voltage treshold: {recovery_voltage_treshold} V")
+        return recovery_voltage_treshold
+    except Exception as e:
+        # error += f"Could not get recovery voltage treshold: {str(e)}" # TODO Return error value
+        print(f"Could not get recovery voltage treshold: {str(e)}")
+        return "-"
+    
+# TODO
+get_low_voltage_treshold_witty_pi_4()
+get_recovery_voltage_treshold_witty_pi_4()
 
 ###########################
 # Get readings
