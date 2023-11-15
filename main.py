@@ -245,21 +245,20 @@ def apply_schedule_witty_pi_4(max_retries: int = 5) -> str:
             command = "cd /home/pi/wittypi && sudo ./runScript.sh"
             output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
             output = output.split("\n")[1:3]
-            print(output)
 
             if not "Schedule next startup at:" in output[1]:
                 print(f"Failed to apply schedule: {output[0]}")
                 sync_witty_pi_time_with_network()
             else:
                 print(f"{output[0]}\n{output[1]}")
-                nextStartupTime = output[1][-19:]
-                return nextStartupTime
+                next_startup_time = output[1][-19:]
+                return next_startup_time
 
     except Exception as e:
         print(f"Failed to apply schedule: {str(e)}")
         return "-"
 
-nextStartupTime = apply_schedule_witty_pi_4()
+next_startup_time = f"{apply_schedule_witty_pi_4()}Z"
 
 ##########################
 # SIM7600G-H 4G module
@@ -452,8 +451,8 @@ def get_temperature_witty_pi_4():
     '''Gets the current temperature reading from the Witty Pi 4 in °C'''
     try:
         temperature = run_witty_pi_4_command("get_temperature")
-        temperature = temperature.split(" / ", maxsplit = 1)[0] # Remove the Farenheit reading
-        temperature = temperature[:-2] # Remove °C
+        temperature = temperature.split("/", maxsplit = 1)[0] # Remove the Farenheit reading
+        temperature = temperature[:-3] # Remove °C
         print(f"Temperature: {temperature} °C")
         return temperature
     except Exception as e:
@@ -503,7 +502,7 @@ def get_internal_current_witty_pi_4():
 temperature = get_temperature_witty_pi_4()
 battery_voltage = get_battery_voltage_witty_pi_4()
 internal_voltage = get_internal_voltage_witty_pi_4()
-internal_current = "-" # get_internal_current_witty_pi_4()
+internal_current = get_internal_current_witty_pi_4()
 signal_quality = get_signal_quality()
 
 ###########################
@@ -530,7 +529,7 @@ except Exception as e:
 try:
     with StringIO() as csvBuffer:
         writer = writer(csvBuffer)
-        newRow = [currentTimeCSV, nextStartupTime, battery_voltage, internal_voltage, internal_current, temperature, signal_quality, latitude, longitude, height, error]
+        newRow = [currentTimeCSV, next_startup_time, battery_voltage, internal_voltage, internal_current, temperature, signal_quality, latitude, longitude, height, error]
 
         # Check if is connected to FTP server
         if CONNECTED_TO_FTP:
