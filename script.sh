@@ -34,6 +34,9 @@ sudo pip3 install pyserial
 # Install pyyaml with pip
 sudo pip3 install pyyaml
 
+# Install suntime
+sudo pip3 install suntime
+
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
@@ -94,8 +97,8 @@ sudo raspi-config nonint do_i2c 0
 sudo raspi-config nonint do_onewire 1
 
 # Disable LED and other unused hardware
-# echo "boot_delay=0" | sudo tee -a /boot/config.txt
-# echo "disable_splash=1" | sudo tee -a /boot/config.txt
+echo "boot_delay=0" | sudo tee -a /boot/config.txt
+echo "disable_splash=1" | sudo tee -a /boot/config.txt
 echo "dtparam=act_led_trigger=none" | sudo tee -a /boot/config.txt
 # echo "dtoverlay=disable-wifi" | sudo tee -a /boot/config.txt
 

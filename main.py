@@ -13,6 +13,7 @@ from picamera2 import Picamera2
 from libcamera import controls
 from yaml import safe_load
 import serial
+import suntime
 
 ###########################
 # Configuration and filenames
@@ -43,10 +44,9 @@ try:
 except Exception as e:
     print(f"Could not open config.yaml: {str(e)}")
 
-cameraName = f"{config['cameraName']}_{get_cpu_serial()}" # Camera name + unique hardware serial
-currentTimeCSV = datetime.today().strftime('%Y-%m-%d %H:%M:%SZ') # UTC-Time
-currentTimeFilename = datetime.today().strftime('%Y%m%d_%H%M') # UTC-Time
-imgFileName = f"{currentTimeFilename}Z_{cameraName}.jpg"
+CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
+TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
+TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
 error = ""
 
 ###########################
@@ -88,10 +88,10 @@ try:
 
         ftp_directory_list = ftp.nlst()
 
-        if cameraName not in ftp_directory_list:
-            ftp.mkd(cameraName)
+        if CAMERA_NAME not in ftp_directory_list:
+            ftp.mkd(CAMERA_NAME)
 
-        ftp.cwd(cameraName)
+        ftp.cwd(CAMERA_NAME)
 
 except Exception as e:
     error += f"Could not change directory on FTP server: {str(e)}"
@@ -162,6 +162,26 @@ except Exception as e:
 ###########################
 # Schedule script
 ###########################
+
+# Get sunrise and sunset times
+try:
+    if settings["enableSunriseSunset"] and CONNECTED_TO_FTP:
+        sun = suntime.Sun(settings["latitude"], settings["longitude"])
+
+        # Sunrise and sunset times
+        sunrise = sun.get_sunrise_time()
+        settings["startTimeHour"] = sunrise.hour
+        settings["startTimeMinute"] = sunrise.minute
+
+        sunset = sun.get_sunset_time()
+        time_until_sunset = sunset - sunrise
+        time_until_sunset = time_until_sunset.total_seconds() / 60 # Convert to minutes
+        settings["repetitionsPerday"] = int(time_until_sunset / settings["intervalMinutes"])
+
+except Exception as e:
+    error += f"Could not get sunrise and sunset times: {str(e)}"
+    print(f"Could not get sunrise and sunset times: {str(e)}")
+
 def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
     '''Generate a startup schedule file for Witty Pi 4'''
 
@@ -175,8 +195,8 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
     if not 0 < intervalMinutes < 1440:
         intervalMinutes = 30
 
-    if not 0 < maxDurationMinute < 1440:
-        maxDurationMinute = 5
+    if not 1 < maxDurationMinute < 60:
+        maxDurationMinute = 4
 
     if not 0 < repetitionsPerday < 250:
         repetitionsPerday = 8
@@ -309,9 +329,9 @@ def get_gps_position(max_attempts=7, delay=5):
     while current_attempt < max_attempts:
 
         current_attempt += 1
-        gps_data_raw = send_at_command('AT+CGPSINFO', back='+CGPSINFO: ')
+        gps_data_raw = send_at_command('AT+CGPSINFO', back='+CGPSINFO:')
 
-        if gps_data_raw == 0:
+        if gps_data_raw == "":
             sleep(delay)
         elif ',,,,,,' in gps_data_raw:
             print('GPS not yet ready.')
@@ -373,7 +393,6 @@ except Exception as e:
 ###########################
 # Setup camera
 ###########################
-
 try:
     camera = Picamera2()
     cameraConfig = camera.create_still_configuration() # Selects highest resolution by default
@@ -405,8 +424,16 @@ except Exception as e:
 ###########################
 # Capture image
 ###########################
+image_filename = f'{TIMESTAMP_FILENAME}.jpg'
 try:
-    camera.start_and_capture_file(FILE_PATH + imgFileName, capture_mode=cameraConfig, delay=2, show_preview=False)
+    if settings["cameraName"] != "":
+        image_filename = f'{TIMESTAMP_FILENAME}_{settings["cameraName"]}.jpg'
+except Exception as e:
+    error += f"Could not set custom camera name: {str(e)}"
+    print(f"Could not set custom camera name: {str(e)}")
+
+try:
+    camera.start_and_capture_file(FILE_PATH + image_filename, capture_mode=cameraConfig, delay=2, show_preview=False)
 except Exception as e:
     error += f"Could not start camera and capture image: {str(e)}"
     print(f"Could not start camera and capture image: {str(e)}")
@@ -529,7 +556,7 @@ except Exception as e:
 try:
     with StringIO() as csvBuffer:
         writer = writer(csvBuffer)
-        newRow = [currentTimeCSV, next_startup_time, battery_voltage, internal_voltage, internal_current, temperature, signal_quality, latitude, longitude, height, error]
+        newRow = [TIMESTAMP_CSV, next_startup_time, battery_voltage, internal_voltage, internal_current, temperature, signal_quality, latitude, longitude, height, error]
 
         # Check if is connected to FTP server
         if CONNECTED_TO_FTP:
