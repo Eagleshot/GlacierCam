@@ -112,7 +112,7 @@ try:
             with open(f"{FILE_PATH}settings.yaml", 'wb') as fp:  # Download
                 ftp.retrbinary('RETR settings.yaml', fp.write)
         else:
-            print("No settings file found on FTP server. Creating new settings file with default settings.")
+            print("No settings file on FTP server. Creating new settings file with default settings.")
             with open(f"{FILE_PATH}settings.yaml", 'rb') as fp:
                 ftp.storbinary('STOR settings.yaml', fp)
 except Exception as e:
@@ -130,14 +130,23 @@ except Exception as e:
 # Time synchronization
 ###########################
 
+def run_witty_pi_4_command(command: str) -> str:
+    '''Send a command to Witty Pi 4'''
+    try:
+        command = f"cd /home/pi/wittypi && . ./utilities.sh && {command}"
+        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
+        output = output.replace("\n", "")
+        return output
+    except Exception as e:
+        print(f"Could not send Witty Pi 4 command: {str(e)}")
+        return "ERROR"
+
 def sync_witty_pi_time_with_network():
     '''Sync WittyPi clock with network time'''
 
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
     try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && net_to_system && system_to_rtc"
-        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
-        output = output.replace("\n", "")
+        output = run_witty_pi_4_command("net_to_system && system_to_rtc")
         print(f"Time synchronized with network: {output}")
     except Exception as e:
         # error += f"Could not synchronize time with network: {str(e)}" # TODO Return error value
@@ -188,10 +197,10 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
 
     # Turn camera off for the rest of the day
     remaining_minutes = 1440 - (repetitionsPerday * intervalMinutes) + (intervalMinutes - maxDurationMinute)
-    remainingHours = remaining_minutes // 60
+    remaining_hours = remaining_minutes // 60
     remaining_minutes = remaining_minutes % 60
 
-    schedule += f"OFF\tH{remainingHours}"
+    schedule += f"OFF\tH{remaining_hours}"
     if remaining_minutes > 0:
         schedule += f" M{remaining_minutes}"
 
@@ -228,31 +237,35 @@ except Exception as e:
     error += f"Failed to write schedule file: {str(e)}"
     print(f"Failed to write schedule file: {str(e)}")
 
-try:
-    # Apply new schedule
-    command = "cd /home/pi/wittypi && sudo ./runScript.sh"
-    output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
-    output = output.split("\n")[1:3]
+def apply_schedule_witty_pi_4(max_retries: int = 10) -> str:
+    '''Apply schedule to Witty Pi 4'''
+    try:
+        for i in range(max_retries):
+            # Apply new schedule
+            command = "cd /home/pi/wittypi && sudo ./runScript.sh"
+            output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=15)
+            output = output.split("\n")[1:3]
 
-    # If output contains warning
-    if "Warning" in output[1]:
-        sync_witty_pi_time_with_network() # Sync time and try again
-        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
-        output = output.split("\n")[1:3]
+            if not "Schedule next startup at:" in output[0]:
+                print(f"Failed to apply schedule: {output[0]}")
+                sync_witty_pi_time_with_network()
+            else:
+                print(f"{output[0]}\n{output[1]}")
+                nextStartupTime = output[1][-19:]
+                return nextStartupTime
 
-    print(f"{output[0]}\n{output[1]}")
-    nextStartupTime = output[1][-19:]
-except Exception as e:
-    error += f"Failed to apply schedule: {str(e)}"
-    print(f"Failed to apply schedule: {str(e)}")
-    nextStartupTime = "-"
+    except Exception as e:
+        print(f"Failed to apply schedule: {str(e)}")
+        return "-"
+
+nextStartupTime = apply_schedule_witty_pi_4()
 
 ##########################
 # SIM7600G-H 4G module
 ###########################
 
 # Send AT command to SIM7600X
-def send_at_command(command, back='OK', timeout=1):
+def send_at_command(command: str, back: str = 'OK', timeout: int = 1) -> str:
     '''Send an AT command to SIM7600X'''
     rec_buff = ''
     ser.write((command+'\r\n').encode())
@@ -262,7 +275,7 @@ def send_at_command(command, back='OK', timeout=1):
         rec_buff = ser.read(ser.inWaiting())
     if back not in rec_buff.decode():
         print(f"Error: AT command {command} returned {rec_buff.decode()}")
-        return 0
+        return ""
 
     return rec_buff.decode()
 
@@ -345,6 +358,9 @@ except Exception as e:
     error += f"Could not open serial connection with 4G module: {str(e)}"
     print (f"Could not open serial connection with 4G module: {str(e)}")
 
+###########################
+# Enable GPS
+###########################
 try:
     # Enable GPS to later read out position
     if settings["enableGPS"]:
@@ -434,9 +450,7 @@ except Exception as e:
 def get_temperature_witty_pi_4():
     '''Gets the current temperature reading from the Witty Pi 4 in °C'''
     try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && get_temperature"
-        temperature = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
-        temperature = temperature.replace("\n", "")
+        temperature = run_witty_pi_4_command("get_temperature")
         temperature = temperature.split(" / ", maxsplit = 1)[0] # Remove the Farenheit reading
         temperature = temperature[:-2] # Remove °C
         print(f"Temperature: {temperature} °C")
@@ -450,9 +464,7 @@ def get_temperature_witty_pi_4():
 def get_battery_voltage_witty_pi_4():
     '''Gets the battery voltage reading from the Witty Pi 4 in V'''
     try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && get_input_voltage"
-        battery_voltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
-        battery_voltage = battery_voltage.replace("\n", "")
+        battery_voltage = run_witty_pi_4_command("get_input_voltage")
         print(f"Battery voltage: {battery_voltage} V")
         return battery_voltage
     except Exception as e:
@@ -461,13 +473,10 @@ def get_battery_voltage_witty_pi_4():
         return "-"
 
 # Raspberry Pi voltage
-# TODO Maybe make setting a setting to enable/disable additional sensor readings in the future
 def get_internal_voltage_witty_pi_4():
     '''Gets the internal (5V) voltage from the Witty Pi 4 in V'''
     try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_voltage"
-        internal_voltage = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
-        internal_voltage = internal_voltage.replace("\n", "")
+        internal_voltage = run_witty_pi_4_command("get_output_voltage")
         print(f"Output voltage: {internal_voltage} V")
         return internal_voltage
     except Exception as e:
@@ -479,9 +488,7 @@ def get_internal_voltage_witty_pi_4():
 def get_internal_current_witty_pi_4():
     '''Gets the internal (5V) current reading from the Witty Pi 4 in A'''
     try:
-        command = "cd /home/pi/wittypi && . ./utilities.sh && get_output_current"
-        internal_current = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
-        internal_current = internal_current.replace("\n", "")
+        internal_current = run_witty_pi_4_command("get_output_current")
         print(f"Output current: {internal_current} A")
         return internal_current
     except Exception as e:
