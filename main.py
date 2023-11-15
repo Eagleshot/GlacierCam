@@ -594,8 +594,8 @@ except Exception as e:
 ###########################
 temperature = get_temperature_witty_pi_4()
 battery_voltage = get_battery_voltage_witty_pi_4()
-internal_voltage = get_internal_voltage_witty_pi_4()
-internal_current = get_internal_current_witty_pi_4()
+internal_voltage = "-" # get_internal_voltage_witty_pi_4()
+internal_current = "-" # get_internal_current_witty_pi_4()
 signal_quality = get_signal_quality()
 
 ###########################
