@@ -159,6 +159,107 @@ except Exception as e:
     error += f"Could not synchronize time with network: {str(e)}"
     print(f"Could not synchronize time with network: {str(e)}")
 
+# Get WittyPi readings
+# See: https://www.baeldung.com/linux/run-function-in-script
+
+# Temperature
+def get_temperature_witty_pi_4():
+    '''Gets the current temperature reading from the Witty Pi 4 in °C'''
+    try:
+        temperature = run_witty_pi_4_command("get_temperature")
+        temperature = temperature.split("/", maxsplit = 1)[0] # Remove the Farenheit reading
+        temperature = temperature[:-3] # Remove °C
+        print(f"Temperature: {temperature} °C")
+        return temperature
+    except Exception as e:
+        # error += f"Could not get temperature: {str(e)}" # TODO Return error value
+        print(f"Could not get temperature: {str(e)}")
+        return "-"
+
+# Battery voltage
+def get_battery_voltage_witty_pi_4():
+    '''Gets the battery voltage reading from the Witty Pi 4 in V'''
+    try:
+        battery_voltage = run_witty_pi_4_command("get_input_voltage")
+        print(f"Battery voltage: {battery_voltage} V")
+        return battery_voltage
+    except Exception as e:
+        # error += f"Could not get battery voltage: {str(e)}" # TODO Return error value
+        print(f"Could not get battery voltage: {str(e)}")
+        return "-"
+
+# Raspberry Pi voltage
+def get_internal_voltage_witty_pi_4():
+    '''Gets the internal (5V) voltage from the Witty Pi 4 in V'''
+    try:
+        internal_voltage = run_witty_pi_4_command("get_output_voltage")
+        print(f"Output voltage: {internal_voltage} V")
+        return internal_voltage
+    except Exception as e:
+        # error += f"Could not get Raspberry Pi voltage: {str(e)}" # TODO Return error value
+        print(f"Could not get Raspberry Pi voltage: {str(e)}")
+        return "-"
+
+# Raspberry Pi current - Not needed at the moment
+def get_internal_current_witty_pi_4():
+    '''Gets the internal (5V) current reading from the Witty Pi 4 in A'''
+    try:
+        internal_current = run_witty_pi_4_command("get_output_current")
+        print(f"Output current: {internal_current} A")
+        return internal_current
+    except Exception as e:
+        # error += f"Could not get Raspberry Pi current: {str(e)}" # TODO Return error value
+        print(f"Could not get Raspberry Pi current: {str(e)}")
+        return "-"
+
+# Get low voltage treshold
+def get_low_voltage_treshold_witty_pi_4():
+    '''Gets the low treshold from the Witty Pi 4'''
+    try:
+        low_voltage_treshold = run_witty_pi_4_command("get_low_voltage_threshold")[:-1]
+        print(f"Low voltage treshold: {low_voltage_treshold} V")
+        return low_voltage_treshold
+    except Exception as e:
+        # error += f"Could not get low voltage treshold: {str(e)}" # TODO Return error value
+        print(f"Could not get low voltage treshold: {str(e)}")
+        return "-"
+
+# Get recovery voltage treshold
+def get_recovery_voltage_treshold_witty_pi_4():
+    '''Gets the recovery treshold from the Witty Pi 4'''
+    try:
+        recovery_voltage_treshold = run_witty_pi_4_command("get_recovery_voltage_threshold")[:-1]
+        print(f"Recovery voltage treshold: {recovery_voltage_treshold} V")
+        return recovery_voltage_treshold
+    except Exception as e:
+        # error += f"Could not get recovery voltage treshold: {str(e)}" # TODO Return error value
+        print(f"Could not get recovery voltage treshold: {str(e)}")
+        return "-"
+
+# Set low voltage treshold
+def set_low_voltage_treshold_witty_pi_4(voltage: float):
+    '''Sets the low voltage treshold from the Witty Pi 4'''
+    try:
+        low_voltage_treshold = run_witty_pi_4_command(f"set_low_voltage_threshold {int(voltage*10)}")
+        print(f"Set low voltage treshold to: {voltage} V")
+        return low_voltage_treshold
+    except Exception as e:
+        # error += f"Could not set low voltage treshold: {str(e)}" # TODO Return error value
+        print(f"Could not set low voltage treshold: {str(e)}")
+        return "-"
+    
+# Set recovery voltage treshold
+def set_recovery_voltage_treshold_witty_pi_4(voltage: float):
+    '''Sets the recovery voltage treshold from the Witty Pi 4'''
+    try:
+        recovery_voltage_treshold = run_witty_pi_4_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
+        print(f"Set recovery voltage treshold to: {voltage} V")
+        return recovery_voltage_treshold
+    except Exception as e:
+        # error += f"Could not set recovery voltage treshold: {str(e)}" # TODO Return error value
+        print(f"Could not set recovery voltage treshold: {str(e)}")
+        return "-"
+
 ###########################
 # Schedule script
 ###########################
@@ -185,8 +286,10 @@ except Exception as e:
     error += f"Could not get sunrise and sunset times: {str(e)}"
     print(f"Could not get sunrise and sunset times: {str(e)}")
 
-def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, maxDurationMinute: int, repetitionsPerday: int):
+def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, repetitionsPerday: int):
     '''Generate a startup schedule file for Witty Pi 4'''
+
+    maxDurationMinute = 4
 
     # Basic validity check of parameters
     if not 0 < startTimeHour < 24:
@@ -197,9 +300,6 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
 
     if not 0 < intervalMinutes < 1440:
         intervalMinutes = 30
-
-    if not 2 < maxDurationMinute < 60:
-        maxDurationMinute = 4
 
     if not 0 < repetitionsPerday < 250:
         repetitionsPerday = 8
@@ -229,8 +329,26 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
 
     return schedule
 
+
 try:
-    schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["maxDurationMinute"], settings["repetitionsPerday"])
+    battery_voltage = get_battery_voltage_witty_pi_4()
+
+    battery_voltage_half = settings["battery_voltage_half"]
+    battery_voltage_quarter = settings["battery_voltage_half"]-(settings["battery_voltage_half"]-settings["low_voltage_treshold"])/2
+
+    if battery_voltage_quarter < battery_voltage < battery_voltage_half:
+        settings["intervalMinutes"] = settings["intervalMinutes"]*2
+        settings["repetitionsPerday"] = settings["repetitionsPerday"]/2
+    elif battery_voltage < battery_voltage_quarter:
+        settings["repetitionsPerday"] = 1
+
+except Exception as e:
+    error += f"Could not get battery voltage: {str(e)}"
+    print(f"Could not get battery voltage: {str(e)}")
+
+try:
+    # Generate schedule
+    schedule = generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["repetitionsPerday"])
 except Exception as e:
     error += f"Failed to generate schedule with setting: {str(e)}"
     print(f"Failed to generate schedule with setting: {str(e)}")
@@ -475,107 +593,6 @@ except Exception as e:
 # Uploading sensor data to CSV
 ###########################
 
-# Get WittyPi readings
-# See: https://www.baeldung.com/linux/run-function-in-script
-
-# Temperature
-def get_temperature_witty_pi_4():
-    '''Gets the current temperature reading from the Witty Pi 4 in °C'''
-    try:
-        temperature = run_witty_pi_4_command("get_temperature")
-        temperature = temperature.split("/", maxsplit = 1)[0] # Remove the Farenheit reading
-        temperature = temperature[:-3] # Remove °C
-        print(f"Temperature: {temperature} °C")
-        return temperature
-    except Exception as e:
-        # error += f"Could not get temperature: {str(e)}" # TODO Return error value
-        print(f"Could not get temperature: {str(e)}")
-        return "-"
-
-# Battery voltage
-def get_battery_voltage_witty_pi_4():
-    '''Gets the battery voltage reading from the Witty Pi 4 in V'''
-    try:
-        battery_voltage = run_witty_pi_4_command("get_input_voltage")
-        print(f"Battery voltage: {battery_voltage} V")
-        return battery_voltage
-    except Exception as e:
-        # error += f"Could not get battery voltage: {str(e)}" # TODO Return error value
-        print(f"Could not get battery voltage: {str(e)}")
-        return "-"
-
-# Raspberry Pi voltage
-def get_internal_voltage_witty_pi_4():
-    '''Gets the internal (5V) voltage from the Witty Pi 4 in V'''
-    try:
-        internal_voltage = run_witty_pi_4_command("get_output_voltage")
-        print(f"Output voltage: {internal_voltage} V")
-        return internal_voltage
-    except Exception as e:
-        # error += f"Could not get Raspberry Pi voltage: {str(e)}" # TODO Return error value
-        print(f"Could not get Raspberry Pi voltage: {str(e)}")
-        return "-"
-
-# Raspberry Pi current - Not needed at the moment
-def get_internal_current_witty_pi_4():
-    '''Gets the internal (5V) current reading from the Witty Pi 4 in A'''
-    try:
-        internal_current = run_witty_pi_4_command("get_output_current")
-        print(f"Output current: {internal_current} A")
-        return internal_current
-    except Exception as e:
-        # error += f"Could not get Raspberry Pi current: {str(e)}" # TODO Return error value
-        print(f"Could not get Raspberry Pi current: {str(e)}")
-        return "-"
-
-# Get low voltage treshold
-def get_low_voltage_treshold_witty_pi_4():
-    '''Gets the low treshold from the Witty Pi 4'''
-    try:
-        low_voltage_treshold = run_witty_pi_4_command("get_low_voltage_threshold")[:-1]
-        print(f"Low voltage treshold: {low_voltage_treshold} V")
-        return low_voltage_treshold
-    except Exception as e:
-        # error += f"Could not get low voltage treshold: {str(e)}" # TODO Return error value
-        print(f"Could not get low voltage treshold: {str(e)}")
-        return "-"
-
-# Get recovery voltage treshold
-def get_recovery_voltage_treshold_witty_pi_4():
-    '''Gets the recovery treshold from the Witty Pi 4'''
-    try:
-        recovery_voltage_treshold = run_witty_pi_4_command("get_recovery_voltage_threshold")[:-1]
-        print(f"Recovery voltage treshold: {recovery_voltage_treshold} V")
-        return recovery_voltage_treshold
-    except Exception as e:
-        # error += f"Could not get recovery voltage treshold: {str(e)}" # TODO Return error value
-        print(f"Could not get recovery voltage treshold: {str(e)}")
-        return "-"
-
-# Set low voltage treshold
-def set_low_voltage_treshold_witty_pi_4(voltage: float):
-    '''Sets the low voltage treshold from the Witty Pi 4'''
-    try:
-        low_voltage_treshold = run_witty_pi_4_command(f"set_low_voltage_threshold {int(voltage*10)}")
-        print(f"Set low voltage treshold to: {voltage} V")
-        return low_voltage_treshold
-    except Exception as e:
-        # error += f"Could not set low voltage treshold: {str(e)}" # TODO Return error value
-        print(f"Could not set low voltage treshold: {str(e)}")
-        return "-"
-    
-# Set recovery voltage treshold
-def set_recovery_voltage_treshold_witty_pi_4(voltage: float):
-    '''Sets the recovery voltage treshold from the Witty Pi 4'''
-    try:
-        recovery_voltage_treshold = run_witty_pi_4_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
-        print(f"Set recovery voltage treshold to: {voltage} V")
-        return recovery_voltage_treshold
-    except Exception as e:
-        # error += f"Could not set recovery voltage treshold: {str(e)}" # TODO Return error value
-        print(f"Could not set recovery voltage treshold: {str(e)}")
-        return "-"
-
 try:
     # If settings low voltage treshold exists
     if 2.0 <= settings["low_voltage_treshold"] <= 25.0 or settings["low_voltage_treshold"] == 0:
@@ -593,7 +610,6 @@ except Exception as e:
 # Get readings
 ###########################
 temperature = get_temperature_witty_pi_4()
-battery_voltage = get_battery_voltage_witty_pi_4()
 internal_voltage = "-" # get_internal_voltage_witty_pi_4()
 internal_current = "-" # get_internal_current_witty_pi_4()
 signal_quality = get_signal_quality()

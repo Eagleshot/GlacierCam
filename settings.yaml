@@ -14,7 +14,6 @@ resolution: [0, 0]
 startTimeHour: 8
 startTimeMinute: 0
 intervalMinutes: 30
-maxDurationMinute: 5
 repetitionsPerday: 16
 timeSync: false # Enable or disable time synchronization with internet
 
