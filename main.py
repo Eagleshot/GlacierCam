@@ -170,6 +170,7 @@ try:
 
         # Sunrise and sunset times
         sunrise = sun.get_sunrise_time()
+        sunrise = sunrise.replace(minute=15 * round(sunrise.minute / 15)) # Round to nearest 15 minutes
         settings["startTimeHour"] = sunrise.hour
         settings["startTimeMinute"] = sunrise.minute
 
@@ -177,6 +178,9 @@ try:
         time_until_sunset = sunset - sunrise
         time_until_sunset = time_until_sunset.total_seconds() / 60 # Convert to minutes
         settings["repetitionsPerday"] = int(time_until_sunset / settings["intervalMinutes"])
+
+        print(f"Sunrise: {sunrise.hour}:{sunrise.minute:02d}")
+        print(f"Sunset: {sunset.hour}:{sunset.minute:02d}")
 
 except Exception as e:
     error += f"Could not get sunrise and sunset times: {str(e)}"
