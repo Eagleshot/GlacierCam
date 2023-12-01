@@ -16,12 +16,6 @@ FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
 
-# TODO: Latitude and longitude overwrite
-location_overwrite = True
-latitude = 46.87
-longitude = 9.88
-heigth = 1200
-
 # Login status
 if "userIsLoggedIn" not in st.session_state:
     st.session_state.userIsLoggedIn = False
@@ -313,10 +307,14 @@ st.divider()
 ##############################################
 
 # Overwrite latitude and longitude if available
-if location_overwrite:
-    df['Latitude'] = latitude
-    df['Longitude'] = longitude
-    df['Heigth'] = heigth
+if "location_overwrite" in settings:
+    if settings["location_overwrite"]:
+        if "latitude" in settings:
+            latitude = settings["latitude"]
+        if "longitude" in settings:
+            longitude = settings["longitude"]
+        if "heigth" in settings:
+            heigth = settings["heigth"]
 
 dfMap = df[df['Latitude'] != "-"]
 dfMap = dfMap[dfMap['Longitude'] != "-"]
@@ -522,9 +520,8 @@ if not dfMap.empty:
         f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['Heigth'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
 
     # Print timestamp
-    if not location_overwrite:
-        st.markdown(
-            f"Letztes Standortupdate: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
+    if settings["location_overwrite"]:
+        st.markdown(f"Letztes Standortupdate: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
 
 # Add a linebreak
 st.write("")

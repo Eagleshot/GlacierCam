@@ -21,8 +21,10 @@ timeSync: false # Enable or disable time synchronization with internet
 enableGPS: false
 
 # Latitude and longitude
+location_override: false
 latitude: 0.0
 longitude: 0.0
+height: 0
 
 # Sunrise and sunset calculation
 enableSunriseSunset: false
