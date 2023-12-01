@@ -42,11 +42,6 @@ st.set_page_config(
     }
 )
 
-# Hide footer and menu
-# See: https://discuss.streamlit.io/t/remove-made-with-streamlit-from-bottom-of-app/1370/2
-STREAMLIT_HIDE_FOOTER = """<style>footer {visibility: hidden;}</style>"""
-st.markdown(STREAMLIT_HIDE_FOOTER, unsafe_allow_html=True)
-
 # Change the camera selection
 with st.sidebar:
 
