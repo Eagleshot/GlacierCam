@@ -75,16 +75,6 @@ ftp.cwd("..") # TODO Remove
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
 
-# Camera name
-if len(imgFiles) > 0:
-    cameraname = imgFiles[-1][15:-21]
-    camera_ID = imgFiles[-1][-20:-4]
-else:
-    cameraname = FTP_FOLDER
-    camera_ID = "ERROR000000000"
-
-st.title("Silvrettagletscher", anchor=False)
-
 # Placeholder for the image
 imagePlaceholder = st.empty()
 
@@ -102,6 +92,29 @@ def get_file_ftp(filename: str) -> None:
     '''Download a file from the FTP server.'''
     # Retrieve the file data
     ftp.retrbinary(f"RETR {filename}", open(filename, 'wb').write)
+
+# Get settings from server
+get_file_ftp("settings.yaml")
+
+with open('settings.yaml', encoding='utf-8') as file:
+    settings = safe_load(file)
+
+
+# Camera name
+if "cameraName" in settings:
+    cameraname = settings["cameraName"]
+elif len(imgFiles) > 0:
+    cameraname = imgFiles[-1][15:-21]
+else:
+    cameraname = FTP_FOLDER
+
+st.title(cameraname, anchor=False)
+
+# Camera ID
+if len(imgFiles) > 0:
+    camera_ID = imgFiles[-1][-20:-4]
+else:
+    camera_ID = "ERROR000000000"
 
 # Download diagnostics file
 get_file_ftp("diagnostics.csv")
@@ -189,38 +202,37 @@ if len(imgFiles) > 1:
         format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(
         timezone).strftime("%Y%m%d") else f"{x[:4]}.{x[4:6]}.{x[6:8]} {x[9:11]}:{x[11:13]} Uhr"
     )
-# elif len(imgFiles) == 1:
-#     selected_file = imgFiles[0]
-# else:
-#     st.write("Keine Bilder vorhanden.")
+elif len(imgFiles) == 1:
+    selected_file = imgFiles[0]
+else:
+    st.write("Keine Bilder vorhanden.")
 
-# @st.cache_data(show_spinner=False, ttl=3600)
-# def get_image_ftp(selected_file):
-#     '''Get an image from the FTP server'''
-#     image_data = BytesIO() 
-#     ftp.cwd("save") # TODO Cleanup
-#     ftp.retrbinary(f"RETR {selected_file}", image_data.write)
-#     ftp.cwd("..") # TODO Cleanup
-#     image = Image.open(image_data)
+@st.cache_data(show_spinner=False, ttl=3600)
+def get_image_ftp(selected_file):
+    '''Get an image from the FTP server'''
+    image_data = BytesIO() 
+    ftp.cwd("save") # TODO Cleanup
+    ftp.retrbinary(f"RETR {selected_file}", image_data.write)
+    ftp.cwd("..") # TODO Cleanup
+    image = Image.open(image_data)
 
-#     # Rotate the image
-#     # image = image.rotate(180, expand=True)
+    # Rotate the image
+    # image = image.rotate(180, expand=True)
 
-#     return image_data, image
+    return image_data, image
 
 # Get the image file from the FTP server
-
-if len(files) >= 0:
-    # image_data, image = get_image_ftp(selected_file)
+if len(files) > 0:
+    image_data, image = get_image_ftp(selected_file)
 
     # Display the image with the corresponding timestamp
-    imagePlaceholder.image("exampleimg.jpg", use_column_width=True)
+    imagePlaceholder.image(image, use_column_width=True)
 
     # Download button for image
     st.download_button(
         label="Bild herunterladen 📷",
-        data="image_data",
-        file_name="selected_file",
+        data=image_data,
+        file_name=selected_file,
         mime="image/jpeg",
         use_container_width=True
     )
@@ -243,8 +255,10 @@ except:
     index = -1
 
 col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]} V")
-col2.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]} °C")
-col3.metric("Signalqualität", df['Signal Quality'].iloc[index])
+col2.metric("Interne Spannung",
+            f"{df['Internal Voltage (V)'].iloc[index]} V")
+col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]} °C")
+col4.metric("Signalqualität", df['Signal Quality'].iloc[index])
 
 st.write("")
 
@@ -294,8 +308,6 @@ else:
         next_last_startup_text += f"{(timeDifference.seconds//60) % 60} Minuten."
     else:
         next_last_startup_text += "weniger als einer Minute."
-
-next_last_startup_text = "Letzter Start vor 12 Minuten - nächster Start in 18 Minuten."
 
 st.write(next_last_startup_text)
 
@@ -531,11 +543,6 @@ st.write("")
 # TODO Settings (incl. validation)
 if True: # st.session_state.userIsLoggedIn:
     with st.expander("Kameraeinstellungen"):
-
-        get_file_ftp("settings.yaml")
-
-        with open('settings.yaml', encoding='utf-8') as file:
-            settings = safe_load(file)
 
         st.write("Kamera")
 
