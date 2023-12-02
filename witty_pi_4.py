@@ -4,14 +4,12 @@ from os import path
 
 # Get WittyPi readings
 # See: https://www.baeldung.com/linux/run-function-in-script
-
 def run_witty_pi_4_command(command: str) -> str:
     '''Send a command to Witty Pi 4'''
     try:
         command = f"cd /home/pi/wittypi && . ./utilities.sh && {command}"
         output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
-        output = output.replace("\n", "")
-        return output
+        return output.strip()
     except Exception as e:
         print(f"Could not send Witty Pi 4 command: {str(e)}")
         return "ERROR"
@@ -27,17 +25,18 @@ def sync_witty_pi_time_with_network():
         print(f"Could not synchronize time with network: {str(e)}")
 
 # Temperature
-def get_temperature_witty_pi_4():
+def get_temperature_witty_pi_4() -> float:
     '''Gets the current temperature reading from the Witty Pi 4 in °C'''
     try:
         temperature = run_witty_pi_4_command("get_temperature")
         temperature = temperature.split("/", maxsplit = 1)[0] # Remove the Farenheit reading
         temperature = temperature[:-3] # Remove °C
+        temperature = float(temperature)
         print(f"Temperature: {temperature} °C")
         return temperature
     except Exception as e:
         print(f"Could not get temperature: {str(e)}")
-        return "-"
+        return 0.0
 
 # Battery voltage
 def get_battery_voltage_witty_pi_4() -> float:
@@ -52,15 +51,16 @@ def get_battery_voltage_witty_pi_4() -> float:
         return 0.0
 
 # Raspberry Pi voltage
-def get_internal_voltage_witty_pi_4():
+def get_internal_voltage_witty_pi_4() -> float:
     '''Gets the internal (5V) voltage from the Witty Pi 4 in V'''
     try:
         internal_voltage = run_witty_pi_4_command("get_output_voltage")
+        internal_voltage = float(internal_voltage)
         print(f"Output voltage: {internal_voltage} V")
         return internal_voltage
     except Exception as e:
         print(f"Could not get Raspberry Pi voltage: {str(e)}")
-        return "-"
+        return 0.0
 
 # Raspberry Pi current - Not needed at the moment
 def get_internal_current_witty_pi_4():
@@ -162,10 +162,10 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
 
     if path.exists(SCHEDULE_FILE_PATH):
         with open(SCHEDULE_FILE_PATH, "r", encoding='utf-8') as f:
-            oldSchedule = f.read()
+            old_schedule = f.read()
 
             # Write new schedule file if it changed
-            if oldSchedule != schedule:
+            if old_schedule != schedule:
                 print("Writing and applying new schedule file.")
                 with open(SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
                     f.write(schedule)
@@ -176,7 +176,6 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
         with open(SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
             f.write(schedule)
 
-    
 def apply_schedule_witty_pi_4(max_retries: int = 5) -> str:
     '''Apply schedule to Witty Pi 4'''
     # TODO: Maybe check check_sys_and_rtc_time() in utilities.sh first
