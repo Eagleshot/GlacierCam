@@ -363,7 +363,7 @@ except Exception as e:
     logging.warning("Could not append new measurements to log CSV: %s", str(e))
 
 try:
-    with open(f"{FILE_PATH}log.txt", 'rb', encoding='utf-8') as file:
+    with open(f"{FILE_PATH}log.txt", 'rb') as file:
         ftp.storbinary("APPE log.txt", file)
 
     # Upload WittyPi diagnostics
@@ -378,7 +378,7 @@ try:
             ftp.storbinary("APPE wittyPiSchedule.txt", wittyPiDiagnostics)
 
 except Exception as e:
-    logging.warning("Could not upload WittyPi diagnostics: %s", str(e))
+    logging.warning("Could not upload diagnostics data: %s", str(e))
 
 ###########################
 # Quit FTP session
