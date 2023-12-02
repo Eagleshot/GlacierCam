@@ -363,7 +363,7 @@ except Exception as e:
     logging.warning("Could not append new measurements to log CSV: %s", str(e))
 
 try:
-    with open(f"{FILE_PATH}log.txt", 'r', encoding='utf-8') as file:
+    with open(f"{FILE_PATH}log.txt", 'rb', encoding='utf-8') as file:
         ftp.storbinary("APPE log.txt", file)
 
     # Upload WittyPi diagnostics
