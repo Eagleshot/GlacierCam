@@ -7,6 +7,7 @@ from csv import writer, reader
 from datetime import datetime
 from ftplib import FTP
 import logging
+from logging.handlers import RotatingFileHandler
 from picamera2 import Picamera2
 from libcamera import controls
 from yaml import safe_load
@@ -37,8 +38,10 @@ def get_cpu_serial():
 
 FILE_PATH = "/home/pi/"  # Path where files are saved
 
-# Logging
-logging.basicConfig(filename=f"{FILE_PATH}log.txt", level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s %(message)s')
+# Error logging
+my_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
+my_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+logging.basicConfig(level=logging.INFO, handlers=[my_handler])
 
 # Read config.yaml file from SD card
 try:
