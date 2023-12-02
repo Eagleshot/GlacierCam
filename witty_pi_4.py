@@ -200,4 +200,17 @@ def apply_schedule_witty_pi_4(max_retries: int = 5) -> str:
     except Exception as e:
         logging.error("Failed to apply schedule: %s", str(e))
         return "-"
-    
+
+if __name__ == "__main__":
+
+    sync_witty_pi_time_with_network()
+    get_temperature_witty_pi_4()
+    get_battery_voltage_witty_pi_4()
+    get_internal_voltage_witty_pi_4()
+    get_internal_current_witty_pi_4()
+    get_low_voltage_treshold_witty_pi_4()
+    get_recovery_voltage_treshold_witty_pi_4()
+    set_low_voltage_treshold_witty_pi_4(3.5)
+    set_recovery_voltage_treshold_witty_pi_4(3.7)
+    generate_schedule(8, 0, 30, 8)
+    apply_schedule_witty_pi_4()

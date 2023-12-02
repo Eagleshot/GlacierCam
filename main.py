@@ -39,9 +39,11 @@ def get_cpu_serial():
 FILE_PATH = "/home/pi/"  # Path where files are saved
 
 # Error logging
-my_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
-my_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-logging.basicConfig(level=logging.INFO, handlers=[my_handler, logging.StreamHandler()])
+file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
+file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+logging.basicConfig(level=logging.INFO, handlers=[file_handler, stream_handler])
 
 # Read config.yaml file from SD card
 try:
@@ -70,20 +72,27 @@ for i in range(MAX_RETRIES):
             logging.warning("Could not connect to FTP server: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
         else:
             logging.info("Could not connect to FTP server: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
-        
+
         CONNECTED_TO_FTP = False
         sleep(5) # Wait 5 seconds and try again
+
+def change_directory(directory: str):
+    '''Change directory on the file server'''
+    try:
+        ftp_directory_list = ftp.nlst()
+
+        if directory not in ftp_directory_list:
+            ftp.mkd(directory)
+
+        ftp.cwd(directory)
+
+    except Exception as e:
+        logging.warning("Could not change directory on FTP server: %s", str(e))
 
 # Go to custom directory in FTP server if specified
 try:
     if config["ftpDirectory"] != "" and CONNECTED_TO_FTP:
-
-        ftp_directory_list = ftp.nlst()
-
-        if config["ftpDirectory"] not in ftp_directory_list:
-            ftp.mkd(config["ftpDirectory"])
-
-        ftp.cwd(config["ftpDirectory"])
+        change_directory(config["ftpDirectory"])
 
 except Exception as e:
     logging.warning("Could not change directory on FTP server: %s", str(e))
@@ -91,13 +100,7 @@ except Exception as e:
 # Go to folder with camera name + unique hardware serial number or create it
 try:
     if config["multipleCamerasOnServer"] and CONNECTED_TO_FTP:
-
-        ftp_directory_list = ftp.nlst()
-
-        if CAMERA_NAME not in ftp_directory_list:
-            ftp.mkd(CAMERA_NAME)
-
-        ftp.cwd(CAMERA_NAME)
+        change_directory(CAMERA_NAME)
 
 except Exception as e:
     logging.warning("Could not change directory on FTP server: %s", str(e))
@@ -360,6 +363,9 @@ except Exception as e:
     logging.warning("Could not append new measurements to log CSV: %s", str(e))
 
 try:
+    with open(f"{FILE_PATH}log.txt", 'r', encoding='utf-8') as file:
+        ftp.storbinary("APPE log.txt", file)
+
     # Upload WittyPi diagnostics
     if settings["uploadWittyPiDiagnostics"] and CONNECTED_TO_FTP:
 
