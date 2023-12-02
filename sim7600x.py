@@ -1,5 +1,6 @@
 '''Class for the SIM7600X 4G module'''
 from time import sleep
+import logging
 import serial
 
 class SIM7600X:
@@ -18,7 +19,7 @@ class SIM7600X:
             sleep(0.01)
             rec_buff = self.ser.read(self.ser.inWaiting())
         if back not in rec_buff.decode():
-            print(f"Error: AT command {command} returned {rec_buff.decode()}")
+            logging.error("Error: AT command %s returned %s", command, rec_buff.decode())
             return ""
 
         return rec_buff.decode()
@@ -37,10 +38,10 @@ class SIM7600X:
             signal_quality = signal_quality[8:10]
             signal_quality = signal_quality.replace("\n", "")
             signal_quality = ''.join(ch for ch in signal_quality if ch.isdigit()) # Remove non-numeric characters
-            print(f"Current signal quality: {signal_quality}")
+            logging.info("Current signal quality: %s", signal_quality)
             return signal_quality
         except Exception as e:
-            print(f"Could not get current signal quality: {str(e)}")
+            logging.error("Could not get current signal quality: %s", str(e))
             return ""
 
     # Get GPS Position
@@ -57,7 +58,7 @@ class SIM7600X:
             if gps_data_raw == "":
                 sleep(delay)
             elif ',,,,,,' in gps_data_raw:
-                print('GPS not yet ready.')
+                logging.info("GPS not yet ready.")
                 sleep(delay)
             else:
                 # Additions to Demo Code Written by Tim! -> Core Electronics
@@ -84,27 +85,25 @@ class SIM7600X:
 
                 # TODO Time
 
-                print(f"GPS position: LAT {str_lat}, LON {str_lon}, HEIGHT {str_height}")
+                logging.info("GPS position: LAT %s, LON %s, HEIGHT %s", str_lat, str_lon, str_height)
                 return str_lat, str_lon, str_height
         return "-", "-", "-"
 
     def start_gps_session(self):
         '''Starts a GPS session on the SIM7600G-H 4G module'''
         try:
-            print('Starting GPS session.')
+            logging.info("Starting GPS session.")
             self.send_at_command('AT+CGPS=1,1')
         except Exception as e:
-            print(f"Could not start GPS session: {str(e)}")
+            logging.error("Could not start GPS session: %s", str(e))
 
     def stop_gps_session(self):
         '''Stops a GPS session on the SIM7600G-H 4G module'''
         try:
-            print('Stopping GPS session.')
+            logging.info("Stopping GPS session.")
             self.send_at_command('AT+CGPS=0')
-            print("GPS session stopped.")
         except Exception as e:
-            print(f"Could not stop GPS session: {str(e)}")
-
+            logging.error("Could not stop GPS session: %s", str(e))
 
 if __name__ == "__main__":
     sim7600x = SIM7600X()
