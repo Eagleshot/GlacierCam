@@ -178,7 +178,6 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
 
 def apply_schedule_witty_pi_4(max_retries: int = 5) -> str:
     '''Apply schedule to Witty Pi 4'''
-    # TODO: Maybe check check_sys_and_rtc_time() in utilities.sh first
     try:
         for i in range(max_retries):
             # Apply new schedule

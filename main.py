@@ -9,8 +9,8 @@ from ftplib import FTP
 from picamera2 import Picamera2
 from libcamera import controls
 from yaml import safe_load
-import serial
 import suntime
+from sim7600x import SIM7600X
 from witty_pi_4 import sync_witty_pi_time_with_network, generate_schedule, apply_schedule_witty_pi_4, get_battery_voltage_witty_pi_4, get_temperature_witty_pi_4, set_low_voltage_treshold_witty_pi_4, set_recovery_voltage_treshold_witty_pi_4
 
 ###########################
@@ -144,13 +144,14 @@ try:
     if settings["enableSunriseSunset"] and settings["latitude"] != 0 and settings["longitude"] != 0:
         sun = suntime.Sun(settings["latitude"], settings["longitude"])
 
-        # Sunrise and sunset times
+        # Sunrise
         sunrise = sun.get_sunrise_time()
         print(f"Next sunrise: {sunrise.hour}:{sunrise.minute:02d}")
         sunrise = sunrise.replace(minute=15 * round(sunrise.minute / 15)) # Round to nearest 15 minutes
         settings["startTimeHour"] = sunrise.hour
         settings["startTimeMinute"] = sunrise.minute
 
+        # Sunset
         sunset = sun.get_sunset_time()
         print(f"Next sunset: {sunset.hour}:{sunset.minute:02d}")
         time_until_sunset = sunset - sunrise
@@ -185,102 +186,17 @@ except Exception as e:
     error += f"Failed to generate schedule: {str(e)}"
     print(f"Failed to generate schedule: {str(e)}")
 
+# Apply schedule
 next_startup_time = f"{apply_schedule_witty_pi_4()}Z"
 
 ##########################
 # SIM7600G-H 4G module
 ###########################
 
-# Send AT command to SIM7600X
-def send_at_command(command: str, back: str = 'OK', timeout: int = 1) -> str:
-    '''Send an AT command to SIM7600X'''
-    rec_buff = ''
-    ser.write((command+'\r\n').encode())
-    sleep(timeout)
-    if ser.inWaiting():
-        sleep(0.01)
-        rec_buff = ser.read(ser.inWaiting())
-    if back not in rec_buff.decode():
-        print(f"Error: AT command {command} returned {rec_buff.decode()}")
-        return ""
-
-    return rec_buff.decode()
-
-# Get current signal quality
-# https://www.manualslib.com/download/1593302/Simcom-Sim7000-Series.html
-# 0 -115 dBm or less
-# 1 -111 dBm
-# 2...30 -110... -54 dBm
-# 31 -52 dBm or greater
-# 99 not known or not detectable
-def get_signal_quality():
-    '''Gets the current signal quality from the SIM7600G-H 4G module'''
-    try:
-        signal_quality = send_at_command('AT+CSQ')
-        signal_quality = signal_quality[8:10]
-        signal_quality = signal_quality.replace("\n", "")
-        signal_quality = ''.join(ch for ch in signal_quality if ch.isdigit()) # Remove non-numeric characters
-        print(f"Current signal quality: {signal_quality}")
-        return signal_quality
-    except Exception as e:
-        # error += f"Could not get current signal quality: {str(e)}" # TODO
-        print(f"Could not get current signal quality: {str(e)}")
-        return ""
-
-# Get GPS Position
-def get_gps_position(max_attempts=7, delay=5):
-    '''Gets the current GPS position from the SIM7600G-H 4G module'''
-
-    current_attempt = 0
-
-    while current_attempt < max_attempts:
-
-        current_attempt += 1
-        gps_data_raw = send_at_command('AT+CGPSINFO', back='+CGPSINFO:')
-
-        if gps_data_raw == "":
-            sleep(delay)
-        elif ',,,,,,' in gps_data_raw:
-            print('GPS not yet ready.')
-            sleep(delay)
-        else:
-            # Additions to Demo Code Written by Tim! -> Core Electronics
-            # https://core-electronics.com.au/guides/raspberry-pi/raspberry-pi-4g-gps-hat/
-            gps_data_cleaned = str(gps_data_raw)[13:]
-
-            lat = gps_data_cleaned[:2]
-            small_lat = gps_data_cleaned[2:11]
-            north_or_south = gps_data_cleaned[12]
-
-            lon = gps_data_cleaned[14:17]
-            small_lon = gps_data_cleaned[17:26]
-            east_or_west = gps_data_cleaned[27]
-
-            lat = float(lat) + (float(small_lat)/60)
-            lon = float(lon) + (float(small_lon)/60)
-
-            if north_or_south == 'S':
-                lat = -lat
-            if east_or_west == 'W':
-                lon = -lon
-
-            # TODO Sometimes heigth is not correctly extracted
-            Height = gps_data_cleaned[45:49]
-
-            str_lat = str(round(lat, 5))
-            str_lon = str(round(lon, 5))
-            str_height = str(Height)
-
-            # TODO Time
-
-            print(f"GPS position: LAT {str_lat}, LON {str_lon}, HEIGHT {str_height}")
-            return str_lat, str_lon, str_height
-    return "-", "-", "-"
 
 # See Waveshare documentation
 try:
-    ser = serial.Serial('/dev/ttyUSB2', 115200, timeout=5)  # USB connection
-    ser.flushInput()
+    sim7600 = SIM7600X()
 except Exception as e:
     error += f"Could not open serial connection with 4G module: {str(e)}"
     print (f"Could not open serial connection with 4G module: {str(e)}")
@@ -291,8 +207,7 @@ except Exception as e:
 try:
     # Enable GPS to later read out position
     if settings["enableGPS"]:
-        print('Start GPS session.')
-        send_at_command('AT+CGPS=1,1')
+        sim7600.start_gps_session()
 except Exception as e:
     error += f"Could not start GPS: {str(e)}"
     print(f"Could not start GPS: {str(e)}")
@@ -360,7 +275,7 @@ except Exception as e:
 
 try:
     if CONNECTED_TO_FTP:
-        # Upload all images in FILE_PATH
+        # Upload all images
         for file in listdir(FILE_PATH):
             if file.endswith(".jpg"):
                 with open(FILE_PATH + file, 'rb') as imgFile:
@@ -396,7 +311,7 @@ except Exception as e:
 temperature = get_temperature_witty_pi_4()
 internal_voltage = "-" # get_internal_voltage_witty_pi_4()
 internal_current = "-" # get_internal_current_witty_pi_4()
-signal_quality = get_signal_quality()
+signal_quality = sim7600.get_signal_quality()
 
 ###########################
 # Get GPS position
@@ -407,9 +322,8 @@ try:
     height = "-"
 
     if settings["enableGPS"]:
-        latitude, longitude, height = get_gps_position()
-        print('Stopping GPS session.')
-        send_at_command('AT+CGPS=0')
+        latitude, longitude, height = sim7600.get_gps_position()
+        sim7600.stop_gps_session()
 
 except Exception as e:
     error += f"Failed to get GPS coordinates: {str(e)}"
