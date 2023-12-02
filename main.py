@@ -6,6 +6,7 @@ from time import sleep
 from csv import writer, reader
 from datetime import datetime
 from ftplib import FTP
+import logging
 from picamera2 import Picamera2
 from libcamera import controls
 from yaml import safe_load
@@ -16,6 +17,7 @@ from witty_pi_4 import sync_witty_pi_time_with_network, generate_schedule, apply
 ###########################
 # Configuration and filenames
 ###########################
+
 # Get unique hardware id of Raspberry Pi
 # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
 # and https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
@@ -35,17 +37,19 @@ def get_cpu_serial():
 
 FILE_PATH = "/home/pi/"  # Path where files are saved
 
+# Logging
+logging.basicConfig(filename=f"{FILE_PATH}log.txt", level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s %(message)s')
+
 # Read config.yaml file from SD card
 try:
     with open(f"{FILE_PATH}config.yaml", 'r', encoding='utf-8') as file:
         config = safe_load(file)
 except Exception as e:
-    print(f"Could not open config.yaml: {str(e)}")
+    logging.critical("Could not open config.yaml: %s", str(e))
 
 CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
 TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
 TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
-error = ""
 
 ###########################
 # Connect to FTP server
@@ -60,8 +64,10 @@ for i in range(MAX_RETRIES):
         break
     except Exception as e:
         if i > 1:
-            error += f"Could not connect to FTP server: {str(e)}, attempt {i+1}/5 failed - trying again in 5 seconds."
-        print(f"Could not connect to FTP server: {str(e)}, attempt {i+1}/5 failed - trying again in 5 seconds.")
+            logging.warning("Could not connect to FTP server: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
+        else:
+            logging.info("Could not connect to FTP server: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
+        
         CONNECTED_TO_FTP = False
         sleep(5) # Wait 5 seconds and try again
 
@@ -77,8 +83,7 @@ try:
         ftp.cwd(config["ftpDirectory"])
 
 except Exception as e:
-    error += f"Could not change directory on FTP server: {str(e)}"
-    print(f"Could not change directory on FTP server: {str(e)}")
+    logging.warning("Could not change directory on FTP server: %s", str(e))
 
 # Go to folder with camera name + unique hardware serial number or create it
 try:
@@ -92,8 +97,7 @@ try:
         ftp.cwd(CAMERA_NAME)
 
 except Exception as e:
-    error += f"Could not change directory on FTP server: {str(e)}"
-    print(f"Could not change directory on FTP server: {str(e)}")
+    logging.warning("Could not change directory on FTP server: %s", str(e))
 
 ###########################
 # Settings
@@ -110,19 +114,18 @@ try:
             with open(f"{FILE_PATH}settings.yaml", 'wb') as fp:  # Download
                 ftp.retrbinary('RETR settings.yaml', fp.write)
         else:
-            print("No settings file on server. Creating new file with default settings.")
+            logging.info("No settings file on server. Creating new file with default settings.")
             with open(f"{FILE_PATH}settings.yaml", 'rb') as fp:
                 ftp.storbinary('STOR settings.yaml', fp)
 except Exception as e:
-    error += f"Error with settings file: {str(e)}"
-    print(f'Error with settings file: {str(e)}')
+    logging.critical("Could not download settings file from FTP server: %s", str(e))
 
 # Read settings file
 try:
     with open(f"{FILE_PATH}settings.yaml", 'r', encoding='utf-8') as file:
         settings = safe_load(file)
 except Exception as e:
-    print(f"Could not open settings.yaml: {str(e)}")
+    logging.critical("Could not open settings.yaml: %s", str(e))
 
 ###########################
 # Time synchronization
@@ -132,8 +135,7 @@ try:
     if settings["timeSync"] and CONNECTED_TO_FTP:
         sync_witty_pi_time_with_network()
 except Exception as e:
-    error += f"Could not synchronize time with network: {str(e)}"
-    print(f"Could not synchronize time with network: {str(e)}")
+    logging.warning("Could not synchronize time with network: %s", str(e))
 
 ###########################
 # Schedule script
@@ -146,21 +148,20 @@ try:
 
         # Sunrise
         sunrise = sun.get_sunrise_time()
-        print(f"Next sunrise: {sunrise.hour}:{sunrise.minute:02d}")
+        logging.info("Next sunrise: %s:%s", sunrise.hour, sunrise.minute)
         sunrise = sunrise.replace(minute=15 * round(sunrise.minute / 15)) # Round to nearest 15 minutes
         settings["startTimeHour"] = sunrise.hour
         settings["startTimeMinute"] = sunrise.minute
 
         # Sunset
         sunset = sun.get_sunset_time()
-        print(f"Next sunset: {sunset.hour}:{sunset.minute:02d}")
+        logging.info("Next sunset: %s:%s", sunset.hour, sunset.minute)
         time_until_sunset = sunset - sunrise
         time_until_sunset = time_until_sunset.total_seconds() / 60 # Convert to minutes
         settings["repetitionsPerday"] = int(time_until_sunset / settings["intervalMinutes"])
 
 except Exception as e:
-    error += f"Could not get sunrise and sunset times: {str(e)}"
-    print(f"Could not get sunrise and sunset times: {str(e)}")
+    logging.warning("Could not get sunrise and sunset times: %s", str(e))
 
 try:
     battery_voltage = get_battery_voltage_witty_pi_4()
@@ -175,16 +176,14 @@ try:
         settings["repetitionsPerday"] = 1
 
 except Exception as e:
-    error += f"Could not get battery voltage: {str(e)}"
-    print(f"Could not get battery voltage: {str(e)}")
+    logging.warning("Could not get battery voltage: %s", str(e))
 
 try:
     # Generate schedule
     generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["repetitionsPerday"])
 except Exception as e:
     generate_schedule(8, 0, 30, 8)
-    error += f"Failed to generate schedule: {str(e)}"
-    print(f"Failed to generate schedule: {str(e)}")
+    logging.warning("Failed to generate schedule: %s", str(e))
 
 # Apply schedule
 next_startup_time = f"{apply_schedule_witty_pi_4()}Z"
@@ -193,13 +192,11 @@ next_startup_time = f"{apply_schedule_witty_pi_4()}Z"
 # SIM7600G-H 4G module
 ###########################
 
-
 # See Waveshare documentation
 try:
     sim7600 = SIM7600X()
 except Exception as e:
-    error += f"Could not open serial connection with 4G module: {str(e)}"
-    print (f"Could not open serial connection with 4G module: {str(e)}")
+    logging.warning("Could not open serial connection with 4G module: %s", str(e))
 
 ###########################
 # Enable GPS
@@ -209,8 +206,7 @@ try:
     if settings["enableGPS"]:
         sim7600.start_gps_session()
 except Exception as e:
-    error += f"Could not start GPS: {str(e)}"
-    print(f"Could not start GPS: {str(e)}")
+    logging.warning("Could not start GPS: %s", str(e))
 
 ###########################
 # Setup camera
@@ -230,8 +226,7 @@ try:
         cameraConfig = camera.create_still_configuration({"size": size})
 
 except Exception as e:
-    error += f"Could not set custom camera resolution: {str(e)}"
-    print(f"Could not set custom camera resolution: {str(e)}")
+    logging.critical("Could not setup camera: %s", str(e))
 
 # Focus settings
 try:
@@ -240,8 +235,7 @@ try:
     else:
         camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
 except Exception as e:
-    error += f"Could not set lens position: {str(e)}"
-    print(f"Could not set lens position: {str(e)}")
+    logging.warning("Could not set lens position: %s", str(e))
 
 ###########################
 # Capture image
@@ -251,14 +245,12 @@ try:
     if settings["cameraName"] != "":
         image_filename = f'{TIMESTAMP_FILENAME}_{settings["cameraName"]}.jpg'
 except Exception as e:
-    error += f"Could not set custom camera name: {str(e)}"
-    print(f"Could not set custom camera name: {str(e)}")
+    logging.warning("Could not set custom camera name: %s", str(e))
 
 try:
     camera.start_and_capture_file(FILE_PATH + image_filename, capture_mode=cameraConfig, delay=2, show_preview=False)
 except Exception as e:
-    error += f"Could not start camera and capture image: {str(e)}"
-    print(f"Could not start camera and capture image: {str(e)}")
+    logging.critical("Could not start camera and capture image: %s", str(e))
 
 ###########################
 # Stop camera
@@ -266,8 +258,7 @@ except Exception as e:
 try:
     camera.stop()
 except Exception as e:
-    error += f"Could not stop camera: {str(e)}"
-    print(f"Could not stop camera: {str(e)}")
+    logging.warning("Could not stop camera: %s", str(e))
 
 ###########################
 # Upload to ftp server and then delete last image
@@ -280,13 +271,12 @@ try:
             if file.endswith(".jpg"):
                 with open(FILE_PATH + file, 'rb') as imgFile:
                     ftp.storbinary(f"STOR {file}", imgFile)
-                    print(f"Successfully uploaded {file}")
+                    logging.info("Successfully uploaded %s", file)
 
                     # Delete uploaded image from Raspberry Pi
                     remove(FILE_PATH + file)
 except Exception as e:
-    error += f"Could not open image: {str(e)}"
-    print(f"Could not open image: {str(e)}")
+    logging.critical("Could not upload image to FTP server: %s", str(e))
 
 ###########################
 # Uploading sensor data to CSV
@@ -302,8 +292,7 @@ try:
         set_recovery_voltage_treshold_witty_pi_4(settings["recovery_voltage_treshold"])
 
 except Exception as e:
-    error += f"Could not set voltage tresholds: {str(e)}"
-    print(f"Could not set voltage tresholds: {str(e)}")
+    logging.warning("Could not set voltage tresholds: %s", str(e))
 
 ###########################
 # Get readings
@@ -326,8 +315,7 @@ try:
         sim7600.stop_gps_session()
 
 except Exception as e:
-    error += f"Failed to get GPS coordinates: {str(e)}"
-    print(f"Failed to get GPS coordinates: {str(e)}")
+    logging.warning("Could not get GPS coordinates: %s", str(e))
 
 ###########################
 # Log readings to CSV
@@ -336,7 +324,7 @@ except Exception as e:
 try:
     with StringIO() as csvBuffer:
         writer = writer(csvBuffer)
-        newRow = [TIMESTAMP_CSV, next_startup_time, battery_voltage, internal_voltage, internal_current, temperature, signal_quality, latitude, longitude, height, error]
+        newRow = [TIMESTAMP_CSV, next_startup_time, battery_voltage, internal_voltage, internal_current, temperature, signal_quality, latitude, longitude, height]
 
         # Check if is connected to FTP server
         if CONNECTED_TO_FTP:
@@ -350,8 +338,7 @@ try:
                             writer.writerow(line)
                     remove(FILE_PATH + "diagnostics.csv")
             except Exception as e:
-                error += f"Could not open diagnostics.csv: {str(e)}"
-                print(f"Could not open diagnostics.csv: {str(e)}")
+                logging.warning("Could not open diagnostics.csv: %s", str(e))
 
             # Append new row to CSV file
             writer.writerow(newRow)
@@ -367,7 +354,7 @@ try:
             with open(f"{FILE_PATH}diagnostics.csv", 'a', newline='', encoding='utf-8') as file:
                 file.write(csvData.decode('utf-8'))
 except Exception as e:
-    print(f"Could not append new measurements to log CSV: {str(e)}")
+    logging.warning("Could not append new measurements to log CSV: %s", str(e))
 
 try:
     # Upload WittyPi diagnostics
@@ -382,7 +369,7 @@ try:
             ftp.storbinary("APPE wittyPiSchedule.txt", wittyPiDiagnostics)
 
 except Exception as e:
-    print(f"Could not upload WittyPi diagnostics: {str(e)}")
+    logging.warning("Could not upload WittyPi diagnostics: %s", str(e))
 
 ###########################
 # Quit FTP session
@@ -391,14 +378,14 @@ try:
     if CONNECTED_TO_FTP:
         ftp.quit()
 except Exception as e:
-    print(f"Could not quit FTP session: {str(e)}")
+    logging.warning("Could not quit FTP session: %s", str(e))
 
 ###########################
 # Shutdown Raspberry Pi if enabled
 ###########################
 try:
     if settings["shutdown"]:
-        print('Shutting down now.')
+        logging.info("Shutting down now.")
         system("sudo shutdown -h now")
 except Exception as e:
     # Setting not found
