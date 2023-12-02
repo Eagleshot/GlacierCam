@@ -1,17 +1,18 @@
 '''A python module for interacting with the Witty Pi 4 board'''
 from subprocess import check_output, STDOUT
 from os import path
+import logging
 
 # Get WittyPi readings
 # See: https://www.baeldung.com/linux/run-function-in-script
 def run_witty_pi_4_command(command: str) -> str:
-    '''Send a command to Witty Pi 4'''
+    '''Run a Witty Pi 4 command'''
     try:
         command = f"cd /home/pi/wittypi && . ./utilities.sh && {command}"
-        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=5)
+        output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=3)
         return output.strip()
     except Exception as e:
-        print(f"Could not send Witty Pi 4 command: {str(e)}")
+        logging.error("Could not run Witty Pi 4 command: %s", str(e))
         return "ERROR"
 
 def sync_witty_pi_time_with_network():
@@ -20,9 +21,9 @@ def sync_witty_pi_time_with_network():
     # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
     try:
         output = run_witty_pi_4_command("net_to_system && system_to_rtc")
-        print(f"Time synchronized with network: {output}")
+        logging.info("Time synchronized with network: %s", output)
     except Exception as e:
-        print(f"Could not synchronize time with network: {str(e)}")
+        logging.error("Could not synchronize time with network: %s", str(e))
 
 # Temperature
 def get_temperature_witty_pi_4() -> float:
@@ -32,10 +33,10 @@ def get_temperature_witty_pi_4() -> float:
         temperature = temperature.split("/", maxsplit = 1)[0] # Remove the Farenheit reading
         temperature = temperature[:-3] # Remove °C
         temperature = float(temperature)
-        print(f"Temperature: {temperature} °C")
+        logging.info("Temperature: %s °C", temperature)
         return temperature
     except Exception as e:
-        print(f"Could not get temperature: {str(e)}")
+        logging.error("Could not get temperature: %s", str(e))
         return 0.0
 
 # Battery voltage
@@ -44,10 +45,10 @@ def get_battery_voltage_witty_pi_4() -> float:
     try:
         battery_voltage = run_witty_pi_4_command("get_input_voltage")
         battery_voltage = float(battery_voltage) # Remove V
-        print(f"Battery voltage: {battery_voltage} V")
+        logging.info("Battery voltage: %s V", battery_voltage)
         return battery_voltage
     except Exception as e:
-        print(f"Could not get battery voltage: {str(e)}")
+        logging.error("Could not get battery voltage: %s", str(e))
         return 0.0
 
 # Raspberry Pi voltage
@@ -56,43 +57,45 @@ def get_internal_voltage_witty_pi_4() -> float:
     try:
         internal_voltage = run_witty_pi_4_command("get_output_voltage")
         internal_voltage = float(internal_voltage)
-        print(f"Output voltage: {internal_voltage} V")
+        logging.info("Output voltage: %s V", internal_voltage)
         return internal_voltage
     except Exception as e:
-        print(f"Could not get Raspberry Pi voltage: {str(e)}")
+        logging.error("Could not get Raspberry Pi voltage: %s", str(e))
         return 0.0
 
 # Raspberry Pi current - Not needed at the moment
-def get_internal_current_witty_pi_4():
+def get_internal_current_witty_pi_4() -> float:
     '''Gets the internal (5V) current reading from the Witty Pi 4 in A'''
     try:
         internal_current = run_witty_pi_4_command("get_output_current")
-        print(f"Output current: {internal_current} A")
+        internal_current = float(internal_current)
+        logging.info("Output current: %s A", internal_current)
         return internal_current
     except Exception as e:
-        print(f"Could not get Raspberry Pi current: {str(e)}")
-        return "-"
+        logging.error("Could not get Raspberry Pi current: %s", str(e))
+        return 0.0
     
 # Get low voltage treshold
 def get_low_voltage_treshold_witty_pi_4():
     '''Gets the low treshold from the Witty Pi 4'''
     try:
         low_voltage_treshold = run_witty_pi_4_command("get_low_voltage_threshold")[:-1]
-        print(f"Low voltage treshold: {low_voltage_treshold} V")
+        logging.info("Low voltage treshold: %s V", low_voltage_treshold)
         return low_voltage_treshold
     except Exception as e:
-        print(f"Could not get low voltage treshold: {str(e)}")
+        logging.error("Could not get low voltage treshold: %s", str(e))
         return "-"
 
 # Get recovery voltage treshold
-def get_recovery_voltage_treshold_witty_pi_4():
+def get_recovery_voltage_treshold_witty_pi_4() -> float:
     '''Gets the recovery treshold from the Witty Pi 4'''
     try:
         recovery_voltage_treshold = run_witty_pi_4_command("get_recovery_voltage_threshold")[:-1]
-        print(f"Recovery voltage treshold: {recovery_voltage_treshold} V")
+        recovery_voltage_treshold = float(recovery_voltage_treshold)
+        logging.info("Recovery voltage treshold: %s V", recovery_voltage_treshold)
         return recovery_voltage_treshold
     except Exception as e:
-        print(f"Could not get recovery voltage treshold: {str(e)}")
+        logging.error("Could not get recovery voltage treshold: %s", str(e))
         return "-"
 
 # Set low voltage treshold
@@ -100,10 +103,10 @@ def set_low_voltage_treshold_witty_pi_4(voltage: float):
     '''Sets the low voltage treshold from the Witty Pi 4'''
     try:
         low_voltage_treshold = run_witty_pi_4_command(f"set_low_voltage_threshold {int(voltage*10)}")
-        print(f"Set low voltage treshold to: {voltage} V")
+        logging.info("Set low voltage treshold to: %s V", voltage)
         return low_voltage_treshold
     except Exception as e:
-        print(f"Could not set low voltage treshold: {str(e)}")
+        logging.error("Could not set low voltage treshold: %s", str(e))
         return "-"
 
 # Set recovery voltage treshold
@@ -111,10 +114,10 @@ def set_recovery_voltage_treshold_witty_pi_4(voltage: float):
     '''Sets the recovery voltage treshold from the Witty Pi 4'''
     try:
         recovery_voltage_treshold = run_witty_pi_4_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
-        print(f"Set recovery voltage treshold to: {voltage} V")
+        logging.info("Set recovery voltage treshold to: %s V", voltage)
         return recovery_voltage_treshold
     except Exception as e:
-        print(f"Could not set recovery voltage treshold: {str(e)}")
+        logging.error("Could not set recovery voltage treshold: %s", str(e))
         return "-"
 
 def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, repetitionsPerday: int):
@@ -166,13 +169,13 @@ def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes:
 
             # Write new schedule file if it changed
             if old_schedule != schedule:
-                print("Writing and applying new schedule file.")
+                logging.info("Schedule changed - writing new schedule file.")
                 with open(SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
                     f.write(schedule)
             else:
-                print("Schedule did not change.")
+                logging.info("Schedule did not change.")
     else:
-        print("Writing and applying new schedule file.")
+        logging.warning("Schedule file not found. Writing new schedule file.")
         with open(SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
             f.write(schedule)
 
@@ -186,13 +189,15 @@ def apply_schedule_witty_pi_4(max_retries: int = 5) -> str:
             output = output.split("\n")[1:3]
 
             if not "Schedule next startup at:" in output[1]:
-                print(f"Failed to apply schedule: {output[0]}")
+                logging.warning("Failed to apply schedule: %s", output[0])
                 sync_witty_pi_time_with_network()
             else:
-                print(f"{output[0]}\n{output[1]}")
+                logging.info("%s", output[0])
+                logging.info("%s", output[1])
                 next_startup_time = output[1][-19:]
                 return next_startup_time
 
     except Exception as e:
-        print(f"Failed to apply schedule: {str(e)}")
+        logging.error("Failed to apply schedule: %s", str(e))
         return "-"
+    

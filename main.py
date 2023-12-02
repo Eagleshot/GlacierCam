@@ -41,7 +41,7 @@ FILE_PATH = "/home/pi/"  # Path where files are saved
 # Error logging
 my_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
 my_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-logging.basicConfig(level=logging.INFO, handlers=[my_handler])
+logging.basicConfig(level=logging.INFO, handlers=[my_handler, logging.StreamHandler()])
 
 # Read config.yaml file from SD card
 try:
