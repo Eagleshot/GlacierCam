@@ -40,15 +40,16 @@ def get_temperature_witty_pi_4():
         return "-"
 
 # Battery voltage
-def get_battery_voltage_witty_pi_4():
+def get_battery_voltage_witty_pi_4() -> float:
     '''Gets the battery voltage reading from the Witty Pi 4 in V'''
     try:
         battery_voltage = run_witty_pi_4_command("get_input_voltage")
+        battery_voltage = float(battery_voltage) # Remove V
         print(f"Battery voltage: {battery_voltage} V")
         return battery_voltage
     except Exception as e:
         print(f"Could not get battery voltage: {str(e)}")
-        return "-"
+        return 0.0
 
 # Raspberry Pi voltage
 def get_internal_voltage_witty_pi_4():
