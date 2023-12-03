@@ -80,49 +80,49 @@ class WittyPi4:
             logging.error("Could not get Raspberry Pi current: %s", str(e))
             return 0.0
         
-    # Get low voltage treshold
-    def get_low_voltage_treshold(self):
-        '''Gets the low treshold from the Witty Pi 4'''
+    # Get low voltage threshold
+    def get_low_voltage_threshold(self):
+        '''Gets the low threshold from the Witty Pi 4'''
         try:
-            low_voltage_treshold = self.run_command("get_low_voltage_threshold")[:-1]
-            logging.info("Low voltage treshold: %s V", low_voltage_treshold)
-            return low_voltage_treshold
+            low_voltage_threshold = self.run_command("get_low_voltage_threshold")[:-1]
+            logging.info("Low voltage threshold: %s V", low_voltage_threshold)
+            return low_voltage_threshold
         except Exception as e:
-            logging.error("Could not get low voltage treshold: %s", str(e))
+            logging.error("Could not get low voltage threshold: %s", str(e))
             return "-"
 
-    # Get recovery voltage treshold
-    def get_recovery_voltage_treshold(self) -> float:
-        '''Gets the recovery treshold from the Witty Pi 4'''
+    # Get recovery voltage threshold
+    def get_recovery_voltage_threshold(self) -> float:
+        '''Gets the recovery threshold from the Witty Pi 4'''
         try:
-            recovery_voltage_treshold = self.run_command("get_recovery_voltage_threshold")[:-1]
-            recovery_voltage_treshold = float(recovery_voltage_treshold)
-            logging.info("Recovery voltage treshold: %s V", recovery_voltage_treshold)
-            return recovery_voltage_treshold
+            recovery_voltage_threshold = self.run_command("get_recovery_voltage_threshold")[:-1]
+            recovery_voltage_threshold = float(recovery_voltage_threshold)
+            logging.info("Recovery voltage threshold: %s V", recovery_voltage_threshold)
+            return recovery_voltage_threshold
         except Exception as e:
-            logging.error("Could not get recovery voltage treshold: %s", str(e))
+            logging.error("Could not get recovery voltage threshold: %s", str(e))
             return "-"
 
-    # Set low voltage treshold
-    def set_low_voltage_treshold(self, voltage: float):
-        '''Sets the low voltage treshold from the Witty Pi 4'''
+    # Set low voltage threshold
+    def set_low_voltage_threshold(self, voltage: float):
+        '''Sets the low voltage threshold from the Witty Pi 4'''
         try:
-            low_voltage_treshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
-            logging.info("Set low voltage treshold to: %s V", voltage)
-            return low_voltage_treshold
+            low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
+            logging.info("Set low voltage threshold to: %s V", voltage)
+            return low_voltage_threshold
         except Exception as e:
-            logging.error("Could not set low voltage treshold: %s", str(e))
+            logging.error("Could not set low voltage threshold: %s", str(e))
             return "-"
 
-    # Set recovery voltage treshold
-    def set_recovery_voltage_treshold(self, voltage: float):
-        '''Sets the recovery voltage treshold from the Witty Pi 4'''
+    # Set recovery voltage threshold
+    def set_recovery_voltage_threshold(self, voltage: float):
+        '''Sets the recovery voltage threshold from the Witty Pi 4'''
         try:
-            recovery_voltage_treshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
-            logging.info("Set recovery voltage treshold to: %s V", voltage)
-            return recovery_voltage_treshold
+            recovery_voltage_threshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
+            logging.info("Set recovery voltage threshold to: %s V", voltage)
+            return recovery_voltage_threshold
         except Exception as e:
-            logging.error("Could not set recovery voltage treshold: %s", str(e))
+            logging.error("Could not set recovery voltage threshold: %s", str(e))
             return "-"
 
     @staticmethod
@@ -217,9 +217,9 @@ if __name__ == "__main__":
     witty_pi_4.get_battery_voltage()
     witty_pi_4.get_internal_voltage()
     witty_pi_4.get_internal_current()
-    witty_pi_4.get_low_voltage_treshold()
-    witty_pi_4.get_recovery_voltage_treshold()
-    witty_pi_4.set_low_voltage_treshold(3.5)
-    witty_pi_4.set_recovery_voltage_treshold(3.7)
+    witty_pi_4.get_low_voltage_threshold()
+    witty_pi_4.get_recovery_voltage_threshold()
+    witty_pi_4.set_low_voltage_threshold(3.5)
+    witty_pi_4.set_recovery_voltage_threshold(3.7)
     witty_pi_4.generate_schedule(8, 0, 30, 8)
     witty_pi_4.apply_schedule()

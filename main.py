@@ -294,11 +294,11 @@ except Exception as e:
 try:
     # If settings low voltage treshold exists
     if 2.0 <= settings["low_voltage_treshold"] <= 25.0 or settings["low_voltage_treshold"] == 0:
-        wittyPi.set_low_voltage_treshold(settings["low_voltage_treshold"])
+        wittyPi.set_low_voltage_threshold(settings["low_voltage_treshold"])
 
     # If settings recovery voltage treshold exists
     if 2.0 <= settings["recovery_voltage_treshold"] <= 25.0 or settings["recovery_voltage_treshold"] == 0:
-        wittyPi.set_recovery_voltage_treshold(settings["recovery_voltage_treshold"])
+        wittyPi.set_recovery_voltage_threshold(settings["recovery_voltage_treshold"])
 
 except Exception as e:
     logging.warning("Could not set voltage tresholds: %s", str(e))
