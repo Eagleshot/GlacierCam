@@ -141,7 +141,7 @@ try:
     wittyPi = WittyPi4()
 
     if settings["timeSync"] and CONNECTED_TO_FTP:
-        wittyPi.sync_witty_pi_time_with_network()
+        wittyPi.sync_time_with_network()
 except Exception as e:
     logging.warning("Could not synchronize time with network: %s", str(e))
 
@@ -307,8 +307,8 @@ except Exception as e:
 # Get readings
 ###########################
 temperature = wittyPi.get_temperature()
-internal_voltage = "-" # get_internal_voltage_witty_pi_4()
-internal_current = "-" # get_internal_current_witty_pi_4()
+internal_voltage = wittyPi.get_internal_voltage()
+internal_current = wittyPi.get_internal_current()
 signal_quality = sim7600.get_signal_quality()
 
 ###########################

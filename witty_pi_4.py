@@ -20,7 +20,7 @@ class WittyPi4:
             logging.error("Could not run Witty Pi 4 command: %s", str(e))
             return "ERROR"
 
-    def sync_witty_pi_time_with_network(self):
+    def sync_time_with_network(self):
         '''Sync WittyPi clock with network time'''
 
         # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
@@ -81,34 +81,36 @@ class WittyPi4:
             return 0.0
         
     # Get low voltage threshold
-    def get_low_voltage_threshold(self):
+    def get_low_voltage_threshold(self) -> float:
         '''Gets the low threshold from the Witty Pi 4'''
         try:
-            low_voltage_threshold = self.run_command("get_low_voltage_threshold")[:-1]
+            low_voltage_threshold = float(self.run_command("get_low_voltage_threshold")[:-1])
             logging.info("Low voltage threshold: %s V", low_voltage_threshold)
             return low_voltage_threshold
         except Exception as e:
             logging.error("Could not get low voltage threshold: %s", str(e))
-            return "-"
+            return 0.0
 
     # Get recovery voltage threshold
     def get_recovery_voltage_threshold(self) -> float:
         '''Gets the recovery threshold from the Witty Pi 4'''
         try:
-            recovery_voltage_threshold = self.run_command("get_recovery_voltage_threshold")[:-1]
-            recovery_voltage_threshold = float(recovery_voltage_threshold)
+            recovery_voltage_threshold = float(self.run_command("get_recovery_voltage_threshold")[:-1])
             logging.info("Recovery voltage threshold: %s V", recovery_voltage_threshold)
             return recovery_voltage_threshold
         except Exception as e:
             logging.error("Could not get recovery voltage threshold: %s", str(e))
-            return "-"
+            return 0.0
 
     # Set low voltage threshold
     def set_low_voltage_threshold(self, voltage: float):
         '''Sets the low voltage threshold from the Witty Pi 4'''
         try:
-            low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
-            logging.info("Set low voltage threshold to: %s V", voltage)
+            if voltage != self.get_low_voltage_threshold():
+                low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
+                logging.info("Set low voltage threshold to: %s V", voltage)
+            else:
+                logging.info("Low voltage threshold already set to: %s V", voltage)
             return low_voltage_threshold
         except Exception as e:
             logging.error("Could not set low voltage threshold: %s", str(e))
@@ -118,8 +120,11 @@ class WittyPi4:
     def set_recovery_voltage_threshold(self, voltage: float):
         '''Sets the recovery voltage threshold from the Witty Pi 4'''
         try:
-            recovery_voltage_threshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
-            logging.info("Set recovery voltage threshold to: %s V", voltage)
+            if voltage != self.get_recovery_voltage_threshold():
+                recovery_voltage_threshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
+                logging.info("Set recovery voltage threshold to: %s V", voltage)
+            else:
+                logging.info("Recovery voltage threshold already set to: %s V", voltage)
             return recovery_voltage_threshold
         except Exception as e:
             logging.error("Could not set recovery voltage threshold: %s", str(e))
@@ -196,7 +201,7 @@ class WittyPi4:
 
                 if not "Schedule next startup at:" in output[1]:
                     logging.warning("Failed to apply schedule: %s", output[0])
-                    self.sync_witty_pi_time_with_network()
+                    self.sync_time_with_network()
                 else:
                     logging.info("%s", output[0])
                     logging.info("%s", output[1])
@@ -212,7 +217,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     witty_pi_4 = WittyPi4()
-    witty_pi_4.sync_witty_pi_time_with_network()
+    witty_pi_4.sync_time_with_network()
     witty_pi_4.get_temperature()
     witty_pi_4.get_battery_voltage()
     witty_pi_4.get_internal_voltage()
