@@ -103,10 +103,10 @@ class WittyPi4:
             return 0.0
 
     # Set low voltage threshold
-    def set_low_voltage_threshold(self, voltage: float):
+    def set_low_voltage_threshold(self, voltage: float) -> float:
         '''Sets the low voltage threshold from the Witty Pi 4'''
         try:
-            if voltage != self.get_low_voltage_threshold() -> float:
+            if voltage != self.get_low_voltage_threshold():
                 low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
                 logging.info("Set low voltage threshold to: %s V", voltage)
                 return low_voltage_threshold
