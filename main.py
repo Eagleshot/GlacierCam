@@ -13,7 +13,7 @@ from libcamera import controls
 from yaml import safe_load
 import suntime
 from sim7600x import SIM7600X
-from witty_pi_4 import sync_witty_pi_time_with_network, generate_schedule, apply_schedule_witty_pi_4, get_battery_voltage_witty_pi_4, get_temperature_witty_pi_4, set_low_voltage_treshold_witty_pi_4, set_recovery_voltage_treshold_witty_pi_4
+from witty_pi_4 import WittyPi4
 
 ###########################
 # Configuration and filenames
@@ -138,8 +138,10 @@ except Exception as e:
 ###########################
 
 try:
+    wittyPi = WittyPi4()
+
     if settings["timeSync"] and CONNECTED_TO_FTP:
-        sync_witty_pi_time_with_network()
+        wittyPi.sync_witty_pi_time_with_network()
 except Exception as e:
     logging.warning("Could not synchronize time with network: %s", str(e))
 
@@ -170,7 +172,7 @@ except Exception as e:
     logging.warning("Could not get sunrise and sunset times: %s", str(e))
 
 try:
-    battery_voltage = get_battery_voltage_witty_pi_4()
+    battery_voltage = wittyPi.get_battery_voltage()
 
     battery_voltage_half = settings["battery_voltage_half"]
     battery_voltage_quarter = settings["battery_voltage_half"]-(settings["battery_voltage_half"]-settings["low_voltage_treshold"])/2
@@ -186,13 +188,14 @@ except Exception as e:
 
 try:
     # Generate schedule
-    generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["repetitionsPerday"])
+    wittyPi.generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["repetitionsPerday"])
 except Exception as e:
-    generate_schedule(8, 0, 30, 8)
+    wittyPi.generate_schedule(8, 0, 30, 8)
     logging.warning("Failed to generate schedule: %s", str(e))
 
 # Apply schedule
-next_startup_time = f"{apply_schedule_witty_pi_4()}Z"
+next_startup_time = wittyPi.apply_schedule()
+next_startup_time = f"{next_startup_time}Z"
 
 ##########################
 # SIM7600G-H 4G module
@@ -291,11 +294,11 @@ except Exception as e:
 try:
     # If settings low voltage treshold exists
     if 2.0 <= settings["low_voltage_treshold"] <= 25.0 or settings["low_voltage_treshold"] == 0:
-        set_low_voltage_treshold_witty_pi_4(settings["low_voltage_treshold"])
+        wittyPi.set_low_voltage_treshold(settings["low_voltage_treshold"])
 
     # If settings recovery voltage treshold exists
     if 2.0 <= settings["recovery_voltage_treshold"] <= 25.0 or settings["recovery_voltage_treshold"] == 0:
-        set_recovery_voltage_treshold_witty_pi_4(settings["recovery_voltage_treshold"])
+        wittyPi.set_recovery_voltage_treshold(settings["recovery_voltage_treshold"])
 
 except Exception as e:
     logging.warning("Could not set voltage tresholds: %s", str(e))
@@ -303,7 +306,7 @@ except Exception as e:
 ###########################
 # Get readings
 ###########################
-temperature = get_temperature_witty_pi_4()
+temperature = wittyPi.get_temperature()
 internal_voltage = "-" # get_internal_voltage_witty_pi_4()
 internal_current = "-" # get_internal_current_witty_pi_4()
 signal_quality = sim7600.get_signal_quality()

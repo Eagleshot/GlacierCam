@@ -42,7 +42,7 @@ class WittyPi4:
             return temperature
         except Exception as e:
             logging.error("Could not get temperature: %s", str(e))
-            return 0.0
+            return -273.15
 
     # Battery voltage
     def get_battery_voltage(self) -> float:
