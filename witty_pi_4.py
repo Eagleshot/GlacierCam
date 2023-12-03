@@ -106,29 +106,31 @@ class WittyPi4:
     def set_low_voltage_threshold(self, voltage: float):
         '''Sets the low voltage threshold from the Witty Pi 4'''
         try:
-            if voltage != self.get_low_voltage_threshold():
+            if voltage != self.get_low_voltage_threshold() -> float:
                 low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
                 logging.info("Set low voltage threshold to: %s V", voltage)
+                return low_voltage_threshold
             else:
                 logging.info("Low voltage threshold already set to: %s V", voltage)
-            return low_voltage_threshold
+                return voltage
         except Exception as e:
             logging.error("Could not set low voltage threshold: %s", str(e))
-            return "-"
+            return 0.0
 
     # Set recovery voltage threshold
-    def set_recovery_voltage_threshold(self, voltage: float):
+    def set_recovery_voltage_threshold(self, voltage: float) -> float:
         '''Sets the recovery voltage threshold from the Witty Pi 4'''
         try:
             if voltage != self.get_recovery_voltage_threshold():
                 recovery_voltage_threshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
                 logging.info("Set recovery voltage threshold to: %s V", voltage)
+                return recovery_voltage_threshold
             else:
                 logging.info("Recovery voltage threshold already set to: %s V", voltage)
-            return recovery_voltage_threshold
+                return voltage
         except Exception as e:
             logging.error("Could not set recovery voltage threshold: %s", str(e))
-            return "-"
+            return 0.0
 
     @staticmethod
     def generate_schedule(startTimeHour: int, startTimeMinute: int, intervalMinutes: int, repetitionsPerday: int):

@@ -72,6 +72,12 @@ echo '==========================================================================
 wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/main.py
 sudo chmod 777 /home/pi/main.py # Execution permissions
 
+# Download sim7600x.py
+wget -O /home/pi/sim7600x.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/sim7600x.py
+
+# Download witty_pi_4.py
+wget -O /home/pi/witty_pi_4.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/witty_pi_4.py
+
 # Download config.yaml
 wget -O /home/pi/config.yaml https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/config.yaml
 

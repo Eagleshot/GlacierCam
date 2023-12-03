@@ -175,7 +175,7 @@ try:
     battery_voltage = wittyPi.get_battery_voltage()
 
     battery_voltage_half = settings["battery_voltage_half"]
-    battery_voltage_quarter = settings["battery_voltage_half"]-(settings["battery_voltage_half"]-settings["low_voltage_treshold"])/2
+    battery_voltage_quarter = settings["battery_voltage_half"]-(settings["battery_voltage_half"]-settings["low_voltage_threshold"])/2
 
     if battery_voltage_quarter < battery_voltage < battery_voltage_half:
         settings["intervalMinutes"] = settings["intervalMinutes"]*2
@@ -292,16 +292,16 @@ except Exception as e:
 ###########################
 
 try:
-    # If settings low voltage treshold exists
-    if 2.0 <= settings["low_voltage_treshold"] <= 25.0 or settings["low_voltage_treshold"] == 0:
-        wittyPi.set_low_voltage_threshold(settings["low_voltage_treshold"])
+    # If settings low voltage threshold exists
+    if 2.0 <= settings["low_voltage_threshold"] <= 25.0 or settings["low_voltage_threshold"] == 0:
+        wittyPi.set_low_voltage_threshold(settings["low_voltage_threshold"])
 
-    # If settings recovery voltage treshold exists
-    if 2.0 <= settings["recovery_voltage_treshold"] <= 25.0 or settings["recovery_voltage_treshold"] == 0:
-        wittyPi.set_recovery_voltage_threshold(settings["recovery_voltage_treshold"])
+    # If settings recovery voltage threshold exists
+    if 2.0 <= settings["recovery_voltage_threshold"] <= 25.0 or settings["recovery_voltage_threshold"] == 0:
+        wittyPi.set_recovery_voltage_threshold(settings["recovery_voltage_threshold"])
 
 except Exception as e:
-    logging.warning("Could not set voltage tresholds: %s", str(e))
+    logging.warning("Could not set voltage thresholds: %s", str(e))
 
 ###########################
 # Get readings
