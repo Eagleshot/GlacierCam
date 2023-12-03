@@ -180,8 +180,10 @@ try:
     if battery_voltage_quarter < battery_voltage < battery_voltage_half:
         settings["intervalMinutes"] = settings["intervalMinutes"]*2
         settings["repetitionsPerday"] = settings["repetitionsPerday"]/2
+        logging.warning("Battery voltage <50%.")
     elif battery_voltage < battery_voltage_quarter:
         settings["repetitionsPerday"] = 1
+        logging.warning("Battery voltage <25%.")
 
 except Exception as e:
     logging.warning("Could not get battery voltage: %s", str(e))

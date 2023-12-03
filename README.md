@@ -192,6 +192,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 
 ## General
 - [ ] Extend documentation + improve installation script
+# TODO Set camera to UTC time
 - [ ] Open source the project
 
 # In the media
