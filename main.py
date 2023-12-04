@@ -178,8 +178,8 @@ try:
     battery_voltage_quarter = settings["battery_voltage_half"]-(settings["battery_voltage_half"]-settings["low_voltage_threshold"])/2
 
     if battery_voltage_quarter < battery_voltage < battery_voltage_half:
-        settings["intervalMinutes"] = settings["intervalMinutes"]*2
-        settings["repetitionsPerday"] = settings["repetitionsPerday"]/2
+        settings["intervalMinutes"] = int(settings["intervalMinutes"]*2)
+        settings["repetitionsPerday"] = int(settings["repetitionsPerday"]/2)
         logging.warning("Battery voltage <50%.")
     elif battery_voltage < battery_voltage_quarter:
         settings["repetitionsPerday"] = 1
@@ -300,6 +300,7 @@ try:
 
     # If settings recovery voltage threshold exists
     if 2.0 <= settings["recovery_voltage_threshold"] <= 25.0 or settings["recovery_voltage_threshold"] == 0:
+        # TODO: Needs to be bigger than low_voltage_threshold
         wittyPi.set_recovery_voltage_threshold(settings["recovery_voltage_threshold"])
 
 except Exception as e:
@@ -309,8 +310,8 @@ except Exception as e:
 # Get readings
 ###########################
 temperature = wittyPi.get_temperature()
-internal_voltage = wittyPi.get_internal_voltage()
-internal_current = wittyPi.get_internal_current()
+internal_voltage = "-" # wittyPi.get_internal_voltage()
+internal_current = "-" # wittyPi.get_internal_current()
 signal_quality = sim7600.get_signal_quality()
 
 ###########################
