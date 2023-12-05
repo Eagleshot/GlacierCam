@@ -64,10 +64,8 @@ ftp.cwd("..") # TODO Remove
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
 
-# Placeholder for the image
-imagePlaceholder = st.empty()
-
-@st.cache_data(show_spinner=False, ttl=60)
+# TODO: Cache currently doesnt work with multiple cameras due to same filename
+@st.cache_data(show_spinner=False, ttl=1)
 def getFileLastModifiedDate(filename: str) -> datetime:
     '''Get the last modification date of a file on the FTP server.'''
     last_modified = ftp.sendcmd(f"MDTM {filename}")
@@ -76,7 +74,7 @@ def getFileLastModifiedDate(filename: str) -> datetime:
 
     return last_modified
 
-@st.cache_data(show_spinner=False, ttl=60)
+@st.cache_data(show_spinner=False, ttl=1)
 def get_file_ftp(filename: str) -> None:
     '''Download a file from the FTP server.'''
     # Retrieve the file data
@@ -99,11 +97,8 @@ else:
 
 st.title(cameraname, anchor=False)
 
-# Camera ID
-if len(imgFiles) > 0:
-    camera_ID = imgFiles[-1][-20:-4]
-else:
-    camera_ID = "ERROR000000000"
+# Placeholder for the image
+imagePlaceholder = st.empty()
 
 # Download diagnostics file
 get_file_ftp("diagnostics.csv")
@@ -122,10 +117,14 @@ df.rename(columns={df.columns[6]: 'Signal Quality'}, inplace=True)
 df.rename(columns={df.columns[7]: 'Latitude'}, inplace=True)
 df.rename(columns={df.columns[8]: 'Longitude'}, inplace=True)
 df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
-df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
+if len(df.columns) > 10:
+    df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
 
 # Convert the timestamp to datetime
-df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
+try:
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
+except:
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%MZ')
 
 
 ##############################################
@@ -189,7 +188,7 @@ if len(imgFiles) > 1:
         value=imgFiles[-1],
         # Format the timestamp and dont show date if it is today
         format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(
-        timezone).strftime("%Y%m%d") else f"{x[:4]}.{x[4:6]}.{x[6:8]} {x[9:11]}:{x[11:13]} Uhr"
+        timezone).strftime("%Y%m%d") else f"{x[6:8]}.{x[4:6]}.{x[:4]} {x[9:11]}:{x[11:13]} Uhr"
     )
 elif len(imgFiles) == 1:
     selected_file = imgFiles[0]
@@ -281,7 +280,10 @@ else:
 
 # Print next startup relative to now
 nextStartup = df['Next Startup'].iloc[-1]
-nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%S')
+try:
+    nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%S')
+except:
+    nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%SZ')
 nextStartup = nextStartup + pd.Timedelta(minutes=1)
 
 # Check if next startup is in the future
@@ -572,7 +574,7 @@ if True: # st.session_state.userIsLoggedIn:
         # Repetitions per day
         repetitionsPerday = col1.number_input("Aufnahmen pro Tag", min_value=1, max_value=100, value=settings['repetitionsPerday'], step=1, help="Anzahl Aufnahmen pro Tag.")
         # Duration
-        durationTime = col2.number_input("Max. Aufnahmedauer", min_value=1, max_value=10, value=settings['maxDurationMinute'], step=1, help="Maximale Aufnahmedauer in Minuten. Das Kamerasystem wird spätestens nach dieser Zeitdauer ausgeschaltet.")
+        # durationTime = col2.number_input("Max. Aufnahmedauer", min_value=1, max_value=10, value=settings['maxDurationMinute'], step=1, help="Maximale Aufnahmedauer in Minuten. Das Kamerasystem wird spätestens nach dieser Zeitdauer ausgeschaltet.")
         timeSync = st.toggle(
             "Zeitsynchronisation", value=settings["timeSync"], help="Aktiviert die automatische Zeitsynchronisation der Kamera mit dem Internet.")
         
@@ -657,18 +659,15 @@ if True: # st.session_state.userIsLoggedIn:
                     help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
                 )
 
-        st.write("")
-        st.write(f"Kamera ID: {camera_ID}")
-
     # Display the errors
-    with st.expander("Fehlermeldungen"):
+    # with st.expander("Fehlermeldungen"):
         # Display the errors (not nan)
-        dfError = df[df['Error'].notna()]
+        # dfError = df[df['Error'].notna()]
 
-        if not dfError.empty:
-            # Display error message and timestamp as text in reverse order
-            for index, row in dfError[::-1].iterrows():
-                st.write(row['Timestamp'].strftime(
-                    "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
-        else:
-            st.write("Keine Fehlermeldungen vorhanden 🥳.")
+        # if not dfError.empty:
+        #     # Display error message and timestamp as text in reverse order
+        #     for index, row in dfError[::-1].iterrows():
+        #         st.write(row['Timestamp'].strftime(
+        #             "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
+        # else:
+        #     st.write("Keine Fehlermeldungen vorhanden 🥳.")

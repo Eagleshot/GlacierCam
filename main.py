@@ -310,7 +310,7 @@ except Exception as e:
 # Get readings
 ###########################
 temperature = wittyPi.get_temperature()
-internal_voltage = "-" # wittyPi.get_internal_voltage()
+internal_voltage = wittyPi.get_internal_voltage()
 internal_current = "-" # wittyPi.get_internal_current()
 signal_quality = sim7600.get_signal_quality()
 
