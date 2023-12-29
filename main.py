@@ -157,6 +157,7 @@ try:
         # Sunrise
         sunrise = sun.get_sunrise_time()
         logging.info("Next sunrise: %s:%s", sunrise.hour, sunrise.minute)
+        # TODO: Rund to nearest interval
         sunrise = sunrise.replace(minute=15 * round(sunrise.minute / 15)) # Round to nearest 15 minutes
         settings["startTimeHour"] = sunrise.hour
         settings["startTimeMinute"] = sunrise.minute

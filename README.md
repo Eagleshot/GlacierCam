@@ -1,20 +1,3 @@
-* Gewinde (Filter + Schrauben)
-* Toleranzen
-* Standoff zu Deckel oder in Deckel hinein
-* Löcher für Antenne(n)
-* GPS-Halter?
-* Gehäuse oben kl. als unten
-* USB?
-
--> Nur halter fräsen?
-
-* Deckel dicker -> löcher unten
-* Kamera zentrieren
-* Filter
-* Abstand deckel/gehäuserand
-
-* Abstandshalter Witty Pi hinten
-
 # GlacierCam
 ## Features at a glance
 ### Camera
@@ -78,16 +61,8 @@ General question: Don't fix it if it works? Testing is relatively time consuming
 * Gültigkeit der einstellungen, wo kommt dies her -> ddos
 -> konfiguration signieren (sehr aufwändig)
 
-
 rollback -> 
 neue config herunterladen -> überprüfen -> nur überschreiben wenn alles gültig
-
-logdaten -> eine verantwortliche stelle -> log facility
--> ringpuffer
-loglevel -> info -> fatal, error, immediate
-
-on device extended logging:
-wenn logfile gewisse grösse -> umbenennen mit datum -> neues logfile -> max. 10 logfiles
 
 # -> numerische daten als yaml anstatt csv -> does battery voltage exist -> ev. versionierung
 
@@ -113,36 +88,44 @@ There are many possible options:
 ## Updates and version control
 How to handle different versions of the software software (especially during active development/in the future)? Camera in the field, camera running development software etc.? Mostly compatible but sometimes breaking changes in data format etc. together with the webapp.
 
-* Simpler camera update possibility: e.g. shell script to update main python file remotely
 * Flag with version of data format
 * Different webserver versions (e.g. for different cameras) or for different image locations
 
 * Gehäuse -> 3D Modell
 * Kamerafilter -> Test/Gewinde
 * Antennen
-
-* Namensänderung in Einstellungen
-
 * Generelle Fehlerbehebungen -> Stürzt nicht ab wenn z.B. Temperatursensor defekt
-
-
 * Webserver -> Einstellungsmenü
 
 
 '''bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh 
 '''
-# only works with raspberry pi os bullseye
 
-* iteration for sim7600x and witty pi 4
+ Gewinde (Filter + Schrauben)
+* Toleranzen
+* Standoff zu Deckel oder in Deckel hinein
+* Löcher für Antenne(n)
+* GPS-Halter?
+* Gehäuse oben kl. als unten
+* USB?
+
+-> Nur halter fräsen?
+
+* Deckel dicker -> löcher unten
+* Kamera zentrieren
+* Filter
+* Abstand deckel/gehäuserand
+* Abstandshalter Witty Pi hinten
+
 
 # TODOs
 ## Hardware
 - [X] Upgrade to Witty Pi 4 (non mini)
 - [X] Upgrade to Raspberry Pi Zero 2 W
-- [ ] Create 3D printed internal case xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 - [X] Test camera focus with plexiglass
-- [ ] Create 3 additional cameras for testing
+- [ ] Create 3D printed internal case
+- [ ] Create additional cameras for testing
 
 ## Software
 - [x] Code review by Philip
@@ -161,7 +144,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 - [X] Set location manually for sunrise and sunset
 - [ ] Get startup reason from witty pi
 - [X] Move to dedicated logging facility - https://docs.python.org/3/library/logging.html
-- [ ] Log file handling with witty pi log files
+- [X] Log file handling with witty pi log files
 # https://www.youtube.com/watch?v=pxuXaaT1u3k
 # https://stackoverflow.com/questions/24505145/how-to-limit-log-file-size-in-python
 
@@ -192,7 +175,9 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 
 ## General
 - [ ] Extend documentation + improve installation script
-# TODO Set camera to UTC time
+    * Add instruction: camera needs to be set to UTC time
+    * Add instruction: default camera state needs to be set to "on"
+    * Add instruction: Only works with raspberry pi os bullseye
 - [ ] Open source the project
 
 # In the media
