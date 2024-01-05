@@ -10,34 +10,28 @@ lensPosition: -1.0
 # Has to be between 64x64 and 4608x2592
 resolution: [0, 0]
 
-# Change camera timer schedule
+# Change camera timer schedule in UTC
 startTimeHour: 8
 startTimeMinute: 0
 intervalMinutes: 30
 repetitionsPerday: 16
 timeSync: false # Enable or disable time synchronization with internet
 
-# Enable or disable GPS location
-enableGPS: false
+# Sunrise and sunset calculation for schedule (overrides schedule, needs location)
+enableSunriseSunset: false
 
-# Latitude and longitude
-location_override: false
+# Location settings
+enableGPS: false # Enable or disable GPS module
+location_override: false # Manually override location (set location below)
 latitude: 0.0
 longitude: 0.0
 height: 0
-
-# Sunrise and sunset calculation
-enableSunriseSunset: false
-
-# Enable or disable shutdown after program has run
-shutdown: false
 
 # Extended diagnostics data
 uploadWittyPiDiagnostics: false
 
 # Voltage thresholds
-low_voltage_threshold: 0.0
-recovery_voltage_threshold: 0.0
+low_voltage_threshold: 0.0 # Camera will shutdown if voltage drops below this value
+recovery_voltage_threshold: 0.0 # Camera will restart if voltage rises above this value
 
-# TODO Detailed description of each setting
-# the lensPosition is controls the focus of the camera. TODO insert datasheet data. By selecting -1.0 the camera will use autofocus.
+shutdown: false # Enable or disable shutdown after program has run

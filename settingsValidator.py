@@ -9,13 +9,13 @@ from yaml import safe_load
 
 class SettingsValidator:
     """Class to validate the settings.yaml file"""
-    def __init__(self, settings_file):
-        self.settings_file = settings_file
+    def __init__(self, settings_filename: str) -> None:
+        self.settings_filename = settings_filename
         self.settings = self.load_settings()
 
     def load_settings(self):
         """Load settings from file"""
-        with open(self.settings_file, 'r', encoding='utf-8') as f:
+        with open(self.settings_filename, 'r', encoding='utf-8') as f:
             settings = safe_load(f)
         return settings
 
@@ -162,22 +162,3 @@ if __name__ == '__main__':
     validator = SettingsValidator("settings.yaml")
     validator.validate_settings()
     print('Validation complete')
-
-# cameraName: "Camera1"
-# lensPosition: -1.0
-# resolution: [0, 0]
-# startTimeHour: 8
-# startTimeMinute: 0
-# intervalMinutes: 30
-# repetitionsPerday: 16
-# timeSync: false
-# enableGPS: false
-# location_override: false
-# latitude: 0.0
-# longitude: 0.0
-# height: 0
-# enableSunriseSunset: false
-# shutdown: false
-# uploadWittyPiDiagnostics: false
-# low_voltage_threshold: 0.0
-# recovery_voltage_threshold: 0.0
