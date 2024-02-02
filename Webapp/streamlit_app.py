@@ -400,15 +400,18 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
 
         col1, col2 = st.columns([1.5, 1])
 
-        col1.header("Wetter", anchor=False)
-        # col1.caption(f"{name}, {country}")
-        col1.text("")
-        col1.markdown(f"### :grey[Temperatur: {current_temperature} °C]")
-        col2.text("")
-        col2.text("")
-        col2.text("")
-        col2.text("")
-        col2.image(icon_image, caption=weather_description)
+        with col1:
+            st.header("Wetter", anchor=False)
+            # st.caption(f"{name}, {country}")
+            st.text("")
+            st.markdown(f"### :grey[Temperatur: {current_temperature} °C]")
+        
+        with col2:
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.image(icon_image, caption=weather_description)
         st.text("")
 
         col1, col2, col3, col4 = st.columns(4, gap="medium")
@@ -457,56 +460,22 @@ except SunTimeException as e:
 # Charts
 ##############################################
 
-# Battery Voltage
-st.header("Batterie", anchor=False)
-st.write(f"Letzte Messung: {str(df['Battery Voltage (V)'].iloc[-1])} V")
+def plot_chart(title: str, df: pd.DataFrame, x: str, y: str, unit: str = ""):
+    '''Create an Altair chart.'''
+    st.header(title, anchor=False)
+    st.write(f"Letzte Messung: {str(df[y].iloc[-1])} {unit}")
+    chart = alt.Chart(df).mark_line().encode(
+        x=alt.X(f'{x}:T', axis=alt.Axis(
+            title=f'{x}', labelAngle=-45)),
+        y=alt.Y(f'{y}:Q', axis=alt.Axis(title=f'{y}')),
+    ).interactive()
+    st.altair_chart(chart, use_container_width=True)
 
-chart = alt.Chart(df).mark_line().encode(
-    x=alt.X('Timestamp:T', axis=alt.Axis(
-        title='Timestamp', labelAngle=-45)),
-    y=alt.Y('Battery Voltage (V):Q', axis=alt.Axis(
-        title='Battery Voltage (V)')),
-    tooltip=['Timestamp:T', 'Battery Voltage:Q']
-).interactive()
-st.altair_chart(chart, use_container_width=True)
-
-# Internal Voltage
-st.header("Interne Spannung", anchor=False)
-st.write(f"Letzte Messung: {str(df['Internal Voltage (V)'].iloc[-1])} V")
-
-chart = alt.Chart(df).mark_line().encode(
-    x=alt.X('Timestamp:T', axis=alt.Axis(
-        title='Timestamp', labelAngle=-45)),
-    y=alt.Y('Internal Voltage (V):Q', axis=alt.Axis(
-        title='Internal Voltage (V)')),
-    tooltip=['Timestamp:T', 'Internal Voltage:Q']
-).interactive()
-st.altair_chart(chart, use_container_width=True)
-
-# Temperature
-st.header("Temperatur", anchor=False)
-st.write(f"Letzte Messung: {str(df['Temperature (°C)'].iloc[-1])} °C")
-
-chart = alt.Chart(df).mark_line().encode(
-    x=alt.X('Timestamp:T', axis=alt.Axis(
-        title='Timestamp', labelAngle=-45)),
-    y=alt.Y('Temperature (°C):Q', axis=alt.Axis(title='Temperature (°C)')),
-    tooltip=['Timestamp:T', 'Temperature:Q']
-).interactive()
-st.altair_chart(chart, use_container_width=True)
-
-# Signal Quality
+plot_chart("Batterie", df, 'Timestamp', 'Battery Voltage (V)', "V") # Battery Voltage
+plot_chart("Interne Spannung", df, 'Timestamp', 'Internal Voltage (V)', "V") # Internal voltage
+plot_chart("Temperatur", df, 'Timestamp', 'Temperature (°C)', "°C") # Temperature
+plot_chart("Sigalqualität", df, 'Timestamp', 'Signal Quality') # Signal quality
 # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
-st.header("Signalqualität", anchor=False)
-st.write(f"Letzte Messung: {str(df['Signal Quality'].iloc[-1])}")
-
-chart = alt.Chart(df).mark_line().encode(
-    x=alt.X('Timestamp:T', axis=alt.Axis(
-        title='Timestamp', labelAngle=-45)),
-    y=alt.Y('Signal Quality:Q', axis=alt.Axis(title='Signal Quality')),
-    tooltip=['Timestamp:T', 'Signal Quality:Q']
-).interactive()
-st.altair_chart(chart, use_container_width=True)
 
 ##############################################
 # Map
@@ -641,7 +610,7 @@ if True: # st.session_state.userIsLoggedIn:
 
         # Check if wittyPiSchedule.txt exists
         if "wittyPiSchedule.txt" in files:
-            
+
             # Retrieve the file data
             ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
 
