@@ -66,7 +66,7 @@ imgFiles = [file for file in files if file.endswith(".jpg")]
 
 # TODO: Cache currently doesnt work with multiple cameras due to same filename
 @st.cache_data(show_spinner=False, ttl=1)
-def getFileLastModifiedDate(filename: str) -> datetime:
+def get_file_last_modified_date(filename: str) -> datetime:
     '''Get the last modification date of a file on the FTP server.'''
     last_modified = ftp.sendcmd(f"MDTM {filename}")
     last_modified = datetime.strptime(last_modified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
@@ -198,7 +198,7 @@ else:
 @st.cache_data(show_spinner=False, ttl=3600)
 def get_image_ftp(selected_file):
     '''Get an image from the FTP server'''
-    image_data = BytesIO() 
+    image_data = BytesIO()
     ftp.cwd("save") # TODO Cleanup
     ftp.retrbinary(f"RETR {selected_file}", image_data.write)
     ftp.cwd("..") # TODO Cleanup
@@ -405,7 +405,7 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
             # st.caption(f"{name}, {country}")
             st.text("")
             st.markdown(f"### :grey[Temperatur: {current_temperature} °C]")
-        
+
         with col2:
             st.text("")
             st.text("")
@@ -514,7 +514,7 @@ if True: # st.session_state.userIsLoggedIn:
             autofocus_ON = True
 
         col1, col2 = st.columns([3,1])
-        
+
         # Focus range slider from 0m to inf
         col2.write("")
         col2.write("")
@@ -523,20 +523,19 @@ if True: # st.session_state.userIsLoggedIn:
 
         focus = col1.slider(
             "Manueller Fokus", min_value=0, max_value=100, value=0, step=1, disabled=autofocus_ON, format="%d m")
-        
 
         # Resolution
         # TODO
         resolution = st.selectbox(
             "Auflösung", options=["Automatisch", "2592x1944", "1920x1080", "1280x720", "640x480"], index=0, help="Bildauflösung der Kamera.")
-        
+
         st.divider()
         st.write("Zeit")
         col1, col2 = st.columns(2)
 
         # Start time
         startTime = col1.time_input('Startzeit', datetime.strptime(f"{settings['startTimeHour']}:{settings['startTimeMinute']}", "%H:%M").time(), help="Startzeit der Aufnahme.")
-     
+
         # Interval
         intervalTime = col2.number_input("Aufnahmeintervall", min_value=5, max_value=720, value=settings['intervalMinutes'], step=5, help="Aufnahmeintervall in Minuten.")
 
@@ -546,14 +545,14 @@ if True: # st.session_state.userIsLoggedIn:
         # durationTime = col2.number_input("Max. Aufnahmedauer", min_value=1, max_value=10, value=settings['maxDurationMinute'], step=1, help="Maximale Aufnahmedauer in Minuten. Das Kamerasystem wird spätestens nach dieser Zeitdauer ausgeschaltet.")
         timeSync = st.toggle(
             "Zeitsynchronisation", value=settings["timeSync"], help="Aktiviert die automatische Zeitsynchronisation der Kamera mit dem Internet.")
-        
+
         st.divider()
         st.write("Weitere Einstellungen")
         enableGPS = st.toggle("GPS aktivieren", value = settings["enableGPS"],
              help="Aktiviert die GPS-Funktion der Kamera. Die GPS-Antenne muss dafür angeschlossen sein!")
         extendedDiagnostics = st.toggle(
             "Erweiterte Diagnosedaten", value=settings["uploadWittyPiDiagnostics"], help="Hochladen von erweiterten Diagnosedaten. Kann bei schwerwiegenderen Problemen helfen.")
-        
+
         st.divider()
         st.write(":red[Danger Zone]")
         shutdown = st.toggle("Shutdown", value=settings["shutdown"], help="Kamera nach Bildaufnahme ausschalten. Wird diese Option deaktiviert, schaltet sich die Kamera erst verspätet aus und der Stromverbrauch ist erhöht.")
@@ -595,7 +594,7 @@ if True: # st.session_state.userIsLoggedIn:
             ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
 
             # Get last modification date
-            lastModified = getFileLastModifiedDate("wittyPiDiagnostics.txt")
+            lastModified = get_file_last_modified_date("wittyPiDiagnostics.txt")
 
             with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
                 # Download wittyPiDiagnostics.txt
@@ -615,7 +614,7 @@ if True: # st.session_state.userIsLoggedIn:
             ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
 
             # Get last modification date
-            lastModified = getFileLastModifiedDate("wittyPiSchedule.txt")
+            lastModified = get_file_last_modified_date("wittyPiSchedule.txt")
 
             with open('wittyPiSchedule.txt', encoding='utf-8') as file:
                 # Download wittyPiSchedule.txt
