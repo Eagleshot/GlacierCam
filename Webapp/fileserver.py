@@ -33,10 +33,13 @@ class fileServer:
 
         return image_data, image
 
-    def list_files(self, directory=""):
+    def list_files(self, directory: str = "") -> list:
         '''List files in the current or specified directory'''
         if directory:
             self.change_directory(directory)
+            files = self.ftp.nlst()
+            self.change_directory("..")
+            return files
 
         return self.ftp.nlst()
 

@@ -56,7 +56,6 @@ fileserver.change_directory(FTP_FOLDER) # Change the directory on the file serve
 
 # Get the list of files from the FTP server
 files = fileserver.list_files("save")
-fileserver.change_directory("..")
 
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
@@ -87,18 +86,10 @@ df = pd.read_csv('diagnostics.csv', encoding='utf-8')
 # Rename the columns
 # TODO Also read first line
 # TODO: Maybe do column naming in the main.py script
-df.rename(columns={df.columns[0]: 'Timestamp'}, inplace=True)
-df.rename(columns={df.columns[1]: 'Next Startup'}, inplace=True)
-df.rename(columns={df.columns[2]: 'Battery Voltage (V)'}, inplace=True)
-df.rename(columns={df.columns[3]: 'Internal Voltage (V)'}, inplace=True)
-df.rename(columns={df.columns[4]: 'Internal Current (A)'}, inplace=True)
-df.rename(columns={df.columns[5]: 'Temperature (°C)'}, inplace=True)
-df.rename(columns={df.columns[6]: 'Signal Quality'}, inplace=True)
-df.rename(columns={df.columns[7]: 'Latitude'}, inplace=True)
-df.rename(columns={df.columns[8]: 'Longitude'}, inplace=True)
-df.rename(columns={df.columns[9]: 'Heigth'}, inplace=True)
+column_names = ['Timestamp', 'Next Startup', 'Battery Voltage (V)', 'Internal Voltage (V)', 'Internal Current (A)', 'Temperature (°C)', 'Signal Quality', 'Latitude', 'Longitude', 'Heigth']
 if len(df.columns) > 10:
-    df.rename(columns={df.columns[10]: 'Error'}, inplace=True)
+    column_names.append('Error')
+df.columns = column_names
 
 # Convert the timestamp to datetime
 try:
