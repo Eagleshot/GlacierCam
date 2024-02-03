@@ -10,11 +10,7 @@ import altair as alt
 import pytz
 from suntime import Sun, SunTimeException
 import requests
-
-# FTP server credentials
-FTP_HOST = st.secrets["FTP_HOST"]
-FTP_USERNAME = st.secrets["FTP_USERNAME"]
-FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
+import fileserver as fs
 
 # Login status
 if "userIsLoggedIn" not in st.session_state:
@@ -50,64 +46,23 @@ with st.sidebar:
     else:
         FTP_FOLDER = st.secrets["FTP_FOLDER"][0]
 
-# Connect to the FTP server
-ftp = FTP(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
+# Connect to the file server
+FTP_HOST = st.secrets["FTP_HOST"]
+FTP_USERNAME = st.secrets["FTP_USERNAME"]
+FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
 
-# Change the working directory to the FTP folder
-ftp.cwd(FTP_FOLDER)
-
-@st.cache_data(show_spinner=False, ttl=1)
-def get_file_ftp(filename: str) -> None:
-    '''Download a file from the FTP server.'''
-    # Retrieve the file data
-    ftp.retrbinary(f"RETR {filename}", open(filename, 'wb').write)
-
-@st.cache_data(show_spinner=False, ttl=3600)
-def get_image_ftp(selected_file: str, rotate: bool = False):
-    '''Get an image from the FTP server'''
-    image_data = BytesIO()
-    ftp.cwd("save") # TODO Cleanup
-    ftp.retrbinary(f"RETR {selected_file}", image_data.write)
-    ftp.cwd("..") # TODO Cleanup
-    image = Image.open(image_data)
-
-    # Rotate the image
-    if rotate:
-        image = image.rotate(180, expand=True)
-
-    return image_data, image
-
-# TODO: Cache currently doesnt work with multiple cameras due to same filename
-@st.cache_data(show_spinner=False, ttl=1)
-def get_file_last_modified_date(filename: str) -> datetime:
-    '''Get the last modification date of a file on the FTP server.'''
-    last_modified = ftp.sendcmd(f"MDTM {filename}")
-    last_modified = datetime.strptime(last_modified[4:], '%Y%m%d%H%M%S') # Convert date to datetime
-    last_modified = timezone.localize(last_modified) # Convert date to local timezone
-
-    return last_modified
-
-# def get_file_list_ftp(filetype: str = "") -> list:
-#     '''Get the list of files from the FTP server.'''
-#     ftp.cwd("save") # TODO Cleanup
-#     files = ftp.nlst()
-#     ftp.cwd("..") # TODO Cleanup
-
-#     if filetype:
-#         files = [file for file in files if file.endswith(filetype)]
-
-#     return files
+fileserver = fs.fileServer(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
+fileserver.change_directory(FTP_FOLDER) # Change the directory on the file server
 
 # Get the list of files from the FTP server
-ftp.cwd("save") # TODO Remove
-files = ftp.nlst()
-ftp.cwd("..") # TODO Remove
+files = fileserver.list_files("save")
+fileserver.change_directory("..")
 
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
 
 # Get settings from server
-get_file_ftp("settings.yaml")
+fileserver.download_file("settings.yaml")
 
 with open('settings.yaml', encoding='utf-8') as file:
     settings = safe_load(file)
@@ -126,7 +81,7 @@ st.title(cameraname, anchor=False)
 imagePlaceholder = st.empty()
 
 # Download diagnostics file
-get_file_ftp("diagnostics.csv")
+fileserver.download_file("diagnostics.csv")
 df = pd.read_csv('diagnostics.csv', encoding='utf-8')
 
 # Rename the columns
@@ -226,7 +181,7 @@ else:
 
 # Get the image file from the FTP server
 if len(files) > 0:
-    image_data, image = get_image_ftp(selected_file)
+    image_data, image = fileserver.get_image(selected_file)
 
     # Display the image with the corresponding timestamp
     imagePlaceholder.image(image, use_column_width=True)
@@ -604,10 +559,10 @@ if True: # st.session_state.userIsLoggedIn:
         if "wittyPiDiagnostics.txt" in files:
 
             # Retrieve the file data
-            ftp.retrbinary("RETR wittyPiDiagnostics.txt", open('wittyPiDiagnostics.txt', 'wb').write)
+            fileserver.download_file("wittyPiDiagnostics.txt")
 
             # Get last modification date
-            lastModified = get_file_last_modified_date("wittyPiDiagnostics.txt")
+            lastModified = fileserver.get_file_last_modified_date("wittyPiDiagnostics.txt", timezone)
 
             with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
                 # Download wittyPiDiagnostics.txt
@@ -624,10 +579,10 @@ if True: # st.session_state.userIsLoggedIn:
         if "wittyPiSchedule.txt" in files:
 
             # Retrieve the file data
-            ftp.retrbinary("RETR wittyPiSchedule.txt", open('wittyPiSchedule.txt', 'wb').write)
+            fileserver.download_file("wittyPiSchedule.txt")
 
             # Get last modification date
-            lastModified = get_file_last_modified_date("wittyPiSchedule.txt")
+            lastModified = fileserver.get_file_last_modified_date("wittyPiSchedule.txt", timezone)
 
             with open('wittyPiSchedule.txt', encoding='utf-8') as file:
                 # Download wittyPiSchedule.txt
