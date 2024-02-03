@@ -185,12 +185,12 @@ with st.sidebar:
                     & (df['Timestamp'] <= endDateTime)]
 
     # Zeitzone auswählen
-    # TODO
-    st.header("Zeitzone auswählen", help="Zeitzone der Kamera auswählen.")
+    # TODO: Automatic timezone detection
+    st.header("Zeitzone auswählen")
     timezone_selection = st.selectbox(
         "Bitte wählen Sie eine Zeitzone aus:",
-        options=pytz.all_timezones,
-        index=pytz.all_timezones.index('Europe/Zurich'),
+        options=pytz.common_timezones,
+        index=pytz.common_timezones.index('Europe/Zurich'),
     )
     timezone = pytz.timezone(timezone_selection)
 
