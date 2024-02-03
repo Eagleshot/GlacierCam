@@ -56,6 +56,48 @@ ftp = FTP(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
 # Change the working directory to the FTP folder
 ftp.cwd(FTP_FOLDER)
 
+@st.cache_data(show_spinner=False, ttl=1)
+def get_file_ftp(filename: str) -> None:
+    '''Download a file from the FTP server.'''
+    # Retrieve the file data
+    ftp.retrbinary(f"RETR {filename}", open(filename, 'wb').write)
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def get_image_ftp(selected_file: str, rotate: bool = False):
+    '''Get an image from the FTP server'''
+    image_data = BytesIO()
+    ftp.cwd("save") # TODO Cleanup
+    ftp.retrbinary(f"RETR {selected_file}", image_data.write)
+    ftp.cwd("..") # TODO Cleanup
+    image = Image.open(image_data)
+
+    # Rotate the image
+    if rotate:
+        image = image.rotate(180, expand=True)
+
+    return image_data, image
+
+# TODO: Cache currently doesnt work with multiple cameras due to same filename
+@st.cache_data(show_spinner=False, ttl=1)
+def get_file_last_modified_date(filename: str) -> datetime:
+    '''Get the last modification date of a file on the FTP server.'''
+    last_modified = ftp.sendcmd(f"MDTM {filename}")
+    last_modified = datetime.strptime(last_modified[4:], '%Y%m%d%H%M%S') # Convert date to datetime
+    last_modified = timezone.localize(last_modified) # Convert date to local timezone
+
+    return last_modified
+
+# def get_file_list_ftp(filetype: str = "") -> list:
+#     '''Get the list of files from the FTP server.'''
+#     ftp.cwd("save") # TODO Cleanup
+#     files = ftp.nlst()
+#     ftp.cwd("..") # TODO Cleanup
+
+#     if filetype:
+#         files = [file for file in files if file.endswith(filetype)]
+
+#     return files
+
 # Get the list of files from the FTP server
 ftp.cwd("save") # TODO Remove
 files = ftp.nlst()
@@ -64,28 +106,11 @@ ftp.cwd("..") # TODO Remove
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
 
-# TODO: Cache currently doesnt work with multiple cameras due to same filename
-@st.cache_data(show_spinner=False, ttl=1)
-def get_file_last_modified_date(filename: str) -> datetime:
-    '''Get the last modification date of a file on the FTP server.'''
-    last_modified = ftp.sendcmd(f"MDTM {filename}")
-    last_modified = datetime.strptime(last_modified[4:], '%Y%m%d%H%M%S') # Convert last modification date to datetime
-    last_modified = timezone.localize(last_modified) # Convert last modification date to local timezone
-
-    return last_modified
-
-@st.cache_data(show_spinner=False, ttl=1)
-def get_file_ftp(filename: str) -> None:
-    '''Download a file from the FTP server.'''
-    # Retrieve the file data
-    ftp.retrbinary(f"RETR {filename}", open(filename, 'wb').write)
-
 # Get settings from server
 get_file_ftp("settings.yaml")
 
 with open('settings.yaml', encoding='utf-8') as file:
     settings = safe_load(file)
-
 
 # Camera name
 if "cameraName" in settings:
@@ -181,33 +206,23 @@ with st.sidebar:
 
 # Select slider if multiple images are available
 if len(imgFiles) > 1:
+
+    # UTC offset
+    UTC_OFFSET_HOUR = int(timezone.utcoffset(datetime.now()).total_seconds() / 3600)
+
     selected_file = st.select_slider(
         "Wähle ein Bild aus",
         label_visibility="hidden",  # Hide the label
         options=imgFiles,
         value=imgFiles[-1],
         # Format the timestamp and dont show date if it is today
-        format_func=lambda x: f"{x[9:11]}:{x[11:13]} Uhr" if x[:8] == datetime.now(
-        timezone).strftime("%Y%m%d") else f"{x[6:8]}.{x[4:6]}.{x[:4]} {x[9:11]}:{x[11:13]} Uhr"
+        format_func=lambda x: f"{int(x[9:11]) + UTC_OFFSET_HOUR}:{x[11:13]} Uhr" if x[:8] == datetime.now(
+        timezone).strftime("%Y%m%d") else f"{x[6:8]}.{x[4:6]}.{x[:4]} {int(x[9:11]) + UTC_OFFSET_HOUR}:{x[11:13]} Uhr"
     )
 elif len(imgFiles) == 1:
     selected_file = imgFiles[0]
 else:
     st.write("Keine Bilder vorhanden.")
-
-@st.cache_data(show_spinner=False, ttl=3600)
-def get_image_ftp(selected_file):
-    '''Get an image from the FTP server'''
-    image_data = BytesIO()
-    ftp.cwd("save") # TODO Cleanup
-    ftp.retrbinary(f"RETR {selected_file}", image_data.write)
-    ftp.cwd("..") # TODO Cleanup
-    image = Image.open(image_data)
-
-    # Rotate the image
-    # image = image.rotate(180, expand=True)
-
-    return image_data, image
 
 # Get the image file from the FTP server
 if len(files) > 0:
@@ -231,8 +246,6 @@ st.text("")
 # Overview of the last measurements
 ##############################################
 
-col1, col2, col3, col4 = st.columns(4)
-
 try:
     timestampSelectedImage = datetime.strptime(
         selected_file[0:13], '%d%m%Y_%H%M')
@@ -242,9 +255,9 @@ try:
 except:
     index = -1
 
+col1, col2, col3, col4 = st.columns(4)
 col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]} V")
-col2.metric("Interne Spannung",
-            f"{df['Internal Voltage (V)'].iloc[index]} V")
+col2.metric("Interne Spannung", f"{df['Internal Voltage (V)'].iloc[index]} V")
 col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]} °C")
 col4.metric("Signalqualität", df['Signal Quality'].iloc[index])
 
@@ -284,6 +297,7 @@ try:
     nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%S')
 except:
     nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%SZ')
+
 nextStartup = nextStartup + pd.Timedelta(minutes=1)
 
 # Check if next startup is in the future
@@ -422,8 +436,7 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
         col4.metric("Sichtweite", f"{visibility}")
 
         st.text("")
-        st.markdown(
-            "Daten von [OpenWeatherMap](https://openweathermap.org).")
+        st.markdown("Daten von [OpenWeatherMap](https://openweathermap.org).")
 
         st.divider()
 
