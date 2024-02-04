@@ -1,9 +1,8 @@
 """Webserver for the Eagleshot GlacierCam - https://github.com/Eagleshot/GlacierCam"""
-from ftplib import FTP
 from io import BytesIO
 from datetime import datetime
-import streamlit as st
 from PIL import Image
+import streamlit as st
 import pandas as pd
 from yaml import safe_load
 import altair as alt
@@ -172,10 +171,10 @@ else:
 
 # Get the image file from the FTP server
 if len(files) > 0:
-    image_data, image = fileserver.get_image(selected_file)
+    image_data = fileserver.get_image(selected_file)
 
     # Display the image with the corresponding timestamp
-    imagePlaceholder.image(image, use_column_width=True)
+    imagePlaceholder.image(Image.open(image_data), use_column_width=True)
 
     # Download button for image
     st.download_button(
