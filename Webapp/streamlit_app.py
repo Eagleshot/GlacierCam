@@ -597,3 +597,5 @@ if True: # st.session_state.userIsLoggedIn:
         #             "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
         # else:
         #     st.write("Keine Fehlermeldungen vorhanden 🥳.")
+
+    fileserver.close()
