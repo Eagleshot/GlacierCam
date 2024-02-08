@@ -35,3 +35,5 @@ low_voltage_threshold: 0.0 # Camera will shutdown if voltage drops below this va
 recovery_voltage_threshold: 0.0 # Camera will restart if voltage rises above this value
 
 shutdown: false # Enable or disable shutdown after program has run
+
+# When adding new settings, make sure to also add them to the settings class for proper settings validation

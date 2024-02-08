@@ -38,46 +38,9 @@
 -> Modular for expansion and/or future upgrades
 
 # Components
+* TODO
 * https://www.distrelec.ch/de/kunststoffgehaeuse-82x80x55mm-dunkelgrau-abs-ip67-rnd-components-rnd-455-01032/p/30128636
 
-
-# Code review 
-## Python hooks
-Problem: Some functionality on the camera and webapp should be able to be modified/added in the future (e.g. image processing on the camera/webserver or readout of additional sensors). Its not ideal to hardcode this functionality.
-
--> Idea: The program calls a hook function (e.g. `image_processing()`) and the user can add his own code to this function. This function is called at a specific point in the program (e.g. after the image is taken). The user can add his own code to this function and the program will execute it. All sensor data can be stored in the CSV as an additional row.
-
-# -> numerische daten als yaml anstatt csv -> does battery voltage exist -> ev. versionierung
-
-## One time actions
--> crontab
--> ntp for rtc
--> Set setting to certain value and then revert it!!!!!!!
-
-Problem: When activated, certain settings run every time the camera runs. This is not needed for everything (e.g. time sync, GPS location). In addition, some new settings should be added (e.g. changing low voltage treshold, clear log files, chang wifi access credentials) that would only need to be done once and very rarely.
-
-There are many possible options:
-* Create a "TODO" list for the camera with jobs to be done
-* Modify the settings file (e.g. set low voltage treshold 0 V after changing it)
-* Only trigger this in a certain timeslot (e.g. at the first run of the day)
-* Only trigger during certain conditions (e.g. when power was lost/restored)
-* Leave it as is, as the overhead is possibly not worth it. Certain settings could be improve (e.g. check if time is correct first and only then sync it)
-
--> How to minimize overhead
--> How to properly implement
--> How to to it "time aware" with a possibly changing schedule
-
-## Updates and version control
-How to handle different versions of the software software (especially during active development/in the future)? Camera in the field, camera running development software etc.? Mostly compatible but sometimes breaking changes in data format etc. together with the webapp.
-
-* Flag with version of data format
-* Different webserver versions (e.g. for different cameras) or for different image locations
-
-* Gehäuse -> 3D Modell
-* Kamerafilter -> Test/Gewinde
-* Antennen
-* Generelle Fehlerbehebungen -> Stürzt nicht ab wenn z.B. Temperatursensor defekt
-* Webserver -> Einstellungsmenü
 
 '''bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh 
@@ -92,10 +55,13 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 - [ ] Create additional cameras for testing
 
 ## Software
+- [ ] Automatically set camera to reboot when power is on again
 - [ ] Add log level settings
-- [x] Code review by Philip
 - [ ] Improved settings validation
+- [x] Code review by Philip
+- [ ] Improve the format of saved data -> e.g. use .yaml instead of a csv file so additional data can easily be added or different data versions can be used in future software
 - [ ] Enable watchdog
+- [ ] Add hooks for data processing (e.g. `image_processing()`) that are called by the program at a specific time in the program and can be modified by the user
 - [X] Move SIM7600G-H 4G code to separate file/library for easier readability and add tests
 - [X] Move WittyPi code to separate file/library for easier readability and add tests
 - [ ] Move file handling code to separate file/library for easier readability and add tests
@@ -111,9 +77,8 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 - [X] Move to dedicated logging facility
 - [X] Log file handling with witty pi log files
 - [ ] Limit log filesize
-# https://www.youtube.com/watch?v=pxuXaaT1u3k
-# https://stackoverflow.com/questions/24505145/how-to-limit-log-file-size-in-python
-- [ ]
+- https://www.youtube.com/watch?v=pxuXaaT1u3k
+- https://stackoverflow.com/questions/24505145/how-to-limit-log-file-size-in-python
 
 ## Energy and Scheduling
 - [X] Take sunrise and sunset into account for scheduling
@@ -148,7 +113,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 - [ ] Open source the project
 
 # In the media
-* [FHGR News](https://www.fhgr.ch/news/newsdetail/photonics-bachelorarbeit-wird-praemiert/)
+* [FHGR News](https://www.fhgr.ch/news/newsdetail/photonics-absolvent-gewinnt-ruag-innovation-award/)
 * [Nau](https://www.nau.ch/ort/chur/fh-graubunden-photonics-absolvent-gewinnt-ruag-innovation-award-66625517)
 * [LinkedIn](https://www.linkedin.com/posts/ruag-ag_news-fh-graub%C3%BCnden-activity-7117803653880569858-ut_M)
 * [myScience](https://www.myscience.ch/de/news/wire/photonics_bachelorarbeit_wird_praemiert-2023-fhgr)
