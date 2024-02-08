@@ -31,9 +31,9 @@ class fileServer:
     def change_directory(self, directory: str, create: bool = False):
         '''Change the current directory on the file server'''
         try:
-            ftp_directory_list = self.ftp.nlst()
+            directory_list = self.list_files()
 
-            if directory not in ftp_directory_list and create:
+            if directory not in directory_list and create:
                 self.ftp.mkd(directory)
 
             self.ftp.cwd(directory)
@@ -80,13 +80,13 @@ class fileServer:
         return self.ftp.nlst()
 
     def get_file_last_modified_date(self, filename: str, timezone: timezone) -> datetime:
-        '''Get the last modification date of a file on the fileserver.'''
+        '''Get the last modification date of a file on the file server.'''
         last_modified = self.ftp.sendcmd(f"MDTM {filename}")
         last_modified = datetime.strptime(last_modified[4:], '%Y%m%d%H%M%S') # Convert to datetime
         last_modified = timezone.localize(last_modified) # Convert date to local timezone
 
         return last_modified
 
-    def close(self):
-        '''Close the FTP connection'''
+    def close(self) -> None:
+        '''Close the file server connection'''
         self.ftp.quit()

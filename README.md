@@ -47,25 +47,7 @@ Problem: Some functionality on the camera and webapp should be able to be modifi
 
 -> Idea: The program calls a hook function (e.g. `image_processing()`) and the user can add his own code to this function. This function is called at a specific point in the program (e.g. after the image is taken). The user can add his own code to this function and the program will execute it. All sensor data can be stored in the CSV as an additional row.
 
-
-## Settings download
-Settings are downloaded every run from the FTP server and overwrite the local settings. There is some basic settings validation (e.g. to ensure that the camera always restarts even with invalid timer settings). If the server is offline, the local settings are used. If the settings get deleted on the server, the local settings are uploaded.
-
--> Is this an "ok enough" way of doing it? An option would be to add a settings validator/comparison but that would bring additional overhead.
-
-Idea: Settings will mainly be changed in the webapp in the future. The webapp also could validate the settings and alert the user (if changed manually). Otherwise the settings validation on the camera prevents major errors so they only cause minor inconveniences.
-
-General question: Don't fix it if it works? Testing is relatively time consuming together with hardware (problems). Sometimes it was not clear where the errors came from so it resulted in reversed code changes.
-
-
-* Gültigkeit der einstellungen, wo kommt dies her -> ddos
--> konfiguration signieren (sehr aufwändig)
-
-rollback -> 
-neue config herunterladen -> überprüfen -> nur überschreiben wenn alles gültig
-
 # -> numerische daten als yaml anstatt csv -> does battery voltage exist -> ev. versionierung
-
 
 ## One time actions
 -> crontab
@@ -97,27 +79,9 @@ How to handle different versions of the software software (especially during act
 * Generelle Fehlerbehebungen -> Stürzt nicht ab wenn z.B. Temperatursensor defekt
 * Webserver -> Einstellungsmenü
 
-
 '''bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh 
 '''
-
- Gewinde (Filter + Schrauben)
-* Toleranzen
-* Standoff zu Deckel oder in Deckel hinein
-* Löcher für Antenne(n)
-* GPS-Halter?
-* Gehäuse oben kl. als unten
-* USB?
-
--> Nur halter fräsen?
-
-* Deckel dicker -> löcher unten
-* Kamera zentrieren
-* Filter
-* Abstand deckel/gehäuserand
-* Abstandshalter Witty Pi hinten
-
 
 # TODOs
 ## Hardware
@@ -128,6 +92,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 - [ ] Create additional cameras for testing
 
 ## Software
+- [ ] Add log level settings
 - [x] Code review by Philip
 - [ ] Improved settings validation
 - [ ] Enable watchdog
@@ -143,15 +108,17 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 - [X] Fix bug with wrong timezone for start time
 - [X] Set location manually for sunrise and sunset
 - [ ] Get startup reason from witty pi
-- [X] Move to dedicated logging facility - https://docs.python.org/3/library/logging.html
+- [X] Move to dedicated logging facility
 - [X] Log file handling with witty pi log files
+- [ ] Limit log filesize
 # https://www.youtube.com/watch?v=pxuXaaT1u3k
 # https://stackoverflow.com/questions/24505145/how-to-limit-log-file-size-in-python
+- [ ]
 
 ## Energy and Scheduling
 - [X] Take sunrise and sunset into account for scheduling
 - [X] Take battery level into account for scheduling
-- [ ] Advanced scheduling (start and end date)xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+- [ ] Advanced scheduling (start and end date)
 - [ ] Time drift detection (maybe with GPS)
 - [X] New energy measurement -> optimize Solar panel and battery size
 

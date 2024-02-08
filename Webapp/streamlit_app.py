@@ -4,12 +4,12 @@ from datetime import datetime
 from PIL import Image
 import streamlit as st
 import pandas as pd
-from yaml import safe_load
 import altair as alt
 import pytz
 from suntime import Sun, SunTimeException
 import requests
 import fileserver as fs
+from settings import Settings
 
 # Login status
 if "userIsLoggedIn" not in st.session_state:
@@ -59,20 +59,12 @@ files = fileserver.list_files("save")
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
 
-# Get settings from server
+# Load settings from server
 fileserver.download_file("settings.yaml")
-
-with open('settings.yaml', encoding='utf-8') as file:
-    settings = safe_load(file)
+settings = Settings()
 
 # Camera name
-if "cameraName" in settings:
-    cameraname = settings["cameraName"]
-elif len(imgFiles) > 0:
-    cameraname = imgFiles[-1][15:-21]
-else:
-    cameraname = FTP_FOLDER
-
+cameraname = settings.get("cameraName")
 st.title(cameraname, anchor=False)
 
 # Placeholder for the image
@@ -268,17 +260,12 @@ st.divider()
 ##############################################
 
 # Overwrite latitude and longitude if available
-if "location_overwrite" in settings:
-    if settings["location_overwrite"]:
-        if "latitude" in settings:
-            latitude = settings["latitude"]
-        if "longitude" in settings:
-            longitude = settings["longitude"]
-        if "heigth" in settings:
-            heigth = settings["heigth"]
+if settings.get("location_overwrite"):
+    latitude = settings.get("latitude")
+    longitude = settings.get("longitude")
+    heigth = settings.get("heigth")
 
-dfMap = df[df['Latitude'] != "-"]
-dfMap = dfMap[dfMap['Longitude'] != "-"]
+dfMap = df[(df['Latitude'] != "-") & (df['Longitude'] != "-")]
 
 @st.cache_data(show_spinner=False, ttl=300)
 def get_weather_data(latitude: float, longitude: float) -> dict:
@@ -314,24 +301,8 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
         wind_direction = weather_data["wind"]["deg"]
 
         # Convert wind direction to text
-        if wind_direction > 337.5:
-            WIND_DIRECTION_TEXT = "N"
-        elif wind_direction > 292.5:
-            WIND_DIRECTION_TEXT = "NW"
-        elif wind_direction > 247.5:
-            WIND_DIRECTION_TEXT = "W"
-        elif wind_direction > 202.5:
-            WIND_DIRECTION_TEXT = "SW"
-        elif wind_direction > 157.5:
-            WIND_DIRECTION_TEXT = "S"
-        elif wind_direction > 122.5:
-            WIND_DIRECTION_TEXT = "SE"
-        elif wind_direction > 67.5:
-            WIND_DIRECTION_TEXT = "E"
-        elif wind_direction > 22.5:
-            WIND_DIRECTION_TEXT = "NE"
-        else:
-            WIND_DIRECTION_TEXT = "N"
+        directions = ["N", "NW", "W", "SW", "S", "SE", "E", "NE", "N"]
+        WIND_DIRECTION_TEXT = directions[int((wind_direction + 22.5) % 360 // 45)]
 
         # Get the icon from OpenWeatherMap
         icon = weather_data["weather"][0]["icon"]
@@ -468,8 +439,8 @@ if True: # st.session_state.userIsLoggedIn:
         st.write("Kamera")
 
         autofocus_ON = False
-        if settings["lensPosition"] == -1:
-            autofocus_ON = True
+        # if settings["lensPosition"] == -1:
+        #     autofocus_ON = True
 
         col1, col2 = st.columns([3,1])
 
