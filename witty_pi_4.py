@@ -84,9 +84,16 @@ class WittyPi4:
     def get_low_voltage_threshold(self) -> float:
         '''Gets the low threshold from the Witty Pi 4'''
         try:
-            low_voltage_threshold = float(self.run_command("get_low_voltage_threshold")[:-1])
+            low_voltage_threshold = self.run_command("get_low_voltage_threshold")
+
+            if low_voltage_threshold == "disabled":
+                logging.info("Low voltage threshold: disabled")
+                return 0.0
+
+            low_voltage_threshold = float(low_voltage_threshold[:-1])
             logging.info("Low voltage threshold: %s V", low_voltage_threshold)
             return low_voltage_threshold
+
         except Exception as e:
             logging.error("Could not get low voltage threshold: %s", str(e))
             return 0.0
@@ -95,9 +102,16 @@ class WittyPi4:
     def get_recovery_voltage_threshold(self) -> float:
         '''Gets the recovery threshold from the Witty Pi 4'''
         try:
-            recovery_voltage_threshold = float(self.run_command("get_recovery_voltage_threshold")[:-1])
+            recovery_voltage_threshold = self.run_command("get_recovery_voltage_threshold")
+
+            if recovery_voltage_threshold == "disabled":
+                logging.info("Recovery voltage threshold: disabled")
+                return 0.0
+
+            recovery_voltage_threshold = float(recovery_voltage_threshold[:-1])
             logging.info("Recovery voltage threshold: %s V", recovery_voltage_threshold)
             return recovery_voltage_threshold
+
         except Exception as e:
             logging.error("Could not get recovery voltage threshold: %s", str(e))
             return 0.0
