@@ -275,6 +275,11 @@ except Exception as e:
 ###########################
 # Get readings
 ###########################
+temperature = "-"
+internal_voltage = "-"
+internal_current = "-"
+signal_quality = "-"
+
 try:
     temperature = wittyPi.get_temperature()
     internal_voltage = wittyPi.get_internal_voltage()
