@@ -7,8 +7,11 @@ class SIM7600X:
     '''Class for the SIM7600X 4G module'''
     def __init__(self, port: str = '/dev/ttyUSB2', baudrate: int = 115200, timeout: int = 5):
         '''Initialize SIM7600X'''
-        self.ser = serial.Serial(port, baudrate, timeout=timeout) # USB connection
-        self.ser.flushInput()
+        try:
+            self.ser = serial.Serial(port, baudrate, timeout=timeout) # USB connection
+            self.ser.flushInput()
+        except Exception as e:
+            logging.error("Could not initialize SIM7600X: %s", str(e))
 
     # Send AT command to SIM7600X
     def send_at_command(self, command: str, back: str = 'OK', timeout: int = 1) -> str:
