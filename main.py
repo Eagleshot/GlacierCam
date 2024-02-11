@@ -2,10 +2,8 @@
 
 from io import BytesIO, StringIO
 from os import system, remove, listdir, path
-from time import sleep
 from csv import writer, reader
 from datetime import datetime
-from ftplib import FTP
 import logging
 from logging.handlers import RotatingFileHandler
 from picamera2 import Picamera2
@@ -14,6 +12,7 @@ from yaml import safe_load
 import suntime
 from sim7600x import SIM7600X
 from witty_pi_4 import WittyPi4
+import fileserver as fs
 
 ###########################
 # Configuration and filenames
@@ -59,53 +58,23 @@ TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
 TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
 
 ###########################
-# Connect to FTP server
+# Connect to fileserver
 ###########################
-MAX_RETRIES = 5
 
-for i in range(MAX_RETRIES):
-    try:
-        ftp = FTP(config["ftpServerAddress"], timeout=5)
-        ftp.login(user=config["username"], passwd=config["password"])
-        CONNECTED_TO_FTP = True
-        break
-    except Exception as e:
-        if i > 1:
-            logging.warning("Could not connect to FTP server: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
-        else:
-            logging.info("Could not connect to FTP server: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
+fileserver = fs.fileserver(config["ftpServerAddress"], config["username"], config["password"])
+CONNECTED_TO_FTP = fileserver.connected()
 
-        CONNECTED_TO_FTP = False
-        sleep(5) # Wait 5 seconds and try again
-
-def change_directory(directory: str):
-    '''Change directory on the file server'''
-    try:
-        ftp_directory_list = ftp.nlst()
-
-        if directory not in ftp_directory_list:
-            ftp.mkd(directory)
-
-        ftp.cwd(directory)
-
-    except Exception as e:
-        logging.warning("Could not change directory on FTP server: %s", str(e))
-
-# Go to custom directory in FTP server if specified
+# Go to custom directory on fileserver if specified
 try:
+    # Custom directory
     if config["ftpDirectory"] != "" and CONNECTED_TO_FTP:
-        change_directory(config["ftpDirectory"])
+        fileserver.change_directory(config["ftpDirectory"], True)
 
-except Exception as e:
-    logging.warning("Could not change directory on FTP server: %s", str(e))
-
-# Go to folder with camera name + unique hardware serial number or create it
-try:
+    # Custom camera directory
     if config["multipleCamerasOnServer"] and CONNECTED_TO_FTP:
-        change_directory(CAMERA_NAME)
-
+        fileserver.change_directory(CAMERA_NAME, True)
 except Exception as e:
-    logging.warning("Could not change directory on FTP server: %s", str(e))
+    logging.warning("Could not change directory on fileserver: %s", str(e))
 
 ###########################
 # Settings
@@ -115,16 +84,14 @@ except Exception as e:
 try:
     if CONNECTED_TO_FTP:
 
-        fileList = ftp.nlst()
+        file_list = fileserver.list_files()
 
         # Check if settings file exists
-        if "settings.yaml" in fileList:
-            with open(f"{FILE_PATH}settings.yaml", 'wb') as fp:  # Download
-                ftp.retrbinary('RETR settings.yaml', fp.write)
+        if "settings.yaml" in file_list:
+            fileserver.download_file("settings.yaml", FILE_PATH)
         else:
-            logging.info("No settings file on server. Creating new file with default settings.")
-            with open(f"{FILE_PATH}settings.yaml", 'rb') as fp:
-                ftp.storbinary('STOR settings.yaml', fp)
+            logging.warning("No settings file on server. Creating new file with default settings.")
+            fileserver.upload_file("settings.yaml", "", FILE_PATH)
 except Exception as e:
     logging.critical("Could not download settings file from FTP server: %s", str(e))
 
@@ -212,9 +179,7 @@ try:
 except Exception as e:
     logging.warning("Could not open serial connection with 4G module: %s", str(e))
 
-###########################
 # Enable GPS
-###########################
 try:
     # Enable GPS to later read out position
     if settings["enableGPS"]:
@@ -275,7 +240,7 @@ except Exception as e:
     logging.warning("Could not stop camera: %s", str(e))
 
 ###########################
-# Upload to ftp server and then delete last image
+# Upload to fileserver and then delete last image
 ###########################
 
 try:
@@ -283,14 +248,12 @@ try:
         # Upload all images
         for file in listdir(FILE_PATH):
             if file.endswith(".jpg"):
-                with open(FILE_PATH + file, 'rb') as imgFile:
-                    ftp.storbinary(f"STOR {file}", imgFile)
-                    logging.info("Successfully uploaded %s", file)
+                fileserver.upload_file(file, "", FILE_PATH)
 
-                    # Delete uploaded image from Raspberry Pi
-                    remove(FILE_PATH + file)
+                # Delete uploaded image from Raspberry Pi
+                remove(FILE_PATH + file)
 except Exception as e:
-    logging.critical("Could not upload image to FTP server: %s", str(e))
+    logging.critical("Could not upload image to fileserver: %s", str(e))
 
 ###########################
 # Uploading sensor data to CSV
@@ -360,7 +323,7 @@ try:
             csvData = csvBuffer.getvalue().encode('utf-8')
 
             # Upload CSV file to FTP server
-            ftp.storbinary("APPE diagnostics.csv", BytesIO(csvData))
+            fileserver.append_file_from_bytes("diagnostics.csv", BytesIO(csvData))
         else:
             writer.writerow(newRow)
             csvData = csvBuffer.getvalue().encode('utf-8')
@@ -372,19 +335,16 @@ except Exception as e:
     logging.warning("Could not append new measurements to log CSV: %s", str(e))
 
 try:
-    with open(f"{FILE_PATH}log.txt", 'rb') as file:
-        ftp.storbinary("APPE log.txt", file)
+    fileserver.append_file("diagnostics.csv", "", FILE_PATH)
 
     # Upload WittyPi diagnostics
     if settings["uploadWittyPiDiagnostics"] and CONNECTED_TO_FTP:
 
         # Witty Pi log
-        with open("/home/pi/wittypi/wittyPi.log", 'rb') as wittyPiDiagnostics:
-            ftp.storbinary("APPE wittyPiDiagnostics.txt", wittyPiDiagnostics)
+        fileserver.append_file("wittyPi.log", "", "/home/pi/wittypi/")
 
         # Witty Pi schedule
-        with open("/home/pi/wittypi/schedule.log", 'rb') as wittyPiDiagnostics:
-            ftp.storbinary("APPE wittyPiSchedule.txt", wittyPiDiagnostics)
+        fileserver.append_file("schedule.log", "", "/home/pi/wittypi/")
 
 except Exception as e:
     logging.warning("Could not upload diagnostics data: %s", str(e))
@@ -394,7 +354,7 @@ except Exception as e:
 ###########################
 try:
     if CONNECTED_TO_FTP:
-        ftp.quit()
+        fileserver.quit()
 except Exception as e:
     logging.warning("Could not quit FTP session: %s", str(e))
 

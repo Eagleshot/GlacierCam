@@ -10,7 +10,7 @@ class fileserver:
         '''Connect to the file server'''
 
         MAX_RETRIES = 5
-        self.CONNECTED_TO_FTP = False
+        self.CONNECTED_TO_FTP = False # TODO Use this for subsequent calls
 
         for i in range(MAX_RETRIES):
             try:
@@ -20,12 +20,15 @@ class fileserver:
                 break
             except Exception as e:
                 if i > 1:
-                    logging.warning("Could not connect to FTP server: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
+                    logging.warning("Could not connect to fileserver: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
                 else:
-                    logging.info("Could not connect to FTP server: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
+                    logging.info("Could not connect to fileserver: %s, attempt %s/%s failed - trying again in 5 seconds.", str(e), i+1, MAX_RETRIES)
 
                 sleep(5) # Wait 5 seconds and try again
 
+    def connected(self) -> bool:
+        '''Check if the file server is connected'''
+        return self.CONNECTED_TO_FTP
     # TODO Create flag
     def change_directory(self, directory: str, create: bool = False):
         '''Change the current directory on the file server'''
@@ -42,20 +45,44 @@ class fileserver:
 
 
     # @st.cache_data(show_spinner=False, ttl=1)
-    def download_file(self, filename: str) -> None:
+    def download_file(self, filename: str, local_file_path: str = "") -> None:
         '''Download a file from the file server and save it to the disk.'''
-        with open(filename, 'wb') as local_file:
+        with open(local_file_path + filename, 'wb') as local_file:
             self.ftp.retrbinary(f"RETR {filename}", local_file.write)
 
-    def upload_file(self, filename: str, directory: str = "") -> None:
+    def upload_file(self, filename: str, server_directory: str = "", local_directory: str = "") -> None:
         '''Upload a file to the file server.'''
-        if directory:
-            self.change_directory(directory)
+        if server_directory:
+            self.change_directory(server_directory)
 
-        with open(filename, 'rb') as local_file:
+        with open(local_directory + filename, 'rb') as local_file:
             self.ftp.storbinary(f"STOR {filename}", local_file)
+            logging.info("Successfully uploaded %s", local_file)
 
-        if directory:
+        if server_directory:
+            self.change_directory("..")
+        
+    def append_file(self, filename: str, server_directory: str = "", local_directory: str = "") -> None:
+        '''Append a file to the file server.'''
+        if server_directory:
+            self.change_directory(server_directory)
+
+        with open(local_directory + filename, 'rb') as local_file:
+            self.ftp.storbinary(f"APPE {filename}", local_file)
+            logging.info("Successfully appended %s", local_file)
+
+        if server_directory:
+            self.change_directory("..")
+        
+    def append_file_from_bytes(self, filename: str, file_data: BytesIO, server_directory: str = "") -> None:
+        '''Append a file to the file server.'''
+        if server_directory:
+            self.change_directory(server_directory)
+
+        self.ftp.storbinary(f"APPE {filename}", file_data)
+        logging.info("Successfully appended %s", filename)
+
+        if server_directory:
             self.change_directory("..")
 
     # @st.cache_data(show_spinner=False, ttl=3600)
@@ -85,6 +112,6 @@ class fileserver:
 
         return last_modified
 
-    def close(self) -> None:
-        '''Close the file server connection'''
+    def quit(self) -> None:
+        '''Quit the file server connection'''
         self.ftp.quit()

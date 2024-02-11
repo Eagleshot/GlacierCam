@@ -573,4 +573,4 @@ if True: # st.session_state.userIsLoggedIn:
         # else:
         #     st.write("Keine Fehlermeldungen vorhanden 🥳.")
 
-    fileserver.close()
+    fileserver.quit()
