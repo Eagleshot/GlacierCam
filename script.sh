@@ -64,11 +64,17 @@ echo '==========================================================================
 wget -O /home/pi/main.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/main.py
 sudo chmod 777 /home/pi/main.py # Execution permissions
 
-# Download sim7600x.py
+# Download modules
 wget -O /home/pi/sim7600x.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/sim7600x.py
 
 # Download witty_pi_4.py
 wget -O /home/pi/witty_pi_4.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/witty_pi_4.py
+
+# Download settings.py
+wget -O /home/pi/settings.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.py
+
+# Download fileserver.py
+wget -O /home/pi/fileserver.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/fileserver.py
 
 # Download config.yaml
 wget -O /home/pi/config.yaml https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/config.yaml
@@ -128,6 +134,8 @@ sudo ufw enable
 # cd /home/pi
 # wget https://www.uugear.com/repo/WittyPi4/install.sh
 # sudo sh install.sh
+
+# TODO: Add the updatescript to automatically update the software
 
 # Add main.py to automatically run before wittyPi script
 # echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh

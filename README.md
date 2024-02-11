@@ -42,11 +42,27 @@
 * https://www.distrelec.ch/de/kunststoffgehaeuse-82x80x55mm-dunkelgrau-abs-ip67-rnd-components-rnd-455-01032/p/30128636
 
 
-'''bash
-wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh 
-'''
+## Installation
+### Initial Setup
+```bash
+wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
+```
+### Update
+```bash
+wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScript.sh | sudo sh
+```
 
-# TODOs
+# Next TODOs
+- [ ] Modularization -> graphics
+- [ ] Advanced scheduling (start and end date)
+- [ ] Test raspberry pi hq camera
+- [ ] Improved settings validation
+- [ ] Improve setup script
+- [ ] Primitive software update possibility
+
+-> get sample images for image processing
+-> get solar panel
+
 ## Hardware
 - [X] Upgrade to Witty Pi 4 (non mini)
 - [X] Upgrade to Raspberry Pi Zero 2 W
@@ -107,7 +123,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 
 ## General
 - [ ] Extend documentation + improve installation script
-    * Add instruction: camera needs to be set to UTC time
+    * Add instruction: camera needs to be set to UTC time -> Should be done by installation script
     * Add instruction: default camera state needs to be set to "on"
     * Add instruction: Only works with raspberry pi os bullseye
 - [ ] Open source the project
