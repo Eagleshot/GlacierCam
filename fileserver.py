@@ -4,9 +4,8 @@ from io import BytesIO
 from datetime import datetime
 from time import sleep
 import logging
-from pytz import timezone
 
-class fileServer:
+class fileserver:
     def __init__(self, host: str, username: str, password: str) -> None:
         '''Connect to the file server'''
 
@@ -79,11 +78,10 @@ class fileServer:
 
         return self.ftp.nlst()
 
-    def get_file_last_modified_date(self, filename: str, timezone: timezone) -> datetime:
+    def get_file_last_modified_date(self, filename: str) -> datetime:
         '''Get the last modification date of a file on the file server.'''
         last_modified = self.ftp.sendcmd(f"MDTM {filename}")
         last_modified = datetime.strptime(last_modified[4:], '%Y%m%d%H%M%S') # Convert to datetime
-        last_modified = timezone.localize(last_modified) # Convert date to local timezone
 
         return last_modified
 

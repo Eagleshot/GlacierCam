@@ -26,14 +26,8 @@ sudo apt-get upgrade -y
 sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
 
-# Install pyserial with pip
-sudo pip3 install pyserial
-
-# Install pyyaml with pip
-sudo pip3 install pyyaml
-
-# Install suntime
-sudo pip3 install suntime
+# Install required Python packages
+sudo pip3 install pyserial pyyaml suntime
 
 echo ''
 echo '================================================================================'
@@ -89,6 +83,9 @@ echo '|                     Step 3: Configure Raspberry Pi                      
 echo '|                                                                              |'
 echo '================================================================================'
 echo ''
+
+# Set the timezone to UTC
+sudo timedatectl set-timezone UTC
 
 # See: https://www.raspberrypi.com/documentation/computers/configuration.html
 # Enable camera and other hardware interfaces

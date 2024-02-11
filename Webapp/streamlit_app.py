@@ -1,6 +1,8 @@
 """Webserver for the Eagleshot GlacierCam - https://github.com/Eagleshot/GlacierCam"""
+import sys
 from io import BytesIO
 from datetime import datetime
+from pathlib import Path
 from PIL import Image
 import streamlit as st
 import pandas as pd
@@ -8,8 +10,11 @@ import altair as alt
 import pytz
 from suntime import Sun, SunTimeException
 import requests
-import fileserver as fs
+
+sys.path.append(str(Path(__file__).resolve().parent.parent)) # Add the parent directory to sys.path
+
 from settings import Settings
+import fileserver as fs
 
 # Login status
 if "userIsLoggedIn" not in st.session_state:
@@ -50,7 +55,7 @@ FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
 
-fileserver = fs.fileServer(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
+fileserver = fs.fileserver(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
 fileserver.change_directory(FTP_FOLDER) # Change the directory on the file server
 
 # Get the list of files from the FTP server
@@ -523,7 +528,9 @@ if True: # st.session_state.userIsLoggedIn:
             fileserver.download_file("wittyPiDiagnostics.txt")
 
             # Get last modification date
-            lastModified = fileserver.get_file_last_modified_date("wittyPiDiagnostics.txt", timezone)
+            last_modified = fileserver.get_file_last_modified_date("wittyPiDiagnostics.txt")
+            last_modified = timezone.localize(last_modified) # Convert date to local timezone
+
 
             with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
                 # Download wittyPiDiagnostics.txt
@@ -533,7 +540,7 @@ if True: # st.session_state.userIsLoggedIn:
                     file_name="wittyPiDiagnostics.txt",
                     mime="text/plain",
                     use_container_width=True,
-                    help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
+                    help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
                 )
 
         # Check if wittyPiSchedule.txt exists
@@ -543,7 +550,8 @@ if True: # st.session_state.userIsLoggedIn:
             fileserver.download_file("wittyPiSchedule.txt")
 
             # Get last modification date
-            lastModified = fileserver.get_file_last_modified_date("wittyPiSchedule.txt", timezone)
+            last_modified = fileserver.get_file_last_modified_date("wittyPiSchedule.txt")
+            last_modified = timezone.localize(last_modified) # Convert date to local timezone
 
             with open('wittyPiSchedule.txt', encoding='utf-8') as file:
                 # Download wittyPiSchedule.txt
@@ -553,7 +561,7 @@ if True: # st.session_state.userIsLoggedIn:
                     file_name="wittyPiSchedule.txt",
                     mime="text/plain",
                     use_container_width=True,
-                    help=f"Letzte Änderung: {lastModified.strftime('%d.%m.%Y %H:%M Uhr')}"
+                    help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
                 )
 
     # Display the errors

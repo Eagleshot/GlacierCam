@@ -39,11 +39,13 @@ def get_cpu_serial():
 FILE_PATH = "/home/pi/"  # Path where files are saved
 
 # Error logging
+LOG_LEVEL = logging.WARNING
+
 file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-logging.basicConfig(level=logging.INFO, handlers=[file_handler, stream_handler])
+logging.basicConfig(level=LOG_LEVEL, handlers=[file_handler, stream_handler])
 
 # Read config.yaml file from SD card
 try:
