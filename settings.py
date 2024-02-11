@@ -16,11 +16,13 @@ class Settings:
     def __init__(self, settings_filename: str = "settings.yaml", save: bool = True):
 
         valid_settings = True
-        
+
         with open(settings_filename, encoding='utf-8') as file:
             self.settings = safe_load(file)
 
         settings_to_check = {
+            # TODO
+            'battery_voltage_half' : {'type': float, 'min': 0, 'max': 30, 'default': 12.0},
             'cameraName': {'type': str, 'default': 'GlacierCam'},
             'resolution': {'type': list}, # , 'min': 0, 'max': 0},
             'startTimeHour': {'type': int, 'min': 0, 'max': 23, 'default': 8},
