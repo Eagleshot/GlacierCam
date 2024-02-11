@@ -425,7 +425,7 @@ if not dfMap.empty:
         f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['Heigth'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
 
     # Print timestamp
-    if settings["location_overwrite"]:
+    if settings.get("location_overwrite"):
         st.markdown(f"Letztes Standortupdate: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
 
 # Add a linebreak
@@ -444,7 +444,7 @@ if True: # st.session_state.userIsLoggedIn:
         st.write("Kamera")
 
         autofocus_ON = False
-        # if settings["lensPosition"] == -1:
+        # if settings.get("lensPosition") == -1:
         #     autofocus_ON = True
 
         col1, col2 = st.columns([3,1])
@@ -468,28 +468,28 @@ if True: # st.session_state.userIsLoggedIn:
         col1, col2 = st.columns(2)
 
         # Start time
-        startTime = col1.time_input('Startzeit', datetime.strptime(f"{settings['startTimeHour']}:{settings['startTimeMinute']}", "%H:%M").time(), help="Startzeit der Aufnahme.")
+        startTime = col1.time_input('Startzeit', datetime.strptime(f"{settings.get('startTimeHour')}:{settings.get('startTimeMinute')}", "%H:%M").time(), help="Startzeit der Aufnahme.")
 
         # Interval
-        intervalTime = col2.number_input("Aufnahmeintervall", min_value=5, max_value=720, value=settings['intervalMinutes'], step=5, help="Aufnahmeintervall in Minuten.")
+        intervalTime = col2.number_input("Aufnahmeintervall", min_value=5, max_value=720, value=settings.get('intervalMinutes'), step=5, help="Aufnahmeintervall in Minuten.")
 
         # Repetitions per day
-        repetitionsPerday = col1.number_input("Aufnahmen pro Tag", min_value=1, max_value=100, value=settings['repetitionsPerday'], step=1, help="Anzahl Aufnahmen pro Tag.")
+        repetitionsPerday = col1.number_input("Aufnahmen pro Tag", min_value=1, max_value=100, value=settings.get('repetitionsPerday'), step=1, help="Anzahl Aufnahmen pro Tag.")
         # Duration
-        # durationTime = col2.number_input("Max. Aufnahmedauer", min_value=1, max_value=10, value=settings['maxDurationMinute'], step=1, help="Maximale Aufnahmedauer in Minuten. Das Kamerasystem wird spätestens nach dieser Zeitdauer ausgeschaltet.")
+        # durationTime = col2.number_input("Max. Aufnahmedauer", min_value=1, max_value=10, value=settings.get('maxDurationMinute'), step=1, help="Maximale Aufnahmedauer in Minuten. Das Kamerasystem wird spätestens nach dieser Zeitdauer ausgeschaltet.")
         timeSync = st.toggle(
-            "Zeitsynchronisation", value=settings["timeSync"], help="Aktiviert die automatische Zeitsynchronisation der Kamera mit dem Internet.")
+            "Zeitsynchronisation", value=settings.get("timeSync"), help="Aktiviert die automatische Zeitsynchronisation der Kamera mit dem Internet.")
 
         st.divider()
         st.write("Weitere Einstellungen")
-        enableGPS = st.toggle("GPS aktivieren", value = settings["enableGPS"],
+        enableGPS = st.toggle("GPS aktivieren", value = settings.get("enableGPS"),
              help="Aktiviert die GPS-Funktion der Kamera. Die GPS-Antenne muss dafür angeschlossen sein!")
         extendedDiagnostics = st.toggle(
-            "Erweiterte Diagnosedaten", value=settings["uploadWittyPiDiagnostics"], help="Hochladen von erweiterten Diagnosedaten. Kann bei schwerwiegenderen Problemen helfen.")
+            "Erweiterte Diagnosedaten", value=settings.get("uploadWittyPiDiagnostics"), help="Hochladen von erweiterten Diagnosedaten. Kann bei schwerwiegenderen Problemen helfen.")
 
         st.divider()
         st.write(":red[Danger Zone]")
-        shutdown = st.toggle("Shutdown", value=settings["shutdown"], help="Kamera nach Bildaufnahme ausschalten. Wird diese Option deaktiviert, schaltet sich die Kamera erst verspätet aus und der Stromverbrauch ist erhöht.")
+        shutdown = st.toggle("Shutdown", value=settings.get("shutdown"), help="Kamera nach Bildaufnahme ausschalten. Wird diese Option deaktiviert, schaltet sich die Kamera erst verspätet aus und der Stromverbrauch ist erhöht.")
 
         # Save the settings
         col1, col2 = st.columns([5,1])
@@ -506,7 +506,7 @@ if True: # st.session_state.userIsLoggedIn:
 
         # Title
         st.write("Titel")
-        # title = st.text_input("Titel", value=settings["title"], help="Titel der Webseite.")
+        # title = st.text_input("Titel", value=settings.get("title"), help="Titel der Webseite.")
         title = st.text_input("Titel", max_chars=50, help="Titel der Webseite.")
         description = st.text_area("Beschreibung", max_chars=1500, help="Beschreibung der Webseite.")
 
