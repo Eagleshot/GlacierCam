@@ -57,8 +57,8 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 - [ ] Advanced scheduling (start and end date)
 - [ ] Test raspberry pi hq camera
 - [ ] Improved settings validation
-- [ ] Improve setup script
-- [ ] Primitive software update possibility
+- [ ] Improve setup script -> witty pi power on settings
+- [x] Primitive software update possibility
 
 -> get sample images for image processing
 -> get solar panel

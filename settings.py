@@ -59,6 +59,10 @@ class Settings:
             with open('settings.yaml', 'w', encoding='utf-8') as file:
                 file.write(safe_dump(self.settings))
 
+    def get_settings(self):
+        '''Return the settings'''
+        return self.settings
+    
     def get(self, key: str):
         '''Return the settings'''
         if key in self.settings:

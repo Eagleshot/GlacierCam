@@ -13,6 +13,7 @@ import suntime
 from sim7600x import SIM7600X
 from witty_pi_4 import WittyPi4
 import fileserver as fs
+from settings import Settings
 
 ###########################
 # Configuration and filenames
@@ -97,8 +98,9 @@ except Exception as e:
 
 # Read settings file
 try:
-    with open(f"{FILE_PATH}settings.yaml", 'r', encoding='utf-8') as file:
-        settings = safe_load(file)
+    settings1 = Settings()
+    settings = settings1.get_settings()
+
 except Exception as e:
     logging.critical("Could not open settings.yaml: %s", str(e))
 
