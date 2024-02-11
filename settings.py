@@ -15,6 +15,8 @@ class Settings:
     """Class to safely load and validate the settings from a YAML file. If the settings are not valid, the default values are used and the file is saved."""
     def __init__(self, settings_filename: str = "settings.yaml", save: bool = True):
 
+        valid_settings = True
+        
         with open(settings_filename, encoding='utf-8') as file:
             self.settings = safe_load(file)
 
