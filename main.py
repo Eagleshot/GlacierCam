@@ -342,7 +342,7 @@ except Exception as e:
     logging.warning("Could not append new measurements to log CSV: %s", str(e))
 
 try:
-    fileserver.append_file("diagnostics.csv", "", FILE_PATH)
+    # fileserver.append_file("diagnostics.csv", "", FILE_PATH)
 
     # Upload WittyPi diagnostics
     if settings["uploadWittyPiDiagnostics"] and CONNECTED_TO_FTP:
