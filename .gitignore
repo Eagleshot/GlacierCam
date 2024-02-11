@@ -3,4 +3,5 @@
 *.yml
 *.csv
 *.txt
+!requirements.txt
 *.pyc

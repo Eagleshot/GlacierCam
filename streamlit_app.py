@@ -1,6 +1,4 @@
 """Webserver for the Eagleshot GlacierCam - https://github.com/Eagleshot/GlacierCam"""
-
-import sys
 from io import BytesIO
 from datetime import datetime
 from pathlib import Path
@@ -13,9 +11,6 @@ from suntime import Sun, SunTimeException
 import requests
 from settings import Settings
 import fileserver as fs
-
-# Add parent directory to system path to import the modules
-sys.path.append(str(Path(__file__).resolve().parent.parent)) 
 
 # Login status
 if "userIsLoggedIn" not in st.session_state:
