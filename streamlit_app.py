@@ -11,8 +11,8 @@ import altair as alt
 import pytz
 from suntime import Sun, SunTimeException
 import requests
-from Modules.settings import Settings
-import Modules.fileserver as fs
+from settings import Settings
+import fileserver as fs
 
 # Add parent directory to system path to import the modules
 sys.path.append(str(Path(__file__).resolve().parent.parent)) 
