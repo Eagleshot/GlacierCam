@@ -3,6 +3,9 @@ from subprocess import check_output, STDOUT
 from os import path
 import logging
 
+WITTYPI_DIRECTORY = "/home/pi/wittypi"
+SCHEDULE_FILE_PATH = f"{WITTYPI_DIRECTORY}/schedule.wpi"
+
 class WittyPi4:
     '''A class for interacting with the Witty Pi 4 board'''
     def __init__(self):
@@ -13,15 +16,15 @@ class WittyPi4:
     def run_command(self, command: str) -> str:
         '''Run a Witty Pi 4 command'''
         try:
-            command = f"cd /home/pi/wittypi && . ./utilities.sh && {command}"
+            command = f"cd {WITTYPI_DIRECTORY} && . ./utilities.sh && {command}"
             output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=3)
             return output.strip()
         except Exception as e:
             logging.error("Could not run Witty Pi 4 command: %s", str(e))
             return "ERROR"
 
-    def sync_time_with_network(self):
-        '''Sync WittyPi clock with network time'''
+    def sync_time_with_network(self) -> None:
+        '''Sync Witty Pi 4 clock with network time'''
 
         # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
         try:
@@ -120,7 +123,7 @@ class WittyPi4:
 
             logging.info("Low voltage threshold already set to: %s V", voltage)
             return voltage
-        
+
         except Exception as e:
             logging.error("Could not set low voltage threshold: %s", str(e))
             return 0.0
@@ -142,7 +145,7 @@ class WittyPi4:
             return 0.0
 
     @staticmethod
-    def generate_schedule(start_hour: int, start_minute: int, interval_length_minutes: int, num_repetitions_per_day: int):
+    def generate_schedule(start_hour: int, start_minute: int, interval_length_minutes: int, num_repetitions_per_day: int) -> None:
         '''Generate a startup schedule file for Witty Pi 4'''
 
         max_duration_minutes = 4
@@ -184,8 +187,6 @@ class WittyPi4:
         if remaining_minutes > 0:
             schedule += f" M{remaining_minutes}"
 
-        SCHEDULE_FILE_PATH = "/home/pi/wittypi/schedule.wpi"
-
         if path.exists(SCHEDULE_FILE_PATH):
             with open(SCHEDULE_FILE_PATH, "r", encoding='utf-8') as f:
                 old_schedule = f.read()
@@ -204,25 +205,25 @@ class WittyPi4:
 
     def apply_schedule(self, max_retries: int = 5) -> str:
         '''Apply schedule to Witty Pi 4'''
-        try:
-            for i in range(max_retries):
+        for _ in range(max_retries):
+            try:
                 # Apply new schedule
-                command = "cd /home/pi/wittypi && sudo ./runScript.sh"
+                command = f"cd {WITTYPI_DIRECTORY} && sudo ./runScript.sh"
                 output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=10)
                 output = output.split("\n")[1:3]
 
-                if not "Schedule next startup at:" in output[1]:
-                    logging.warning("Failed to apply schedule: %s", output[0])
-                    self.sync_time_with_network()
-                else:
+                if "Schedule next startup at:" in output[1]:
                     logging.info("%s", output[0])
                     logging.info("%s", output[1])
                     next_startup_time = output[1][-19:]
                     return next_startup_time
 
-        except Exception as e:
-            logging.error("Failed to apply schedule: %s", str(e))
-            return "-"
+                logging.warning("Failed to apply schedule: %s", output[0])
+                self.sync_time_with_network()
+ 
+            except Exception as e:
+                logging.error("Failed to apply schedule: %s", str(e))
+                return "-"
 
 if __name__ == "__main__":
 
