@@ -51,7 +51,7 @@ FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
 
-fileserver = fs.fileserver(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
+fileserver = fs.FileServer(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
 fileserver.change_directory(FTP_FOLDER) # Change the directory on the file server
 
 # Get the list of files from the FTP server
@@ -79,6 +79,8 @@ df = pd.read_csv('diagnostics.csv', encoding='utf-8')
 # TODO Also read first line
 # TODO: Maybe do column naming in the main.py script
 column_names = ['Timestamp', 'Next Startup', 'Battery Voltage (V)', 'Internal Voltage (V)', 'Internal Current (A)', 'Temperature (°C)', 'Signal Quality', 'Latitude', 'Longitude', 'Heigth']
+
+# TODO Remove once camera V1 is no longer in use
 if len(df.columns) > 10:
     column_names.append('Error')
 df.columns = column_names
@@ -101,26 +103,26 @@ with st.sidebar:
     with st.expander("Zeitraum auswählen"):
 
         # Get the start and end date
-        startDate = st.date_input("Startdatum", df['Timestamp'].iloc[0])
-        endDate = st.date_input("Enddatum", df['Timestamp'].iloc[-1])
+        start_date = st.date_input("Startdatum", df['Timestamp'].iloc[0])
+        end_date = st.date_input("Enddatum", df['Timestamp'].iloc[-1])
 
         # Get the start and end time
-        startTime = st.time_input(
+        start_time = st.time_input(
             "Startzeit", datetime.strptime("00:00", "%H:%M").time())
-        endTime = st.time_input(
+        end_time = st.time_input(
             "Endzeit", datetime.strptime("23:59", "%H:%M").time())
 
         # Combine the start and end date and time
-        startDateTime = datetime.combine(startDate, startTime)
-        endDateTime = datetime.combine(endDate, endTime)
+        start_dateTime = datetime.combine(start_date, start_time)
+        end_dateTime = datetime.combine(end_date, end_time)
 
         # Check if the start date is before the end date
-        if startDateTime >= endDateTime:
+        if start_dateTime >= end_dateTime:
             st.error("Das Enddatum muss nach dem Startdatum liegen.")
         else:
             # Filter the dataframe
-            df = df[(df['Timestamp'] >= startDateTime)
-                    & (df['Timestamp'] <= endDateTime)]
+            df = df[(df['Timestamp'] >= start_dateTime)
+                    & (df['Timestamp'] <= end_dateTime)]
 
     # Zeitzone auswählen
     # TODO: Automatic timezone detection
@@ -164,7 +166,7 @@ else:
 
 # Get the image file from the FTP server
 if len(files) > 0:
-    image_data = fileserver.get_image(selected_file)
+    image_data = fileserver.get_file_as_bytes(selected_file, "save")
 
     # Display the image with the corresponding timestamp
     imagePlaceholder.image(Image.open(image_data), use_column_width=True)
@@ -464,7 +466,7 @@ if True: # st.session_state.userIsLoggedIn:
         col1, col2 = st.columns(2)
 
         # Start time
-        startTime = col1.time_input('Startzeit', datetime.strptime(f"{settings.get('startTimeHour')}:{settings.get('startTimeMinute')}", "%H:%M").time(), help="Startzeit der Aufnahme.")
+        start_time = col1.time_input('Startzeit', datetime.strptime(f"{settings.get('start_timeHour')}:{settings.get('start_timeMinute')}", "%H:%M").time(), help="Startzeit der Aufnahme.")
 
         # Interval
         intervalTime = col2.number_input("Aufnahmeintervall", min_value=5, max_value=720, value=settings.get('intervalMinutes'), step=5, help="Aufnahmeintervall in Minuten.")
