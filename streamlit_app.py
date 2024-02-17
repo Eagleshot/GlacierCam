@@ -466,7 +466,7 @@ if True: # st.session_state.userIsLoggedIn:
         col1, col2 = st.columns(2)
 
         # Start time
-        start_time = col1.time_input('Startzeit', datetime.strptime(f"{settings.get('start_timeHour')}:{settings.get('start_timeMinute')}", "%H:%M").time(), help="Startzeit der Aufnahme.")
+        start_time = col1.time_input('Startzeit', datetime.strptime(f"{settings.get('startTimeHour')}:{settings.get('startTimeMinute')}", "%H:%M").time(), help="Startzeit der Aufnahme.")
 
         # Interval
         intervalTime = col2.number_input("Aufnahmeintervall", min_value=5, max_value=720, value=settings.get('intervalMinutes'), step=5, help="Aufnahmeintervall in Minuten.")
