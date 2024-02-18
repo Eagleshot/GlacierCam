@@ -12,7 +12,7 @@ from yaml import safe_load
 import suntime
 from sim7600x import SIM7600X
 from witty_pi_4 import WittyPi4
-import fileserver as fs
+from fileserver import FileServer
 from settings import Settings
 
 ###########################
@@ -62,7 +62,7 @@ TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
 # Connect to fileserver
 ###########################
 
-fileserver = fs.fileserver(config["ftpServerAddress"], config["username"], config["password"])
+fileserver = FileServer(config["ftpServerAddress"], config["username"], config["password"])
 CONNECTED_TO_FTP = fileserver.connected()
 
 # Go to custom directory on fileserver if specified
@@ -92,7 +92,7 @@ try:
             fileserver.download_file("settings.yaml", FILE_PATH)
         else:
             logging.warning("No settings file on server. Creating new file with default settings.")
-            fileserver.upload_file("settings.yaml", "", FILE_PATH)
+            fileserver.upload_file("settings.yaml", FILE_PATH)
 except Exception as e:
     logging.critical("Could not download settings file from FTP server: %s", str(e))
 
@@ -250,7 +250,7 @@ try:
         # Upload all images
         for file in listdir(FILE_PATH):
             if file.endswith(".jpg"):
-                fileserver.upload_file(file, "", FILE_PATH)
+                fileserver.upload_file(file, FILE_PATH)
 
                 # Delete uploaded image from Raspberry Pi
                 remove(FILE_PATH + file)

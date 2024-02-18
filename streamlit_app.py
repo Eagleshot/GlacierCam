@@ -10,7 +10,7 @@ import pytz
 from suntime import Sun, SunTimeException
 import requests
 from settings import Settings
-import fileserver as fs
+from fileserver import FileServer
 
 # Login status
 if "userIsLoggedIn" not in st.session_state:
@@ -51,11 +51,13 @@ FTP_HOST = st.secrets["FTP_HOST"]
 FTP_USERNAME = st.secrets["FTP_USERNAME"]
 FTP_PASSWORD = st.secrets["FTP_PASSWORD"]
 
-fileserver = fs.FileServer(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
-fileserver.change_directory(FTP_FOLDER) # Change the directory on the file server
+fileserver = FileServer(FTP_HOST, FTP_USERNAME, FTP_PASSWORD)
+fileserver.change_directory(FTP_FOLDER)
 
 # Get the list of files from the FTP server
-files = fileserver.list_files("save")
+fileserver.change_directory("save") # TODO
+files = fileserver.list_files()
+fileserver.change_directory("..") # TODO
 
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
@@ -166,7 +168,9 @@ else:
 
 # Get the image file from the FTP server
 if len(files) > 0:
-    image_data = fileserver.get_file_as_bytes(selected_file, "save")
+    fileserver.change_directory("save") # TODO
+    image_data = fileserver.get_file_as_bytes(selected_file)
+    fileserver.change_directory("..") # TODO
 
     # Display the image with the corresponding timestamp
     imagePlaceholder.image(Image.open(image_data), use_column_width=True)
