@@ -238,6 +238,7 @@ else:
 # Print next startup relative to now
 nextStartup = df['Next Startup'].iloc[-1]
 try:
+    # TODO: Remove - old format for first camera version
     nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%S')
 except:
     nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%SZ')
@@ -396,9 +397,9 @@ except SunTimeException as e:
 # Charts
 ##############################################
 
-def plot_chart(title: str, df: pd.DataFrame, x: str, y: str, unit: str = ""):
+def plot_chart(chart_title: str, df: pd.DataFrame, x: str, y: str, unit: str = ""):
     '''Create an Altair chart.'''
-    st.header(title, anchor=False)
+    st.header(chart_title, anchor=False)
     st.write(f"Letzte Messung: {str(df[y].iloc[-1])} {unit}")
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X(f'{x}:T', axis=alt.Axis(

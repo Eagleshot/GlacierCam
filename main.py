@@ -1,14 +1,13 @@
 '''GlacierCam firmware - see https://github.com/Eagleshot/GlacierCam for more information'''
 
-from io import BytesIO, StringIO
+from io import BytesIO
 from os import system, remove, listdir, path
-from csv import writer, reader
 from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 from picamera2 import Picamera2
 from libcamera import controls
-from yaml import safe_load
+from yaml import safe_load, safe_dump
 import suntime
 from sim7600x import SIM7600X
 from witty_pi_4 import WittyPi4
@@ -63,16 +62,16 @@ TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
 ###########################
 
 fileserver = FileServer(config["ftpServerAddress"], config["username"], config["password"])
-CONNECTED_TO_FTP = fileserver.connected()
+CONNECTED_TO_SERVER = fileserver.connected()
 
 # Go to custom directory on fileserver if specified
 try:
     # Custom directory
-    if config["ftpDirectory"] != "" and CONNECTED_TO_FTP:
+    if config["ftpDirectory"] != "" and CONNECTED_TO_SERVER:
         fileserver.change_directory(config["ftpDirectory"], True)
 
     # Custom camera directory
-    if config["multipleCamerasOnServer"] and CONNECTED_TO_FTP:
+    if config["multipleCamerasOnServer"] and CONNECTED_TO_SERVER:
         fileserver.change_directory(CAMERA_NAME, True)
 except Exception as e:
     logging.warning("Could not change directory on fileserver: %s", str(e))
@@ -83,7 +82,7 @@ except Exception as e:
 
 # Try to download settings from server
 try:
-    if CONNECTED_TO_FTP:
+    if CONNECTED_TO_SERVER:
 
         file_list = fileserver.list_files()
 
@@ -111,7 +110,7 @@ except Exception as e:
 try:
     wittyPi = WittyPi4()
 
-    if settings["timeSync"] and CONNECTED_TO_FTP:
+    if settings["timeSync"] and CONNECTED_TO_SERVER:
         wittyPi.sync_time_with_network()
 except Exception as e:
     logging.warning("Could not synchronize time with network: %s", str(e))
@@ -246,7 +245,7 @@ except Exception as e:
 ###########################
 
 try:
-    if CONNECTED_TO_FTP:
+    if CONNECTED_TO_SERVER:
         # Upload all images
         for file in listdir(FILE_PATH):
             if file.endswith(".jpg"):
@@ -258,7 +257,7 @@ except Exception as e:
     logging.critical("Could not upload image to fileserver: %s", str(e))
 
 ###########################
-# Uploading sensor data to CSV
+# Set voltage thresholds
 ###########################
 
 try:
@@ -289,14 +288,15 @@ try:
     signal_quality = sim7600.get_signal_quality()
 except Exception as e:
     logging.warning("Could not get readings: %s", str(e))
+
 ###########################
 # Get GPS position
 ###########################
-try:
-    latitude = "-"
-    longitude = "-"
-    height = "-"
+latitude = "-"
+longitude = "-"
+height = "-"
 
+try:
     if settings["enableGPS"]:
         latitude, longitude, height = sim7600.get_gps_position()
         sim7600.stop_gps_session()
@@ -305,67 +305,81 @@ except Exception as e:
     logging.warning("Could not get GPS coordinates: %s", str(e))
 
 ###########################
-# Log readings to CSV
+# Uploading sensor data to server
 ###########################
-# Append new measurements to log CSV or create new CSV file if none exists
+
+# Append new measurements to log or create new log file if none exists
 try:
-    with StringIO() as csvBuffer:
-        writer = writer(csvBuffer)
-        newRow = [TIMESTAMP_CSV, next_startup_time, battery_voltage, internal_voltage, internal_current, temperature, signal_quality, latitude, longitude, height]
+    DIAGNOSTICS_FILENAME = "diagnostics.yaml"
+    diagnostics_filepath = f"{FILE_PATH}{DIAGNOSTICS_FILENAME}"
 
-        # Check if is connected to FTP server
-        if CONNECTED_TO_FTP:
-            # Check if local CSV file exists
-            try:
-                if path.exists(f"{FILE_PATH}diagnostics.csv"):
-                    with open(f"{FILE_PATH}diagnostics.csv", 'r', encoding='utf-8') as file:
-                        csvData = file.read()
-                        # Write all lies to writer
-                        for line in reader(StringIO(csvData)):
-                            writer.writerow(line)
-                    remove(FILE_PATH + "diagnostics.csv")
-            except Exception as e:
-                logging.warning("Could not open diagnostics.csv: %s", str(e))
+    # TODO Make this dynamic when measurements are read out
+    data = {
+        'timestamp': TIMESTAMP_CSV,
+        'next_startup_time': next_startup_time,
+        'battery_voltage': battery_voltage,
+        'internal_voltage': internal_voltage,
+        'internal_current': internal_current,
+        'temperature': temperature,
+        'signal_quality': signal_quality,
+        'latitude': latitude,
+        'longitude': longitude,
+        'height': height
+    }
 
-            # Append new row to CSV file
-            writer.writerow(newRow)
-            csvData = csvBuffer.getvalue().encode('utf-8')
+    # Check if is connected to file server
+    if CONNECTED_TO_SERVER:
+        try:
+            # Check if local diagnostics file exists
+            if path.exists(diagnostics_filepath):
+                with open(diagnostics_filepath, 'r', encoding='utf-8') as yaml_file:
+                    read_data = safe_load(yaml_file)
 
-            # Upload CSV file to FTP server
-            fileserver.append_file_from_bytes("diagnostics.csv", BytesIO(csvData))
-        else:
-            writer.writerow(newRow)
-            csvData = csvBuffer.getvalue().encode('utf-8')
+                data = read_data + [data]
 
-            # Append new row to local CSV file
-            with open(f"{FILE_PATH}diagnostics.csv", 'a', newline='', encoding='utf-8') as file:
-                file.write(csvData.decode('utf-8'))
+                remove(diagnostics_filepath)
+        except Exception as e:
+            logging.warning("Could not open diagnostics file: %s", str(e))
+
+
+        # Upload diagnostics to server
+        byte_stream = BytesIO()
+        safe_dump(data, stream=byte_stream, default_flow_style=False, encoding='utf-8')
+        byte_stream.seek(0)  # Set the position to the beginning of the BytesIO object
+        fileserver.append_file_from_bytes(DIAGNOSTICS_FILENAME, byte_stream)
+    else:
+        # Append new measurement to local YAML file
+        with open(diagnostics_filepath, 'a', encoding='utf-8') as yaml_file:
+            safe_dump([data], yaml_file, default_flow_style=False)
 except Exception as e:
-    logging.warning("Could not append new measurements to log CSV: %s", str(e))
+    logging.warning("Could not append new measurements to log: %s", str(e))
 
+###########################
+# Upload diagnostics data
+###########################
 try:
     # fileserver.append_file("diagnostics.csv", "", FILE_PATH)
 
     # Upload WittyPi diagnostics
-    if settings["uploadWittyPiDiagnostics"] and CONNECTED_TO_FTP:
+    if settings["uploadWittyPiDiagnostics"] and CONNECTED_TO_SERVER:
 
         # Witty Pi log
-        fileserver.append_file("wittyPi.log", "", "/home/pi/wittypi/")
+        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/")
 
         # Witty Pi schedule
-        fileserver.append_file("schedule.log", "", "/home/pi/wittypi/")
+        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/")
 
 except Exception as e:
     logging.warning("Could not upload diagnostics data: %s", str(e))
 
 ###########################
-# Quit FTP session
+# Quit file server session
 ###########################
 try:
-    if CONNECTED_TO_FTP:
+    if CONNECTED_TO_SERVER:
         fileserver.quit()
 except Exception as e:
-    logging.warning("Could not quit FTP session: %s", str(e))
+    logging.warning("Could not close file server session: %s", str(e))
 
 ###########################
 # Shutdown Raspberry Pi if enabled
