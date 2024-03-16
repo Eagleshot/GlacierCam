@@ -21,9 +21,8 @@ class Settings:
             self.settings = safe_load(file)
 
         settings_to_check = {
-            # TODO
-            'battery_voltage_half' : {'type': float, 'min': 0, 'max': 30, 'default': 12.0},
             'cameraName': {'type': str, 'default': 'GlacierCam'},
+            'lensPosition': {'type': float, 'min': -1.0, 'max': 10.0, 'default': -1.0},
             'resolution': {'type': list}, # , 'min': 0, 'max': 0},
             'startTimeHour': {'type': int, 'min': 0, 'max': 23, 'default': 8},
             'startTimeMinute': {'type': int, 'min': 0, 'max': 59, 'default': 0},
@@ -34,10 +33,11 @@ class Settings:
             'location_override': {'type': bool, 'default': False},
             'latitude': {'type': float, 'min': -90, 'max': 90, 'default': 0},
             'longitude': {'type': float, 'min': -180, 'max': 180, 'default': 0},
-            'height': {'type': int, 'min': -1000, 'max': 10000, 'default': 0},
+            'enableSunriseSunset': {'type': bool, 'default': False},
             'uploadWittyPiDiagnostics': {'type': bool, 'default': False},
             'low_voltage_threshold': {'type': float, 'min': 0, 'max': 30, 'default': 0.0},
             'recovery_voltage_threshold': {'type': float, 'min': 0, 'max': 30, 'default': 0},
+            'battery_voltage_half' : {'type': float, 'min': 0, 'max': 30, 'default': 12.0},
             'shutdown': {'type': bool, 'default': True},
         }
 
@@ -63,16 +63,16 @@ class Settings:
             with open('settings.yaml', 'w', encoding='utf-8') as file:
                 file.write(safe_dump(self.settings))
 
-    def get_settings(self):
-        '''Return the settings'''
-        return self.settings
-    
     def get(self, key: str):
         '''Return the settings'''
         if key in self.settings:
             return self.settings[key]
 
-        return False
+        return None
+
+    def set(self, key: str, value):
+        '''Set the settings'''
+        self.settings[key] = value
 
 if __name__ == '__main__':
     print('Validating settings.yaml')

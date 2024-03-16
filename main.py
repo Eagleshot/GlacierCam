@@ -57,6 +57,8 @@ CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
 TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
 TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
 
+data = {'timestamp': TIMESTAMP_CSV}
+
 ###########################
 # Connect to fileserver
 ###########################
@@ -97,8 +99,7 @@ except Exception as e:
 
 # Read settings file
 try:
-    settings1 = Settings()
-    settings = settings1.get_settings()
+    settings = Settings()
 
 except Exception as e:
     logging.critical("Could not open settings.yaml: %s", str(e))
@@ -110,7 +111,7 @@ except Exception as e:
 try:
     wittyPi = WittyPi4()
 
-    if settings["timeSync"] and CONNECTED_TO_SERVER:
+    if settings.get("timeSync") and CONNECTED_TO_SERVER:
         wittyPi.sync_time_with_network()
 except Exception as e:
     logging.warning("Could not synchronize time with network: %s", str(e))
@@ -121,7 +122,7 @@ except Exception as e:
 
 # Get sunrise and sunset times
 try:
-    if settings["enableSunriseSunset"] and settings["latitude"] != 0 and settings["longitude"] != 0:
+    if settings.get("enableSunriseSunset") and settings.get("latitude") != 0 and settings.get("longitude") != 0:
         sun = suntime.Sun(settings["latitude"], settings["longitude"])
 
         # Sunrise
@@ -129,8 +130,8 @@ try:
         logging.info("Next sunrise: %s:%s", sunrise.hour, sunrise.minute)
         # TODO: Rund to nearest interval
         sunrise = sunrise.replace(minute=15 * round(sunrise.minute / 15)) # Round to nearest 15 minutes
-        settings["startTimeHour"] = sunrise.hour
-        settings["startTimeMinute"] = sunrise.minute
+        settings.set("startTimeHour", sunrise.hour)
+        settings.set("startTimeMinute", sunrise.minute)
 
         # Sunset
         sunset = sun.get_sunset_time()
@@ -144,16 +145,17 @@ except Exception as e:
 
 try:
     battery_voltage = wittyPi.get_battery_voltage()
+    data["battery_voltage"] = battery_voltage
 
-    battery_voltage_half = settings["battery_voltage_half"]
-    battery_voltage_quarter = settings["battery_voltage_half"]-(settings["battery_voltage_half"]-settings["low_voltage_threshold"])/2
+    battery_voltage_half = settings.get("battery_voltage_half")
+    battery_voltage_quarter = battery_voltage_half-(battery_voltage_half-settings.get("low_voltage_threshold"))/2
 
-    if battery_voltage_quarter < battery_voltage < battery_voltage_half:
+    if battery_voltage_quarter < battery_voltage < battery_voltage_half: # Battery voltage between 50% and 25%
         settings["intervalMinutes"] = int(settings["intervalMinutes"]*2)
         settings["repetitionsPerday"] = int(settings["repetitionsPerday"]/2)
         logging.warning("Battery voltage <50%.")
-    elif battery_voltage < battery_voltage_quarter:
-        settings["repetitionsPerday"] = 1
+    elif battery_voltage < battery_voltage_quarter: # Battery voltage <25%
+        settings.set("repetitionsPerday", 1)
         logging.warning("Battery voltage <25%.")
 
 except Exception as e:
@@ -167,8 +169,11 @@ except Exception as e:
     logging.warning("Failed to generate schedule: %s", str(e))
 
 # Apply schedule
-next_startup_time = wittyPi.apply_schedule()
-next_startup_time = f"{next_startup_time}Z"
+try:
+    next_startup_time = wittyPi.apply_schedule()
+    data['next_startup_time'] = f"{next_startup_time}Z"
+except Exception as e:
+    logging.critical("Could not apply schedule: %s", str(e))
 
 ##########################
 # SIM7600G-H 4G module
@@ -220,8 +225,8 @@ except Exception as e:
 ###########################
 # Capture image
 ###########################
-image_filename = f'{TIMESTAMP_FILENAME}.jpg'
 try:
+    image_filename = f'{TIMESTAMP_FILENAME}.jpg'
     if settings["cameraName"] != "":
         image_filename = f'{TIMESTAMP_FILENAME}_{settings["cameraName"]}.jpg'
 except Exception as e:
@@ -286,20 +291,24 @@ try:
     internal_voltage = wittyPi.get_internal_voltage()
     internal_current = "-" # wittyPi.get_internal_current()
     signal_quality = sim7600.get_signal_quality()
+    data["temperature"] = temperature
+    data["internal_voltage"] = internal_voltage
+    data["internal_current"] = internal_current
+    data["signal_quality"] = signal_quality
 except Exception as e:
     logging.warning("Could not get readings: %s", str(e))
 
 ###########################
 # Get GPS position
 ###########################
-latitude = "-"
-longitude = "-"
-height = "-"
-
 try:
-    if settings["enableGPS"]:
+    if settings.get("enableGPS"):
         latitude, longitude, height = sim7600.get_gps_position()
         sim7600.stop_gps_session()
+
+        data["latitude"] = latitude
+        data["longitude"] = longitude
+        data["height"] = height
 
 except Exception as e:
     logging.warning("Could not get GPS coordinates: %s", str(e))
@@ -312,20 +321,6 @@ except Exception as e:
 try:
     DIAGNOSTICS_FILENAME = "diagnostics.yaml"
     diagnostics_filepath = f"{FILE_PATH}{DIAGNOSTICS_FILENAME}"
-
-    # TODO Make this dynamic when measurements are read out
-    data = {
-        'timestamp': TIMESTAMP_CSV,
-        'next_startup_time': next_startup_time,
-        'battery_voltage': battery_voltage,
-        'internal_voltage': internal_voltage,
-        'internal_current': internal_current,
-        'temperature': temperature,
-        'signal_quality': signal_quality,
-        'latitude': latitude,
-        'longitude': longitude,
-        'height': height
-    }
 
     # Check if is connected to file server
     if CONNECTED_TO_SERVER:
@@ -361,13 +356,10 @@ try:
     # fileserver.append_file("diagnostics.csv", "", FILE_PATH)
 
     # Upload WittyPi diagnostics
-    if settings["uploadWittyPiDiagnostics"] and CONNECTED_TO_SERVER:
+    if settings.get("uploadWittyPiDiagnostics") and CONNECTED_TO_SERVER:
 
-        # Witty Pi log
-        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/")
-
-        # Witty Pi schedule
-        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/")
+        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/") # Witty Pi log
+        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/") # Witty Pi schedule
 
 except Exception as e:
     logging.warning("Could not upload diagnostics data: %s", str(e))
@@ -385,9 +377,8 @@ except Exception as e:
 # Shutdown Raspberry Pi if enabled
 ###########################
 try:
-    if settings["shutdown"]:
+    if settings.get("shutdown") or settings.get("shutdown") is None:
         logging.info("Shutting down now.")
         system("sudo shutdown -h now")
 except Exception as e:
-    # Setting not found
     system("sudo shutdown -h now")

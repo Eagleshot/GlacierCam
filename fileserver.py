@@ -13,7 +13,7 @@ class FileServer:
     def __init__(self, host: str, username: str, password: str) -> None:
         """Initialize and connect to the file server."""
         self.ftp = None
-        self.CONNECTED_TO_FTP = self.connect_to_server(host, username, password)
+        self.connected_to_server = self.connect_to_server(host, username, password)
 
     def connect_to_server(self, host: str, username: str, password: str) -> bool:
         """Connect to the file server with retries."""
@@ -21,6 +21,7 @@ class FileServer:
         for attempt in range(self.MAX_RETRIES):
             try:
                 self.ftp = FTP(host, username, password, timeout=5)
+                logging.info("Connected to file server.")
                 return True
             except Exception as e:
                 if attempt > 1:
@@ -34,7 +35,7 @@ class FileServer:
 
     def connected(self) -> bool:
         """Check if the file server is connected"""
-        return self.CONNECTED_TO_FTP
+        return self.connected_to_server
 
     def change_directory(self, directory: str, create: bool = False) -> None:
         """Change the current directory on the file server"""
@@ -93,7 +94,7 @@ class FileServer:
             self.ftp.retrbinary(f"RETR {filename}", file_data.write)
             return file_data
         except Exception as e:
-            logging.error(f"Failed to retrieve file: {e}")
+            logging.error("Failed to retrieve file: %s", str(e))
             return BytesIO()
 
     def list_files(self) -> list:
@@ -114,7 +115,7 @@ class FileServer:
             return datetime.now()
 
     def quit(self) -> None:
-        """Close the FTP connection."""
+        """Close the file server connection."""
         try:
             self.ftp.quit()
             logging.info("File server connection closed.")
