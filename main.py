@@ -100,7 +100,6 @@ except Exception as e:
 # Read settings file
 try:
     settings = Settings()
-
 except Exception as e:
     logging.critical("Could not open settings.yaml: %s", str(e))
 
@@ -123,7 +122,7 @@ except Exception as e:
 # Get sunrise and sunset times
 try:
     if settings.get("enableSunriseSunset") and settings.get("latitude") != 0 and settings.get("longitude") != 0:
-        sun = suntime.Sun(settings["latitude"], settings["longitude"])
+        sun = suntime.Sun(settings.get("latitude"), settings.get("longitude"))
 
         # Sunrise
         sunrise = sun.get_sunrise_time()
@@ -137,8 +136,8 @@ try:
         sunset = sun.get_sunset_time()
         logging.info("Next sunset: %s:%s", sunset.hour, sunset.minute)
         time_until_sunset = sunset - sunrise
-        time_until_sunset = time_until_sunset.total_seconds() / 60 # Convert to minutes
-        settings["repetitionsPerday"] = int(time_until_sunset / settings["intervalMinutes"])
+        minutes_until_sunset = time_until_sunset.total_seconds() / 60
+        settings.set("repetitionsPerday", int(minutes_until_sunset / settings.get("intervalMinutes")))
 
 except Exception as e:
     logging.warning("Could not get sunrise and sunset times: %s", str(e))
@@ -151,8 +150,8 @@ try:
     battery_voltage_quarter = battery_voltage_half-(battery_voltage_half-settings.get("low_voltage_threshold"))/2
 
     if battery_voltage_quarter < battery_voltage < battery_voltage_half: # Battery voltage between 50% and 25%
-        settings["intervalMinutes"] = int(settings["intervalMinutes"]*2)
-        settings["repetitionsPerday"] = int(settings["repetitionsPerday"]/2)
+        settings.set("intervalMinutes", int(settings.get("intervalMinutes")*2))
+        settings.set("repetitionsPerday", int(settings.get("repetitionsPerday")/2))
         logging.warning("Battery voltage <50%.")
     elif battery_voltage < battery_voltage_quarter: # Battery voltage <25%
         settings.set("repetitionsPerday", 1)
@@ -163,7 +162,11 @@ except Exception as e:
 
 try:
     # Generate schedule
-    wittyPi.generate_schedule(settings["startTimeHour"], settings["startTimeMinute"], settings["intervalMinutes"], settings["repetitionsPerday"])
+    start_time_hour = settings.get("startTimeHour")
+    start_time_minute = settings.get("startTimeMinute")
+    interval_minutes = settings.get("intervalMinutes")
+    repetitions_per_day = settings.get("repetitionsPerday")
+    wittyPi.generate_schedule(start_time_hour, start_time_minute, interval_minutes, repetitions_per_day)
 except Exception as e:
     wittyPi.generate_schedule(8, 0, 30, 8)
     logging.warning("Failed to generate schedule: %s", str(e))
@@ -188,7 +191,7 @@ except Exception as e:
 # Enable GPS
 try:
     # Enable GPS to later read out position
-    if settings["enableGPS"]:
+    if settings.get("enableGPS"):
         sim7600.start_gps_session()
 except Exception as e:
     logging.warning("Could not start GPS: %s", str(e))
@@ -204,7 +207,7 @@ try:
     # Table 6. Stream- specific configuration parameters
     MIN_RESOLUTION = 64
     MAX_RESOLUTION = (4608, 2592)
-    resolution = settings["resolution"]
+    resolution = settings.get("resolution")
 
     if MIN_RESOLUTION < resolution[0] < MAX_RESOLUTION[0] and MIN_RESOLUTION < resolution[1] < MAX_RESOLUTION[1]:
         size = (resolution[0], resolution[1])
@@ -215,8 +218,8 @@ except Exception as e:
 
 # Focus settings
 try:
-    if settings["lensPosition"] > -1:
-        camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings["lensPosition"]})
+    if settings.get("lensPosition") > -1:
+        camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings.get("lensPosition")})
     else:
         camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
 except Exception as e:
@@ -227,8 +230,8 @@ except Exception as e:
 ###########################
 try:
     image_filename = f'{TIMESTAMP_FILENAME}.jpg'
-    if settings["cameraName"] != "":
-        image_filename = f'{TIMESTAMP_FILENAME}_{settings["cameraName"]}.jpg'
+    if settings.get("cameraName") != "":
+        image_filename = f'{TIMESTAMP_FILENAME}_{settings.get("cameraName")}.jpg'
 except Exception as e:
     logging.warning("Could not set custom camera name: %s", str(e))
 
@@ -246,7 +249,7 @@ except Exception as e:
     logging.warning("Could not stop camera: %s", str(e))
 
 ###########################
-# Upload to fileserver and then delete last image
+# Upload image(s) to file server
 ###########################
 
 try:
@@ -267,13 +270,16 @@ except Exception as e:
 
 try:
     # If settings low voltage threshold exists
-    if 2.0 <= settings["low_voltage_threshold"] <= 25.0 or settings["low_voltage_threshold"] == 0:
-        wittyPi.set_low_voltage_threshold(settings["low_voltage_threshold"])
+    if 2.0 <= settings.get("low_voltage_threshold") <= 25.0 or settings.get("low_voltage_threshold") == 0:
+        wittyPi.set_low_voltage_threshold(settings.get("low_voltage_threshold"))
 
     # If settings recovery voltage threshold exists
-    if 2.0 <= settings["recovery_voltage_threshold"] <= 25.0 or settings["recovery_voltage_threshold"] == 0:
-        # TODO: Needs to be bigger than low_voltage_threshold
-        wittyPi.set_recovery_voltage_threshold(settings["recovery_voltage_threshold"])
+    if 2.0 <= settings.get("recovery_voltage_threshold") <= 25.0 or settings.get("recovery_voltage_threshold") == 0:
+        # Recovery voltage threshold must be equal or greater than low voltage threshold
+        if settings.get("recovery_voltage_threshold") < settings.get("low_voltage_threshold"):
+            settings.set("recovery_voltage_threshold", settings.get("low_voltage_threshold"))
+
+        wittyPi.set_recovery_voltage_threshold(settings.get("recovery_voltage_threshold"))
 
 except Exception as e:
     logging.warning("Could not set voltage thresholds: %s", str(e))
@@ -281,20 +287,11 @@ except Exception as e:
 ###########################
 # Get readings
 ###########################
-temperature = "-"
-internal_voltage = "-"
-internal_current = "-"
-signal_quality = "-"
-
 try:
-    temperature = wittyPi.get_temperature()
-    internal_voltage = wittyPi.get_internal_voltage()
-    internal_current = "-" # wittyPi.get_internal_current()
-    signal_quality = sim7600.get_signal_quality()
-    data["temperature"] = temperature
-    data["internal_voltage"] = internal_voltage
-    data["internal_current"] = internal_current
-    data["signal_quality"] = signal_quality
+    data["temperature"] = wittyPi.get_temperature()
+    data["internal_voltage"] = wittyPi.get_internal_voltage()
+    # data["internal_current"] = wittyPi.get_internal_current()
+    data["signal_quality"] = sim7600.get_signal_quality()
 except Exception as e:
     logging.warning("Could not get readings: %s", str(e))
 
@@ -303,12 +300,8 @@ except Exception as e:
 ###########################
 try:
     if settings.get("enableGPS"):
-        latitude, longitude, height = sim7600.get_gps_position()
+        data["latitude"], data["longitude"], data["height"] = sim7600.get_gps_position()
         sim7600.stop_gps_session()
-
-        data["latitude"] = latitude
-        data["longitude"] = longitude
-        data["height"] = height
 
 except Exception as e:
     logging.warning("Could not get GPS coordinates: %s", str(e))
