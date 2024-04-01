@@ -73,10 +73,8 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 # Next TODOs
 - [ ] Modularization -> graphics
 - [ ] Advanced scheduling (start and end date)
-- [ ] Test raspberry pi hq camera
-- [x] Improved settings validation
-- [x] Improve setup script -> witty pi power on settings
-- [x] Primitive software update possibility
+- [ ] Finish 3D-printed case
+- [ ] Publish Witty Pi software
 
 -> get sample images for image processing
 

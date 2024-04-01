@@ -22,12 +22,13 @@ enableSunriseSunset: false
 
 # Location settings
 enableGPS: false # Enable or disable GPS module
-location_override: false # Manually override location (set location below)
+location_overwrite: false # Manually override location (set location below)
 latitude: 0.0
 longitude: 0.0
 height: 0
 
-# Extended diagnostics data
+# Diagnostics data
+logLevel: "INFO"
 uploadWittyPiDiagnostics: false
 
 # Voltage thresholds
