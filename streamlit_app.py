@@ -1,7 +1,6 @@
 """Webserver for the Eagleshot GlacierCam - https://github.com/Eagleshot/GlacierCam"""
 from io import BytesIO
 from datetime import datetime
-from pathlib import Path
 from PIL import Image
 import streamlit as st
 import pandas as pd
@@ -11,6 +10,7 @@ from suntime import Sun, SunTimeException
 import requests
 from settings import Settings
 from fileserver import FileServer
+import logging
 
 # Login status
 if "userIsLoggedIn" not in st.session_state:
@@ -79,7 +79,6 @@ df = pd.read_csv('diagnostics.csv', encoding='utf-8')
 
 # Rename the columns
 # TODO Also read first line
-# TODO: Maybe do column naming in the main.py script
 column_names = ['Timestamp', 'Next Startup', 'Battery Voltage (V)', 'Internal Voltage (V)', 'Internal Current (A)', 'Temperature (°C)', 'Signal Quality', 'Latitude', 'Longitude', 'Heigth']
 
 # TODO Remove once camera V1 is no longer in use
@@ -499,6 +498,16 @@ if True: # st.session_state.userIsLoggedIn:
         if col2.button("Speichern", key="saveCameraSettings"):
             # TODO: Save settings
             st.write("Diese Funktion ist noch nicht verfügbar.")
+
+        # Validate the settings
+        valid_settings = settings.is_valid()
+
+        if valid_settings:
+            st.success("Die Einstellungen sind gültig.")
+        else:
+            st.error("Die Einstellungen sind ungültig. Bitte überprüfen Sie die Einstellungen.")
+            st.toast("Die Einstellungen sind ungültig. Bitte überprüfen Sie die Einstellungen.")
+            settings.save_to_file("improved_settings.yaml")
 
     with st.expander("Webeinstellungen"):
         st.write("Diese Funktion ist noch nicht verfügbar.")

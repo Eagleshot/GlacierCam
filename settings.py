@@ -1,16 +1,7 @@
-# Read and validate the settings from a YAML file
+"""Read and validate the GlacierCam settings from a YAML file"""
 from dataclasses import dataclass
 import logging
 from yaml import safe_load, dump
-
-# TODO
-# - [x] Check max. / min. values according to the documentation
-# - [x] Add default values for settings.yaml
-# - [ ] Also check settings with set
-# - [ ] Add unittests
-# - [ ] Add to webserver
-# - [X] Add to main.py
-# - [ ] Add to development readme instructions
 
 @dataclass
 class Settings:
@@ -49,8 +40,8 @@ class Settings:
             logging.error('Error loading settings: %s', e)
             self.settings = {}
             self.valid_settings = False
-        
-        self.valid_settings = self.validate()
+
+        self.validate()
 
     def validate(self) -> bool:
         '''Load the settings and validate them'''
@@ -79,11 +70,10 @@ class Settings:
                 logging.warning('Setting %s is greater than %s. Using default value: %s', setting, validation['max'], self.settings[setting])
                 self.valid_settings = False
 
-            # if 'valid_values' in validation and self.settings[setting] not in validation['valid_values']:
-            #     print(validation['valid_values'])
-            #     self.settings[setting] = validation['default']
-            #     logging.warning('Setting %s is not a valid value. Using default value: %s', setting, self.settings[setting])
-            #     self.valid_settings = False
+            if 'valid_values' in validation and self.settings[setting] not in validation['valid_values']:
+                self.settings[setting] = validation['default']
+                logging.warning('Setting %s is not a valid value. Using default value: %s', setting, self.settings[setting])
+                self.valid_settings = False
 
         return self.valid_settings
 
@@ -101,7 +91,6 @@ class Settings:
             self.valid_settings = self.validate()
 
         return self.valid_settings
-
 
     def is_valid(self) -> bool:
         '''Return if the settings are valid'''

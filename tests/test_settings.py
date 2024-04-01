@@ -1,6 +1,8 @@
 import os
+from sys import path
 import tempfile
 from yaml import safe_load, dump
+path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import Settings
 
 def test_load_and_validate_valid_file():
@@ -74,6 +76,14 @@ def test_setting_outside_range():
 
     assert not settings.set('startTimeHour', 25)
     assert settings.get('startTimeHour') == 8
+
+def test_setting_valid_values_list():
+    """Test setting a value that must be in a list of valid values and assert that it is reset to the default value"""
+    settings = Settings()
+    assert settings.set('logLevel', 'DEBUG')
+    assert settings.get('logLevel') == 'DEBUG'
+    assert not settings.set('logLevel', 'INVALID')
+    assert settings.get('logLevel') == 'INFO'
 
 def test_save_to_file():
     """Test saving the settings to a file and assert that the file is created and contains the correct settings"""
