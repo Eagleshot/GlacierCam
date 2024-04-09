@@ -5,8 +5,8 @@ from yaml import safe_load, dump
 
 @dataclass
 class Settings:
-    """Class to safely load and validate the settings from a YAML file. If the settings are not valid, the default values are used."""
-    
+    """Class to safely load and validate the settings from a YAML file. If the settings are not valid, default values are used."""
+
     settings_to_check = {
         'cameraName': {'type': str, 'default': 'GlacierCam'},
         'lensPosition': {'type': float, 'min': -1.0, 'max': 10.0, 'default': -1.0},
