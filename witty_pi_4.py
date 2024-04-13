@@ -1,13 +1,16 @@
 '''A python module for interacting with the Witty Pi 4 board'''
 from subprocess import check_output, STDOUT
+from datetime import datetime
 from os import path
 import logging
 
-WITTYPI_DIRECTORY = "/home/pi/wittypi"
-SCHEDULE_FILE_PATH = f"{WITTYPI_DIRECTORY}/schedule.wpi"
-
 class WittyPi4:
     '''A class for interacting with the Witty Pi 4 board'''
+
+    WITTYPI_DIRECTORY = "/home/pi/wittypi"
+    SCHEDULE_FILE_PATH = f"{WITTYPI_DIRECTORY}/schedule.wpi"
+    MAX_DURATION_MINUTES = 4 # Maximum time Raspberry Pi is allowed to run
+
     def __init__(self):
         logging.info("Initializing Witty Pi 4 interface")
 
@@ -16,7 +19,7 @@ class WittyPi4:
     def run_command(self, command: str) -> str:
         '''Run a Witty Pi 4 command'''
         try:
-            command = f"cd {WITTYPI_DIRECTORY} && . ./utilities.sh && {command}"
+            command = f"cd {self.WITTYPI_DIRECTORY} && . ./utilities.sh && {command}"
             output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=3)
             return output.strip()
         except Exception as e:
@@ -25,7 +28,6 @@ class WittyPi4:
 
     def sync_time_with_network(self) -> None:
         '''Sync Witty Pi 4 clock with network time'''
-
         # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
         try:
             output = self.run_command("net_to_system && system_to_rtc")
@@ -145,10 +147,22 @@ class WittyPi4:
             return 0.0
 
     @staticmethod
-    def generate_schedule(start_hour: int, start_minute: int, interval_length_minutes: int, num_repetitions_per_day: int) -> None:
-        '''Generate a startup schedule file for Witty Pi 4'''
+    def round_time_to_nearest_interval(date: datetime, interval: int) -> datetime:
+        '''Round datetime down to the nearest interval (e.g. 15 minutes)'''
+        return date.replace(minute=(date.minute // interval) * interval)
 
-        max_duration_minutes = 4
+    @staticmethod
+    def calculate_num_repetitions_per_day(start_time: datetime, end_time: datetime, interval: int) -> int:
+        '''Calculate the number of repetitions between (and including) the start and end time'''
+
+        # TODO Ensure start time is before end time
+        # TODO Ensure interval is greater than 0
+        # TODO Ensure start and end time are on the same day
+        
+        return ((end_time - start_time).seconds // 60) // interval + 1
+
+    def generate_schedule(self, start_hour: int, start_minute: int, interval_length_minutes: int, num_repetitions_per_day: int) -> None:
+        '''Generate a startup schedule file for Witty Pi 4'''
 
         # Basic validity check of parameters
         if not 0 < start_hour < 24:
@@ -171,15 +185,17 @@ class WittyPi4:
         schedule = f"BEGIN\t2020-01-01 {formatted_start_time}:00\nEND\t2037-12-31 23:59:59\n"
 
         for i in range(num_repetitions_per_day):
-            schedule += f"ON\tM{max_duration_minutes}\n"
+            schedule += f"ON\tM{self.MAX_DURATION_MINUTES}\n"
 
             # Last off is different
             if i < num_repetitions_per_day - 1:
                 # Your code here
-                schedule += f"OFF\tM{interval_length_minutes - max_duration_minutes}\n"
+                schedule += f"OFF\tM{interval_length_minutes - self.MAX_DURATION_MINUTES}\n"
 
         # Turn camera off for the rest of the day
-        remaining_minutes = 1440 - (num_repetitions_per_day * interval_length_minutes) + (interval_length_minutes - max_duration_minutes)
+        remaining_minutes = 1440 - (start_hour * 60) - start_minute # Start time to midnight
+        remaining_minutes = remaining_minutes - (num_repetitions_per_day * interval_length_minutes) # Remaining time after all intervals
+        remaining_minutes = remaining_minutes + interval_length_minutes - self.MAX_DURATION_MINUTES # Remaining time after last interval
         remaining_hours = remaining_minutes // 60
         remaining_minutes = remaining_minutes % 60
 
@@ -187,20 +203,20 @@ class WittyPi4:
         if remaining_minutes > 0:
             schedule += f" M{remaining_minutes}"
 
-        if path.exists(SCHEDULE_FILE_PATH):
-            with open(SCHEDULE_FILE_PATH, "r", encoding='utf-8') as f:
+        if path.exists(self.SCHEDULE_FILE_PATH):
+            with open(self.SCHEDULE_FILE_PATH, "r", encoding='utf-8') as f:
                 old_schedule = f.read()
 
                 # Write new schedule file if it changed
                 if old_schedule != schedule:
                     logging.info("Schedule changed - writing new schedule file.")
-                    with open(SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
+                    with open(self.SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
                         f.write(schedule)
                 else:
                     logging.info("Schedule did not change.")
         else:
             logging.warning("Schedule file not found. Writing new schedule file.")
-            with open(SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
+            with open(self.SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
                 f.write(schedule)
 
     def apply_schedule(self, max_retries: int = 5) -> str:
@@ -208,7 +224,7 @@ class WittyPi4:
         for retry in range(max_retries):
             try:
                 # Apply new schedule
-                command = f"cd {WITTYPI_DIRECTORY} && sudo ./runScript.sh"
+                command = f"cd {self.WITTYPI_DIRECTORY} && sudo ./runScript.sh"
                 output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=15)
                 output = output.split("\n")[1:3]
 
