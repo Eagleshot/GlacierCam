@@ -126,17 +126,15 @@ try:
         # Sunrise
         sunrise = sun.get_sunrise_time()
         logging.info("Next sunrise: %s:%s", sunrise.hour, sunrise.minute)
-        # TODO: Rund to nearest interval
-        sunrise = sunrise.replace(minute=15 * round(sunrise.minute / 15)) # Round to nearest 15 minutes
+        sunrise = WittyPi4.round_time_to_nearest_interval(sunrise, settings.get("intervalMinutes"))
         settings.set("startTimeHour", sunrise.hour)
         settings.set("startTimeMinute", sunrise.minute)
 
         # Sunset
         sunset = sun.get_sunset_time()
         logging.info("Next sunset: %s:%s", sunset.hour, sunset.minute)
-        time_until_sunset = sunset - sunrise
-        minutes_until_sunset = time_until_sunset.total_seconds() / 60
-        settings.set("repetitionsPerday", int(minutes_until_sunset / settings.get("intervalMinutes")))
+        repetitions_per_day = WittyPi4.calculate_num_repetitions_per_day(sunrise, sunset, settings.get("intervalMinutes"))
+        settings.set("repetitionsPerday", repetitions_per_day)
 
 except Exception as e:
     logging.warning("Could not get sunrise and sunset times: %s", str(e))
