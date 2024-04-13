@@ -264,14 +264,13 @@ except Exception as e:
 ###########################
 # Set voltage thresholds
 ###########################
-
 try:
     # If settings low voltage threshold exists
-    if 2.0 <= settings.get("low_voltage_threshold") <= 25.0 or settings.get("low_voltage_threshold") == 0:
+    if settings.get("low_voltage_threshold"):
         wittyPi.set_low_voltage_threshold(settings.get("low_voltage_threshold"))
 
     # If settings recovery voltage threshold exists
-    if 2.0 <= settings.get("recovery_voltage_threshold") <= 25.0 or settings.get("recovery_voltage_threshold") == 0:
+    if settings.get("recovery_voltage_threshold"):
         # Recovery voltage threshold must be equal or greater than low voltage threshold
         if settings.get("recovery_voltage_threshold") < settings.get("low_voltage_threshold"):
             settings.set("recovery_voltage_threshold", settings.get("low_voltage_threshold"))
@@ -340,17 +339,13 @@ except Exception as e:
     logging.warning("Could not append new measurements to log: %s", str(e))
 
 ###########################
-# Upload diagnostics data
+# Upload extended diagnostics data
 ###########################
 try:
-    # fileserver.append_file("diagnostics.csv", "", FILE_PATH)
-
     # Upload WittyPi diagnostics
     if settings.get("uploadWittyPiDiagnostics") and CONNECTED_TO_SERVER:
-
-        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/") # Witty Pi log
-        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/") # Witty Pi schedule
-
+        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/")
+        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/")
 except Exception as e:
     logging.warning("Could not upload diagnostics data: %s", str(e))
 

@@ -88,7 +88,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 ## Software
 - [ ] Automatically set camera to reboot when power is on again
 - [ ] Add log level settings
-- [ ] Improved settings validation
+- [X] Improved settings validation
 - [x] Code review by Philip
 - [x] Improve the format of saved data -> e.g. use .yaml instead of a csv file so additional data can easily be added or different data versions can be used in future software
 - [ ] Enable watchdog

@@ -118,12 +118,17 @@ class WittyPi4:
     def set_low_voltage_threshold(self, voltage: float) -> float:
         '''Sets the low voltage threshold from the Witty Pi 4'''
         try:
-            if voltage != self.get_low_voltage_threshold():
-                low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
-                logging.info("Set low voltage threshold to: %s V", voltage)
-                return low_voltage_threshold
+            if 2.0 <= voltage <= 25.0 or voltage == 0:
+                if voltage != self.get_low_voltage_threshold():
+                    low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
+                    logging.info("Set low voltage threshold to: %s V", voltage)
+                    return low_voltage_threshold
+                
+                logging.info("Low voltage threshold already set to: %s V", voltage)
 
-            logging.info("Low voltage threshold already set to: %s V", voltage)
+            else:
+                logging.error("Voltage must be between 2.0 and 25.0 V (or 0 to disable).")
+
             return voltage
 
         except Exception as e:
@@ -134,12 +139,17 @@ class WittyPi4:
     def set_recovery_voltage_threshold(self, voltage: float) -> float:
         '''Sets the recovery voltage threshold from the Witty Pi 4'''
         try:
-            if voltage != self.get_recovery_voltage_threshold():
-                recovery_voltage_threshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
-                logging.info("Set recovery voltage threshold to: %s V", voltage)
-                return recovery_voltage_threshold
+            if 2.0 <= voltage <= 25.0 or voltage == 0:
+                if voltage != self.get_recovery_voltage_threshold():
+                    recovery_voltage_threshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
+                    logging.info("Set recovery voltage threshold to: %s V", voltage)
+                    return recovery_voltage_threshold
 
-            logging.info("Recovery voltage threshold already set to: %s V", voltage)
+                logging.info("Recovery voltage threshold already set to: %s V", voltage)
+
+            else:
+                logging.error("Voltage must be between 2.0 and 25.0 V (or 0 to disable).")
+                
             return voltage
 
         except Exception as e:
