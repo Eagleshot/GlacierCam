@@ -80,10 +80,9 @@ try:
     df = pd.read_csv('diagnostics.csv', encoding='utf-8')
 
     # Rename the columns
-    column_names = ['Timestamp', 'Next Startup', 'Battery Voltage (V)', 'Internal Voltage (V)', 'Internal Current (A)', 'Temperature (°C)', 'Signal Quality', 'Latitude', 'Longitude', 'Heigth']
+    column_names = ['timestamp', 'next_startup_time', 'battery_voltage', 'internal_voltage', 'internal_current', 'temperature', 'signal_quality', 'latitude', 'longitude', 'heigth']
     df.columns = column_names
 except Exception as e:
-
     fileserver.download_file("diagnostics.yaml")
 
     with open("diagnostics.yaml", 'r', encoding='utf-8') as file:
@@ -93,7 +92,7 @@ except Exception as e:
     df = pd.DataFrame(data)
 
 # Convert the timestamp to datetime
-df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
+df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%MZ')
 
 ##############################################
 # Sidebar
@@ -106,8 +105,8 @@ with st.sidebar:
     with st.expander("Zeitraum auswählen"):
 
         # Get the start and end date
-        start_date = st.date_input("Startdatum", df['Timestamp'].iloc[0])
-        end_date = st.date_input("Enddatum", df['Timestamp'].iloc[-1])
+        start_date = st.date_input("Startdatum", df['timestamp'].iloc[0])
+        end_date = st.date_input("Enddatum", df['timestamp'].iloc[-1])
 
         # Get the start and end time
         start_time = st.time_input(
@@ -124,8 +123,8 @@ with st.sidebar:
             st.error("Das Enddatum muss nach dem Startdatum liegen.")
         else:
             # Filter the dataframe
-            df = df[(df['Timestamp'] >= start_dateTime)
-                    & (df['Timestamp'] <= end_dateTime)]
+            df = df[(df['timestamp'] >= start_dateTime)
+                    & (df['timestamp'] <= end_dateTime)]
 
     # Zeitzone auswählen
     # TODO: Automatic timezone detection
@@ -194,17 +193,17 @@ st.text("")
 try:
     timestampSelectedImage = datetime.strptime(
         selected_file[0:13], '%d%m%Y_%H%M')
-    df['Timestamp'] = df['Timestamp'].dt.floor(
+    df['timestamp'] = df['timestamp'].dt.floor(
         'min')  # Remove seconds from timestamp
-    index = df[df['Timestamp'] == timestampSelectedImage].index[0]
+    index = df[df['timestamp'] == timestampSelectedImage].index[0]
 except:
     index = -1
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Batterie", f"{df['Battery Voltage (V)'].iloc[index]} V")
-col2.metric("Interne Spannung", f"{df['Internal Voltage (V)'].iloc[index]} V")
-col3.metric("Temperatur", f"{df['Temperature (°C)'].iloc[index]} °C")
-col4.metric("Signalqualität", df['Signal Quality'].iloc[index])
+col1.metric("Batterie", f"{df['battery_voltage'].iloc[index]} V")
+col2.metric("Interne Spannung", f"{df['internal_voltage'].iloc[index]} V")
+col3.metric("Temperatur", f"{df['temperature'].iloc[index]} °C")
+col4.metric("Signalqualität", df['signal_quality'].iloc[index])
 
 st.write("")
 
@@ -213,7 +212,7 @@ st.write("")
 ##############################################
 
 # Last startup relative to now
-lastStartup = df['Timestamp'].iloc[-1]
+lastStartup = df['timestamp'].iloc[-1]
 now = datetime.now(timezoneUTC).replace(tzinfo=None)
 timeDifference = now - lastStartup.replace(tzinfo=None)
 
@@ -237,20 +236,18 @@ else:
     next_last_startup_text += "weniger als eine Minute"
 
 # Print next startup relative to now
-nextStartup = df['Next Startup'].iloc[-1]
+next_startup_time = df['next_startup_time'].iloc[-1]
 try:
-    # TODO: Remove - old format for first camera version
-    nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%S')
+    next_startup_time = datetime.strptime(next_startup_time, '%Y-%m-%d %H:%M:%SZ')
 except:
-    nextStartup = datetime.strptime(nextStartup, '%Y-%m-%d %H:%M:%SZ')
-
-nextStartup = nextStartup + pd.Timedelta(minutes=1)
+    next_startup_time = datetime(1970, 1, 1, 0, 0)
+next_startup_time = next_startup_time + pd.Timedelta(minutes=1)
 
 # Check if next startup is in the future
-if nextStartup < now:
+if next_startup_time < now:
     next_last_startup_text += "."
 else:
-    timeDifference = nextStartup - now
+    timeDifference = next_startup_time - now
     next_last_startup_text += " - nächster Start in "
 
     if timeDifference.seconds//3600 > 0:
@@ -268,131 +265,131 @@ st.divider()
 # Weather widget
 ##############################################
 
-# Overwrite latitude and longitude if available
-if settings.get("location_overwrite"):
-    latitude = settings.get("latitude")
-    longitude = settings.get("longitude")
-    heigth = settings.get("heigth")
+# # Overwrite latitude and longitude if available
+# if settings.get("location_overwrite"):
+#     latitude = settings.get("latitude")
+#     longitude = settings.get("longitude")
+#     heigth = settings.get("heigth")
 
-dfMap = df[(df['Latitude'] != "-") & (df['Longitude'] != "-")]
+# dfMap = df[(df['latitude'] != "-") & (df['longitude'] != "-")]
 
-@st.cache_data(show_spinner=False, ttl=300)
-def get_weather_data(latitude: float, longitude: float) -> dict:
-    '''Get weather data from OpenWeatherMap.'''
-    # Get weather data from OpenWeatherMap
-    BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
-    complete_url = f"{BASE_URL}appid={st.secrets['OPENWEATHER_API_KEY']}&lat={latitude}&lon={longitude}&units=metric&lang=de"
-    response = requests.get(complete_url, timeout=5)
+# @st.cache_data(show_spinner=False, ttl=300)
+# def get_weather_data(latitude: float, longitude: float) -> dict:
+#     '''Get weather data from OpenWeatherMap.'''
+#     # Get weather data from OpenWeatherMap
+#     BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
+#     complete_url = f"{BASE_URL}appid={st.secrets['OPENWEATHER_API_KEY']}&lat={latitude}&lon={longitude}&units=metric&lang=de"
+#     response = requests.get(complete_url, timeout=5)
 
-    # Convert the response to json
-    weather_data = response.json()
+#     # Convert the response to json
+#     weather_data = response.json()
 
-    return weather_data
+#     return weather_data
 
-# Check if OpenWeather API key is set and location is available
-if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
+# # Check if OpenWeather API key is set and location is available
+# if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
 
-    latitude = float(dfMap['Latitude'].iloc[-1])
-    longitude = float(dfMap['Longitude'].iloc[-1])
+#     latitude = float(dfMap['latitude'].iloc[-1])
+#     longitude = float(dfMap['longitude'].iloc[-1])
 
-    # Get weather data from OpenWeatherMap
-    weather_data = get_weather_data(latitude, longitude)
+#     # Get weather data from OpenWeatherMap
+#     weather_data = get_weather_data(latitude, longitude)
 
-    if weather_data["cod"] == 200:
+#     if weather_data["cod"] == 200:
 
-        # Convert temperature to celsius
-        current_temperature = int(weather_data["main"]["temp"])
-        current_pressure = weather_data["main"]["pressure"]
-        current_humidity = weather_data["main"]["humidity"]
+#         # Convert temperature to celsius
+#         current_temperature = int(weather_data["main"]["temp"])
+#         current_pressure = weather_data["main"]["pressure"]
+#         current_humidity = weather_data["main"]["humidity"]
 
-        # Wind speed and direction
-        wind_speed = round(weather_data["wind"]["speed"], 1)
-        wind_direction = weather_data["wind"]["deg"]
+#         # Wind speed and direction
+#         wind_speed = round(weather_data["wind"]["speed"], 1)
+#         wind_direction = weather_data["wind"]["deg"]
 
-        # Convert wind direction to text
-        directions = ["N", "NW", "W", "SW", "S", "SE", "E", "NE", "N"]
-        WIND_DIRECTION_TEXT = directions[int((wind_direction + 22.5) % 360 // 45)]
+#         # Convert wind direction to text
+#         directions = ["N", "NW", "W", "SW", "S", "SE", "E", "NE", "N"]
+#         WIND_DIRECTION_TEXT = directions[int((wind_direction + 22.5) % 360 // 45)]
 
-        # Get the icon from OpenWeatherMap
-        icon = weather_data["weather"][0]["icon"]
-        icon_url = f"http://openweathermap.org/img/wn/{icon}@4x.png"
+#         # Get the icon from OpenWeatherMap
+#         icon = weather_data["weather"][0]["icon"]
+#         icon_url = f"http://openweathermap.org/img/wn/{icon}@4x.png"
 
-        # Download the icon
-        icon_data = BytesIO()
-        icon_response = requests.get(icon_url, timeout=5)
-        icon_data.write(icon_response.content)
-        icon_image = Image.open(icon_data)
+#         # Download the icon
+#         icon_data = BytesIO()
+#         icon_response = requests.get(icon_url, timeout=5)
+#         icon_data.write(icon_response.content)
+#         icon_image = Image.open(icon_data)
 
-        # Cut off all invisible pixels
-        icon_image = icon_image.crop(icon_image.getbbox())
+#         # Cut off all invisible pixels
+#         icon_image = icon_image.crop(icon_image.getbbox())
 
-        # Description
-        weather_description = weather_data["weather"][0]["description"]
+#         # Description
+#         weather_description = weather_data["weather"][0]["description"]
 
-        # Visibility
-        visibility = weather_data["visibility"]
+#         # Visibility
+#         visibility = weather_data["visibility"]
 
-        if visibility < 1000:
-            visibility = f"{visibility} m"
-        else:
-            visibility = f"{int(visibility/1000)} km"
+#         if visibility < 1000:
+#             visibility = f"{visibility} m"
+#         else:
+#             visibility = f"{int(visibility/1000)} km"
 
-        col1, col2 = st.columns([1.5, 1])
+#         col1, col2 = st.columns([1.5, 1])
 
-        with col1:
-            st.header("Wetter", anchor=False)
-            # st.caption(f"{name}, {country}")
-            st.text("")
-            st.markdown(f"### :grey[Temperatur: {current_temperature} °C]")
+#         with col1:
+#             st.header("Wetter", anchor=False)
+#             # st.caption(f"{name}, {country}")
+#             st.text("")
+#             st.markdown(f"### :grey[Temperatur: {current_temperature} °C]")
 
-        with col2:
-            st.text("")
-            st.text("")
-            st.text("")
-            st.text("")
-            st.image(icon_image, caption=weather_description)
-        st.text("")
+#         with col2:
+#             st.text("")
+#             st.text("")
+#             st.text("")
+#             st.text("")
+#             st.image(icon_image, caption=weather_description)
+#         st.text("")
 
-        col1, col2, col3, col4 = st.columns(4, gap="medium")
-        col1.metric("Wind", f"{wind_speed} m/s",
-                    delta=WIND_DIRECTION_TEXT, delta_color="off")
-        col2.metric("Luftdruck", f"{current_pressure} hPa")
-        col3.metric("Luftfeuchtigkeit", f"{current_humidity} %")
-        col4.metric("Sichtweite", f"{visibility}")
+#         col1, col2, col3, col4 = st.columns(4, gap="medium")
+#         col1.metric("Wind", f"{wind_speed} m/s",
+#                     delta=WIND_DIRECTION_TEXT, delta_color="off")
+#         col2.metric("Luftdruck", f"{current_pressure} hPa")
+#         col3.metric("Luftfeuchtigkeit", f"{current_humidity} %")
+#         col4.metric("Sichtweite", f"{visibility}")
 
-        st.text("")
-        st.markdown("Daten von [OpenWeatherMap](https://openweathermap.org).")
+#         st.text("")
+#         st.markdown("Daten von [OpenWeatherMap](https://openweathermap.org).")
 
-        st.divider()
+#         st.divider()
 
 ##############################################
 # Sunrise and sunset
 ##############################################
 
-try:
-    if not dfMap.empty:
-        sun = Sun(latitude, longitude)
-        sunrise = sun.get_sunrise_time()
-        sunrise = sunrise.astimezone(timezone)
-        sunrise = sunrise.strftime('%H:%M Uhr')
+# try:
+#     if not dfMap.empty:
+#         sun = Sun(latitude, longitude)
+#         sunrise = sun.get_sunrise_time()
+#         sunrise = sunrise.astimezone(timezone)
+#         sunrise = sunrise.strftime('%H:%M Uhr')
 
-        sunset = sun.get_sunset_time()
-        sunset = sunset.astimezone(timezone)
-        sunset = sunset.strftime('%H:%M Uhr')
+#         sunset = sun.get_sunset_time()
+#         sunset = sunset.astimezone(timezone)
+#         sunset = sunset.strftime('%H:%M Uhr')
 
-        st.header("Sonnenauf- und Untergang", anchor=False)
-        st.text("")
+#         st.header("Sonnenauf- und Untergang", anchor=False)
+#         st.text("")
 
-        col1, col2, col3 = st.columns([0.5, 1, 1])
-        col2.image("https://openweathermap.org/img/wn/01d@2x.png")
-        col2.metric("Sonnenaufgang", sunrise)
-        col3.image("https://openweathermap.org/img/wn/01n@2x.png")
-        col3.metric("Sonnenuntergang", sunset)
+#         col1, col2, col3 = st.columns([0.5, 1, 1])
+#         col2.image("https://openweathermap.org/img/wn/01d@2x.png")
+#         col2.metric("Sonnenaufgang", sunrise)
+#         col3.image("https://openweathermap.org/img/wn/01n@2x.png")
+#         col3.metric("Sonnenuntergang", sunset)
 
-        st.divider()
+#         st.divider()
 
-except SunTimeException as e:
-    print(f"Error with SunTime: {e}")
+# except SunTimeException as e:
+#     print(f"Error with SunTime: {e}")
 
 ##############################################
 # Charts
@@ -409,32 +406,32 @@ def plot_chart(chart_title: str, df: pd.DataFrame, x: str, y: str, unit: str = "
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
 
-plot_chart("Batterie", df, 'Timestamp', 'Battery Voltage (V)', "V") # Battery Voltage
-plot_chart("Interne Spannung", df, 'Timestamp', 'Internal Voltage (V)', "V") # Internal voltage
-plot_chart("Temperatur", df, 'Timestamp', 'Temperature (°C)', "°C") # Temperature
-plot_chart("Sigalqualität", df, 'Timestamp', 'Signal Quality') # Signal quality
+plot_chart("Batterie", df, 'timestamp', 'battery_voltage', "V") # Battery Voltage
+plot_chart("Interne Spannung", df, 'timestamp', 'internal_voltage', "V") # Internal voltage
+plot_chart("Temperatur", df, 'timestamp', 'temperature', "°C") # Temperature
+plot_chart("Sigalqualität", df, 'timestamp', 'signal_quality') # Signal quality
 # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
 
 ##############################################
 # Map
 ##############################################
 
-if not dfMap.empty:
+# if not dfMap.empty:
 
-    st.header("Standort", anchor=False)
-    st.map(pd.DataFrame({'lat': [latitude], 'lon': [longitude]}))
+#     st.header("Standort", anchor=False)
+#     st.map(pd.DataFrame({'lat': [latitude], 'lon': [longitude]}))
 
-    # Print coordinates
-    st.write(
-        f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['Heigth'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
+#     # Print coordinates
+#     st.write(
+#         f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['heigth'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
 
-    # Print timestamp
-    if settings.get("location_overwrite"):
-        st.markdown(f"Letztes Standortupdate: {df['Timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
+#     # Print timestamp
+#     if settings.get("location_overwrite"):
+#         st.markdown(f"Letztes Standortupdate: {df['timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
 
-# Add a linebreak
-st.write("")
-st.write("")
+# # Add a linebreak
+# st.write("")
+# st.write("")
 
 ##############################################
 # Settings and diagnostics
@@ -586,7 +583,7 @@ if True: # st.session_state.userIsLoggedIn:
         # if not dfError.empty:
         #     # Display error message and timestamp as text in reverse order
         #     for index, row in dfError[::-1].iterrows():
-        #         st.write(row['Timestamp'].strftime(
+        #         st.write(row['timestamp'].strftime(
         #             "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
         # else:
         #     st.write("Keine Fehlermeldungen vorhanden 🥳.")
