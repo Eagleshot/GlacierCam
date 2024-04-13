@@ -8,9 +8,10 @@ import altair as alt
 import pytz
 from suntime import Sun, SunTimeException
 import requests
+import yaml
 from settings import Settings
 from fileserver import FileServer
-import logging
+# import logging # TODO
 
 # Login status
 if "userIsLoggedIn" not in st.session_state:
@@ -74,24 +75,25 @@ st.title(cameraname, anchor=False)
 imagePlaceholder = st.empty()
 
 # Download diagnostics file
-fileserver.download_file("diagnostics.csv")
-df = pd.read_csv('diagnostics.csv', encoding='utf-8')
+try:
+    fileserver.download_file("diagnostics.csv")
+    df = pd.read_csv('diagnostics.csv', encoding='utf-8')
 
-# Rename the columns
-# TODO Also read first line
-column_names = ['Timestamp', 'Next Startup', 'Battery Voltage (V)', 'Internal Voltage (V)', 'Internal Current (A)', 'Temperature (°C)', 'Signal Quality', 'Latitude', 'Longitude', 'Heigth']
+    # Rename the columns
+    column_names = ['Timestamp', 'Next Startup', 'Battery Voltage (V)', 'Internal Voltage (V)', 'Internal Current (A)', 'Temperature (°C)', 'Signal Quality', 'Latitude', 'Longitude', 'Heigth']
+    df.columns = column_names
+except Exception as e:
 
-# TODO Remove once camera V1 is no longer in use
-if len(df.columns) > 10:
-    column_names.append('Error')
-df.columns = column_names
+    fileserver.download_file("diagnostics.yaml")
+
+    with open("diagnostics.yaml", 'r', encoding='utf-8') as file:
+        data = yaml.safe_load(file)
+
+    # Convert the data into a Pandas DataFrame
+    df = pd.DataFrame(data)
 
 # Convert the timestamp to datetime
-try:
-    df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
-except:
-    df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%MZ')
-
+df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%Y-%m-%d %H:%M:%SZ')
 
 ##############################################
 # Sidebar
@@ -506,8 +508,8 @@ if True: # st.session_state.userIsLoggedIn:
             st.success("Die Einstellungen sind gültig.")
         else:
             st.error("Die Einstellungen sind ungültig. Bitte überprüfen Sie die Einstellungen.")
-            st.toast("Die Einstellungen sind ungültig. Bitte überprüfen Sie die Einstellungen.")
-            settings.save_to_file("improved_settings.yaml")
+            # st.toast("Die Einstellungen sind ungültig. Bitte überprüfen Sie die Einstellungen.")
+            # settings.save_to_file("improved_settings.yaml")
 
     with st.expander("Webeinstellungen"):
         st.write("Diese Funktion ist noch nicht verfügbar.")

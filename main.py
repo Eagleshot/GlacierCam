@@ -331,7 +331,7 @@ try:
 
         # Upload diagnostics to server
         byte_stream = BytesIO()
-        safe_dump(data, stream=byte_stream, default_flow_style=False, encoding='utf-8')
+        safe_dump([data], stream=byte_stream, default_flow_style=False, encoding='utf-8')
         byte_stream.seek(0)  # Set the position to the beginning of the BytesIO object
         fileserver.append_file_from_bytes(DIAGNOSTICS_FILENAME, byte_stream)
     else:
