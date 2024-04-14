@@ -202,10 +202,8 @@ class WittyPi4:
                 # Your code here
                 schedule += f"OFF\tM{interval_length_minutes - self.MAX_DURATION_MINUTES}\n"
 
-        # Turn camera off for the rest of the day
-        remaining_minutes = 1440 - (start_hour * 60) - start_minute # Start time to midnight
-        remaining_minutes = remaining_minutes - (num_repetitions_per_day * interval_length_minutes) # Remaining time after all intervals
-        remaining_minutes = remaining_minutes + interval_length_minutes - self.MAX_DURATION_MINUTES # Remaining time after last interval
+        # Turn camera off for the rest of the day (schedule length is 24 hours)
+        remaining_minutes = 1440 - (num_repetitions_per_day * interval_length_minutes) + interval_length_minutes - self.MAX_DURATION_MINUTES
         remaining_hours = remaining_minutes // 60
         remaining_minutes = remaining_minutes % 60
 
