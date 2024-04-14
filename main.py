@@ -343,9 +343,11 @@ except Exception as e:
     logging.warning("Could not append new measurements to log: %s", str(e))
 
 ###########################
-# Upload extended diagnostics data
+# Upload diagnostics data
 ###########################
 try:
+    fileserver.append_file("log.txt", FILE_PATH)
+
     # Upload WittyPi diagnostics
     if settings.get("uploadWittyPiDiagnostics") and CONNECTED_TO_SERVER:
         fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/")
