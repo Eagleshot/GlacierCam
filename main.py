@@ -98,7 +98,7 @@ except Exception as e:
 
 # Read settings file
 try:
-    settings = Settings()
+    settings = Settings(f"{FILE_PATH}settings.yaml")
 except Exception as e:
     logging.critical("Could not open settings.yaml: %s", str(e))
 
@@ -144,7 +144,7 @@ try:
     data["battery_voltage"] = battery_voltage
 
     battery_voltage_half = settings.get("battery_voltage_half")
-    battery_voltage_quarter = battery_voltage_half-(battery_voltage_half-settings.get("low_voltage_threshold"))/2
+    battery_voltage_quarter = (battery_voltage_half-settings.get("low_voltage_threshold"))*0.5
 
     if battery_voltage_quarter < battery_voltage < battery_voltage_half: # Battery voltage between 50% and 25%
         settings.set("intervalMinutes", int(settings.get("intervalMinutes")*2))
@@ -157,8 +157,10 @@ try:
 except Exception as e:
     logging.warning("Could not get battery voltage: %s", str(e))
 
+###########################
+# Generate schedule
+###########################
 try:
-    # Generate schedule
     start_time_hour = settings.get("startTimeHour")
     start_time_minute = settings.get("startTimeMinute")
     interval_minutes = settings.get("intervalMinutes")
@@ -168,7 +170,9 @@ except Exception as e:
     wittyPi.generate_schedule(8, 0, 30, 8)
     logging.warning("Failed to generate schedule: %s", str(e))
 
+###########################
 # Apply schedule
+###########################
 try:
     next_startup_time = wittyPi.apply_schedule()
     data['next_startup_time'] = f"{next_startup_time}Z"
