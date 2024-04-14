@@ -73,7 +73,7 @@ def test_generate_valid_schedule():
         lines = file.read()
 
     # Check schedule
-    text = "BEGIN\t2020-01-01 07:30:00\nEND\t2037-12-31 23:59:59\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tH12 M56"
+    text = "BEGIN\t2020-01-01 07:30:00\nEND\t2037-12-31 23:59:59\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tM26\nON\tM4\nOFF\tH20 M26"
     assert lines == text
 
     # Overwrite schedule
@@ -88,7 +88,7 @@ def test_generate_valid_schedule():
         lines = file.read()
 
     # Check schedule
-    text = "BEGIN\t2020-01-01 12:00:00\nEND\t2037-12-31 23:59:59\nON\tM4\nOFF\tM1\nON\tM4\nOFF\tH11 M51"
+    text = "BEGIN\t2020-01-01 12:00:00\nEND\t2037-12-31 23:59:59\nON\tM4\nOFF\tM1\nON\tM4\nOFF\tH23 M51"
     assert lines == text
 
     # Delete schedule file
@@ -114,7 +114,7 @@ def test_generate_invalid_schedule():
         lines = file.read()
 
     # Check schedule
-    text = "BEGIN\t2020-01-01 23:00:00\nEND\t2037-12-31 23:59:59\nON\tM4\nOFF\tH0 M56"
+    text = "BEGIN\t2020-01-01 23:00:00\nEND\t2037-12-31 23:59:59\nON\tM4\nOFF\tH23 M56"
     assert lines == text
 
     # Delete schedule file

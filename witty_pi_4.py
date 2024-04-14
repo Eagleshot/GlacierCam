@@ -233,7 +233,7 @@ class WittyPi4:
             try:
                 # Apply new schedule
                 command = f"cd {self.WITTYPI_DIRECTORY} && sudo ./runScript.sh"
-                output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=15)
+                output = check_output(command, shell=True, executable="/bin/bash", stderr=STDOUT, universal_newlines=True, timeout=30)
                 output = output.split("\n")[1:3]
 
                 if "Schedule next startup at:" in output[1]:
