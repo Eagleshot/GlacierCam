@@ -78,6 +78,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 
 # Fusion 360 TODOs
 - [ ] add cable releve for antenna cabels
+- [ ] See pictures on signal
 
 -> get sample images for image processing
 
