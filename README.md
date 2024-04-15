@@ -76,6 +76,9 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 - [ ] Finish 3D-printed case
 - [ ] Publish Witty Pi software
 
+# Fusion 360 TODOs
+- [ ] add cable releve for antenna cabels
+
 -> get sample images for image processing
 
 ## Hardware
