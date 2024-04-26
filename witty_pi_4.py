@@ -1,14 +1,26 @@
 '''A python module for interacting with the Witty Pi 4 board'''
 from subprocess import check_output, STDOUT
-from datetime import datetime
+from datetime import time, datetime
 from os import path
 import logging
+import suntime
 
 class WittyPi4:
     '''A class for interacting with the Witty Pi 4 board'''
 
+    # Setup
     WITTYPI_DIRECTORY = "/home/pi/wittypi"
     SCHEDULE_FILE_PATH = f"{WITTYPI_DIRECTORY}/schedule.wpi"
+
+    # Default schedule settings
+    start_time = time(8, 0)
+    end_time = time(20, 0)
+    interval_length_minutes = 30
+    interval_length_hours = 0
+    round_start_end_time = False
+
+    START_DATE = datetime(2020, 1, 1)
+    END_DATE = datetime(2037, 12, 31)
     MAX_DURATION_MINUTES = 4 # Maximum time Raspberry Pi is allowed to run
 
     def __init__(self):
@@ -123,9 +135,7 @@ class WittyPi4:
                     low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
                     logging.info("Set low voltage threshold to: %s V", voltage)
                     return low_voltage_threshold
-                
                 logging.info("Low voltage threshold already set to: %s V", voltage)
-
             else:
                 logging.error("Voltage must be between 2.0 and 25.0 V (or 0 to disable).")
 
@@ -135,7 +145,6 @@ class WittyPi4:
             logging.error("Could not set low voltage threshold: %s", str(e))
             return 0.0
 
-    # Set recovery voltage threshold
     def set_recovery_voltage_threshold(self, voltage: float) -> float:
         '''Sets the recovery voltage threshold from the Witty Pi 4'''
         try:
@@ -144,78 +153,123 @@ class WittyPi4:
                     recovery_voltage_threshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
                     logging.info("Set recovery voltage threshold to: %s V", voltage)
                     return recovery_voltage_threshold
-
                 logging.info("Recovery voltage threshold already set to: %s V", voltage)
-
             else:
                 logging.error("Voltage must be between 2.0 and 25.0 V (or 0 to disable).")
-                
+
             return voltage
 
         except Exception as e:
             logging.error("Could not set recovery voltage threshold: %s", str(e))
             return 0.0
 
-    @staticmethod
-    def round_time_to_nearest_interval(date: datetime, interval: int) -> datetime:
-        '''Round datetime down to the nearest interval (e.g. 15 minutes)'''
-        return date.replace(minute=(date.minute // interval) * interval)
+    def set_start_time(self, start_time: time) -> None:
+        '''Set the start time for the schedule'''
+        if start_time < time(23 - self.interval_length_hours, 59 - self.interval_length_minutes):
+            self.start_time = start_time
+        else:
+            logging.error("Invalid start time: %s", start_time)
 
-    @staticmethod
-    def calculate_num_repetitions_per_day(start_time: datetime, end_time: datetime, interval: int) -> int:
+    def set_end_time(self, end_time: time) -> None:
+        '''Set the end time for the schedule'''
+        self.end_time = end_time
+
+    def set_start_end_time_sunrise(self, latitude: float, longitude: float) -> None:
+        '''Start the schedule at sunrise and end it at sunset. The time gets rounded to nearest interval.'''
+        sun = suntime.Sun(latitude, longitude)
+
+        # Sunrise
+        sunrise = sun.get_sunrise_time().time()
+        logging.info("Next sunrise: %s:%s", sunrise.hour, sunrise.minute)
+        self.set_start_time(sunrise)
+
+        # Sunset
+        sunset = sun.get_sunset_time().time()
+        logging.info("Next sunset: %s:%s", sunset.hour, sunset.minute)
+        self.set_end_time(sunset)
+
+        self.round_start_end_time = True # Round to nearest interval
+
+    def set_interval_length(self, minutes: int, hours: int = 0) -> None:
+        '''Set the interval length for the schedule with basic validity checks'''
+        if 0 <= hours < 24:
+            self.interval_length_hours = hours
+        else:
+            logging.error("Invalid interval length (hours): %s", hours)
+
+        if self.MAX_DURATION_MINUTES < minutes < 59 or self.interval_length_hours > 0:
+            self.interval_length_minutes = minutes
+        else:
+            logging.error("Invalid interval length (minutes): %s", minutes)
+
+    def round_time_to_nearest_interval(self, time: time) -> time:
+        '''Round datetime up to the nearest interval (e.g. 15 minutes)'''
+        return time.replace(minute=(time.minute // self.interval_length_minutes) * self.interval_length_minutes)
+
+    def calculate_num_repetitions_per_day(self) -> int:
         '''Calculate the number of repetitions between (and including) the start and end time'''
+        start_time_date = datetime(2020, 1, 1, self.start_time.hour, self.start_time.minute)
+        end_time_date = datetime(2020, 1, 1, self.end_time.hour, self.end_time.minute)
 
-        # TODO Ensure start time is before end time
-        # TODO Ensure interval is greater than 0
-        # TODO Ensure start and end time are on the same day
-        
-        return ((end_time - start_time).seconds // 60) // interval + 1
+        # Swap start and end time if start time is later than end time
+        if self.start_time > self.end_time:
+            start_time_date, end_time_date = end_time_date, start_time_date
 
-    def generate_schedule(self, start_hour: int, start_minute: int, interval_length_minutes: int, num_repetitions_per_day: int) -> None:
-        '''Generate a startup schedule file for Witty Pi 4'''
+        return (((end_time_date - start_time_date).seconds // 60) // (self.interval_length_minutes + self.interval_length_hours * 60)) + 1
 
-        # Basic validity check of parameters
-        if not 0 < start_hour < 24:
-            start_hour = 8
+    def generate_schedule(self) -> None:
+        '''Generate a daily recurring schedule and overwrite schedule.wpi'''
 
-        if not 0 < start_minute < 60:
-            start_minute = 0
+        # Round start and end time
+        if self.round_start_end_time:
+            self.start_time = self.round_time_to_nearest_interval(self.start_time)
+            self.end_time = self.round_time_to_nearest_interval(self.end_time)
 
-        if not 0 < interval_length_minutes < 1440:
-            interval_length_minutes = 30
-
-        if not 0 < num_repetitions_per_day < 250:
-            num_repetitions_per_day = 8
-
-        if ((num_repetitions_per_day * interval_length_minutes) + start_minute + (start_hour * 60)) > 1440:
-            num_repetitions_per_day = 1
+        # Check if end is before start time
+        if self.start_time > self.end_time:
+            self.start_time, self.end_time = self.end_time, self.start_time
 
         # 2037 is the maximum year for WittyPi
-        formatted_start_time = f"{start_hour:02d}:{start_minute:02d}"
-        schedule = f"BEGIN\t2020-01-01 {formatted_start_time}:00\nEND\t2037-12-31 23:59:59\n"
+        formatted_start_date = self.START_DATE.strftime("%Y-%m-%d")
+        formatted_start_time = f"{self.start_time.hour:02d}:{self.start_time.minute:02d}"
+        
+        schedule = f"BEGIN\t{formatted_start_date} {formatted_start_time}:00\nEND\t2037-12-31 23:59:59\n"
 
-        for i in range(num_repetitions_per_day):
-            schedule += f"ON\tM{self.MAX_DURATION_MINUTES}\n"
+        num_repetitions_per_day = self.calculate_num_repetitions_per_day()
 
-            # Last off is different
-            if i < num_repetitions_per_day - 1:
-                # Your code here
-                schedule += f"OFF\tM{interval_length_minutes - self.MAX_DURATION_MINUTES}\n"
+        total_off_minutes = self.interval_length_hours * 60 + self.interval_length_minutes - self.MAX_DURATION_MINUTES
+        off_hours = total_off_minutes // 60
+        off_minutes = total_off_minutes % 60
+
+        for _ in range(num_repetitions_per_day - 1):
+            schedule += f"ON\tM{self.MAX_DURATION_MINUTES}\nOFF\t"
+
+            if off_hours > 0 and off_minutes > 0:
+                schedule += f"H{off_hours} M{(off_minutes)}\n"
+            elif off_hours > 0 and off_minutes == 0:
+                schedule += f"H{off_hours}\n"
+            else:
+                schedule += f"M{(off_minutes)}\n"
+
+        # Last repetition is different
+        schedule += f"ON\tM{self.MAX_DURATION_MINUTES}\n"
 
         # Turn camera off for the rest of the day (schedule length is 24 hours)
-        remaining_minutes = 1440 - (num_repetitions_per_day * interval_length_minutes) + interval_length_minutes - self.MAX_DURATION_MINUTES
+        remaining_minutes = 1440 - (num_repetitions_per_day * (self.interval_length_minutes + self.interval_length_hours * 60))
+        remaining_minutes += self.interval_length_minutes + self.interval_length_hours * 60 - self.MAX_DURATION_MINUTES
         remaining_hours = remaining_minutes // 60
         remaining_minutes = remaining_minutes % 60
 
-        schedule += f"OFF\tH{remaining_hours}"
-        if remaining_minutes > 0:
-            schedule += f" M{remaining_minutes}"
+        if remaining_hours > 0 and remaining_minutes > 0:
+            schedule += f"OFF\tH{remaining_hours} M{remaining_minutes}"
+        elif remaining_minutes > 0:
+            schedule += f"OFF\tM{remaining_minutes}"
 
         if path.exists(self.SCHEDULE_FILE_PATH):
             with open(self.SCHEDULE_FILE_PATH, "r", encoding='utf-8') as f:
                 old_schedule = f.read()
 
-                # Write new schedule file if it changed
+                # Overwrite schedule if it has changed
                 if old_schedule != schedule:
                     logging.info("Schedule changed - writing new schedule file.")
                     with open(self.SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:

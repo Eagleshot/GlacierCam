@@ -2,13 +2,12 @@
 
 from io import BytesIO
 from os import system, remove, listdir, path
-from datetime import datetime
+from datetime import datetime, time
 import logging
 from logging.handlers import RotatingFileHandler
 from picamera2 import Picamera2
 from libcamera import controls
 from yaml import safe_load, safe_dump
-import suntime
 from sim7600x import SIM7600X
 from witty_pi_4 import WittyPi4
 from fileserver import FileServer
@@ -118,27 +117,6 @@ except Exception as e:
 # Schedule script
 ###########################
 
-# Get sunrise and sunset times
-try:
-    if settings.get("enableSunriseSunset") and settings.get("latitude") != 0 and settings.get("longitude") != 0:
-        sun = suntime.Sun(settings.get("latitude"), settings.get("longitude"))
-
-        # Sunrise
-        sunrise = sun.get_sunrise_time()
-        logging.info("Next sunrise: %s:%s", sunrise.hour, sunrise.minute)
-        sunrise = WittyPi4.round_time_to_nearest_interval(sunrise, settings.get("intervalMinutes"))
-        settings.set("startTimeHour", sunrise.hour)
-        settings.set("startTimeMinute", sunrise.minute)
-
-        # Sunset
-        sunset = sun.get_sunset_time()
-        logging.info("Next sunset: %s:%s", sunset.hour, sunset.minute)
-        repetitions_per_day = WittyPi4.calculate_num_repetitions_per_day(sunrise, sunset, settings.get("intervalMinutes"))
-        settings.set("repetitionsPerday", repetitions_per_day)
-
-except Exception as e:
-    logging.warning("Could not get sunrise and sunset times: %s", str(e))
-
 try:
     battery_voltage = wittyPi.get_battery_voltage()
     data["battery_voltage"] = battery_voltage
@@ -148,9 +126,9 @@ try:
 
     if battery_voltage_quarter < battery_voltage < battery_voltage_half: # Battery voltage between 50% and 25%
         settings.set("intervalMinutes", int(settings.get("intervalMinutes")*2))
-        settings.set("repetitionsPerday", int(settings.get("repetitionsPerday")/2))
         logging.warning("Battery voltage <50%.")
     elif battery_voltage < battery_voltage_quarter: # Battery voltage <25%
+        # Set end time to start time
         settings.set("repetitionsPerday", 1)
         logging.warning("Battery voltage <25%.")
 
@@ -161,13 +139,16 @@ except Exception as e:
 # Generate schedule
 ###########################
 try:
-    start_time_hour = settings.get("startTimeHour")
-    start_time_minute = settings.get("startTimeMinute")
-    interval_minutes = settings.get("intervalMinutes")
-    repetitions_per_day = settings.get("repetitionsPerday")
-    wittyPi.generate_schedule(start_time_hour, start_time_minute, interval_minutes, repetitions_per_day)
+    wittyPi.set_interval_length(settings.get("intervalMinutes"))
+
+    if settings.get("enableSunriseSunset"): # TODO
+        wittyPi.set_start_end_time_sunrise(settings.get("latitude"), settings.get("longitude"))
+    else:
+        wittyPi.set_start_time(time(settings.get("startTimeHour"), settings.get("startTimeMinute")))
+        # wittyPi.set_end_time(time(settings.get("endTimeHour"), settings.get("endTimeMinute"))) # TODO
+
+    wittyPi.generate_schedule()
 except Exception as e:
-    wittyPi.generate_schedule(8, 0, 30, 8)
     logging.warning("Failed to generate schedule: %s", str(e))
 
 ###########################
@@ -189,9 +170,8 @@ try:
 except Exception as e:
     logging.warning("Could not open serial connection with 4G module: %s", str(e))
 
-# Enable GPS
+# Enable GPS to read out position later
 try:
-    # Enable GPS to later read out position
     if settings.get("enableGPS"):
         sim7600.start_gps_session()
 except Exception as e:
@@ -218,13 +198,13 @@ except Exception as e:
     logging.critical("Could not setup camera: %s", str(e))
 
 # Focus settings
-try:
-    if settings.get("lensPosition") > -1:
-        camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings.get("lensPosition")})
-    else:
-        camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
-except Exception as e:
-    logging.warning("Could not set lens position: %s", str(e))
+# try:
+#     if settings.get("lensPosition") > -1:
+#         camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings.get("lensPosition")})
+#     else:
+#         camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
+# except Exception as e:
+#     logging.warning("Could not set lens position: %s", str(e))
 
 ###########################
 # Capture image
@@ -275,7 +255,7 @@ try:
 
     # If settings recovery voltage threshold exists
     if settings.get("recovery_voltage_threshold"):
-        # Recovery voltage threshold must be equal or greater than low voltage threshold
+        # Recovery voltage threshold must be equal or greater than low voltage threshold # TODO
         if settings.get("recovery_voltage_threshold") < settings.get("low_voltage_threshold"):
             settings.set("recovery_voltage_threshold", settings.get("low_voltage_threshold"))
 
@@ -346,7 +326,8 @@ except Exception as e:
 # Upload diagnostics data
 ###########################
 try:
-    fileserver.append_file("log.txt", FILE_PATH)
+    if CONNECTED_TO_SERVER:
+        fileserver.append_file("log.txt", FILE_PATH)
 
     # Upload WittyPi diagnostics
     if settings.get("uploadWittyPiDiagnostics") and CONNECTED_TO_SERVER:
