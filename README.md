@@ -77,8 +77,9 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 - [ ] Publish Witty Pi software
 
 # Fusion 360 TODOs
-- [ ] add cable releve for antenna cabels
-- [ ] See pictures on signal
+- [x] add cable releve for antenna cabels
+- [x] See pictures on signal [16.0424]
+
 
 -> get sample images for image processing
 
