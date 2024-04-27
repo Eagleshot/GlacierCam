@@ -48,9 +48,9 @@ class SIM7600X:
             logging.error("Could not get current signal quality: %s", str(e))
             return 99
 
-    @staticmethod     
-    def decode_position(position: str, round_to: int = 5) -> float:
-        '''Decode the GPS position to a latitude or longitude value.'''
+    @staticmethod
+    def __decode_position(position: str, round_to: int = 5) -> float:
+        '''Decode the NMEA GPS position to a latitude or longitude value .'''
         position = position.split('.')
         degrees = position[0][:-2]
         minutes = position[0][-2:] + '.' + position[1]
@@ -76,8 +76,8 @@ class SIM7600X:
                 gps_data_cleaned = str(gps_data_raw)[13:]
                 gps_data_cleaned = gps_data_cleaned.split(',')
 
-                lat = self.decode_position(gps_data_cleaned[0])
-                lon = self.decode_position(gps_data_cleaned[2])
+                lat = self.__decode_position(gps_data_cleaned[0])
+                lon = self.__decode_position(gps_data_cleaned[2])
 
                 # North or South, East or West
                 if gps_data_cleaned[1] == 'S':
