@@ -1,5 +1,6 @@
 '''Class for the SIM7600X 4G module'''
 from time import sleep
+from datetime import datetime
 import logging
 import serial
 
@@ -13,7 +14,6 @@ class SIM7600X:
         except Exception as e:
             logging.error("Could not initialize SIM7600X: %s", str(e))
 
-    # Send AT command to SIM7600X
     def send_at_command(self, command: str, back: str = 'OK', timeout: int = 1) -> str:
         '''Send an AT command to SIM7600X'''
         rec_buff = ''
@@ -35,7 +35,7 @@ class SIM7600X:
     # 2...30 -110... -54 dBm
     # 31 -52 dBm or greater
     # 99 not known or not detectable
-    def get_signal_quality(self):
+    def get_signal_quality(self) -> float:
         '''Gets the current signal quality from the SIM7600G-H 4G module'''
         try:
             signal_quality = self.send_at_command('AT+CSQ')
@@ -43,15 +43,21 @@ class SIM7600X:
             signal_quality = signal_quality.replace("\n", "")
             signal_quality = ''.join(ch for ch in signal_quality if ch.isdigit()) # Remove non-numeric characters
             logging.info("Current signal quality: %s", signal_quality)
-            return signal_quality
+            return float(signal_quality)
         except Exception as e:
             logging.error("Could not get current signal quality: %s", str(e))
-            return ""
+            return 99
 
-    # Get GPS Position
+    @staticmethod     
+    def decode_position(position: str, round_to: int = 5) -> float:
+        '''Decode the GPS position from the SIM7600G-H 4G module to a latitude or longitude value'''
+        position = position.split('.')
+        degrees = position[0][:-2]
+        minutes = position[0][-2:] + '.' + position[1]
+        return round(float(degrees) + float(minutes)/60, round_to)
+
     def get_gps_position(self, max_attempts=7, delay=5):
         '''Gets the current GPS position from the SIM7600G-H 4G module'''
-
         current_attempt = 0
 
         while current_attempt < max_attempts:
@@ -68,30 +74,26 @@ class SIM7600X:
                 # Additions to Demo Code Written by Tim! -> Core Electronics
                 # https://core-electronics.com.au/guides/raspberry-pi/raspberry-pi-4g-gps-hat/
                 gps_data_cleaned = str(gps_data_raw)[13:]
+                gps_data_cleaned = gps_data_cleaned.split(',')
 
-                lat = float(gps_data_cleaned[:2]) + (float(gps_data_cleaned[2:11])/60)
-                lon = float(gps_data_cleaned[14:17]) + (float(gps_data_cleaned[17:26])/60)
+                lat = self.decode_position(gps_data_cleaned[0])
+                lon = self.decode_position(gps_data_cleaned[2])
 
-                north_or_south = gps_data_cleaned[12]
-                east_or_west = gps_data_cleaned[27]
-
-                if north_or_south == 'S':
+                # North or South, East or West
+                if gps_data_cleaned[1] == 'S':
                     lat = -lat
-                if east_or_west == 'W':
+                if gps_data_cleaned[3] == 'W':
                     lon = -lon
 
-                # TODO Sometimes heigth is not correctly extracted
-                Height = gps_data_cleaned[45:49]
+                height = float(gps_data_cleaned[6])
 
-                str_lat = str(round(lat, 5))
-                str_lon = str(round(lon, 5))
-                str_height = str(Height)
+                date_str = gps_data_cleaned[4] + gps_data_cleaned[5]
+                date = datetime.strptime(date_str, ' %d%m%y %H%M%S.%f')
 
-                # TODO Time
+                logging.info("GPS position: LAT %s, LON %s, HEIGHT %s", lat, lon, height)
+                return lat, lon, height, date
 
-                logging.info("GPS position: LAT %s, LON %s, HEIGHT %s", str_lat, str_lon, str_height)
-                return str_lat, str_lon, str_height
-        return "-", "-", "-"
+        return None
 
     def start_gps_session(self):
         '''Starts a GPS session on the SIM7600G-H 4G module'''
@@ -110,6 +112,7 @@ class SIM7600X:
             logging.error("Could not stop GPS session: %s", str(e))
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     sim7600x = SIM7600X()
     sim7600x.get_signal_quality()
     sim7600x.start_gps_session()

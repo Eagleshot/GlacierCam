@@ -280,14 +280,14 @@ except Exception as e:
 ###########################
 try:
     if settings.get("enableGPS"):
-        data["latitude"], data["longitude"], data["height"] = sim7600.get_gps_position()
+        data["latitude"], data["longitude"], data["height"], _ = sim7600.get_gps_position()
         sim7600.stop_gps_session()
 
 except Exception as e:
     logging.warning("Could not get GPS coordinates: %s", str(e))
 
 ###########################
-# Uploading sensor data to server
+# Uploading sensor data
 ###########################
 
 # Append new measurements to log or create new log file if none exists
@@ -323,7 +323,7 @@ except Exception as e:
     logging.warning("Could not append new measurements to log: %s", str(e))
 
 ###########################
-# Upload diagnostics data
+# Upload log data
 ###########################
 try:
     if CONNECTED_TO_SERVER:
