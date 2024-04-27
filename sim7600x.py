@@ -7,7 +7,7 @@ import serial
 class SIM7600X:
     '''Class for the SIM7600X 4G module'''
     def __init__(self, port: str = '/dev/ttyUSB2', baudrate: int = 115200, timeout: int = 5):
-        '''Initialize SIM7600X'''
+        '''Initialize SIM7600X.'''
         try:
             self.ser = serial.Serial(port, baudrate, timeout=timeout) # USB connection
             self.ser.flushInput()
@@ -15,7 +15,7 @@ class SIM7600X:
             logging.error("Could not initialize SIM7600X: %s", str(e))
 
     def send_at_command(self, command: str, back: str = 'OK', timeout: int = 1) -> str:
-        '''Send an AT command to SIM7600X'''
+        '''Send an AT command to SIM7600X.'''
         rec_buff = ''
         self.ser.write((command+'\r\n').encode())
         sleep(timeout)
@@ -36,7 +36,7 @@ class SIM7600X:
     # 31 -52 dBm or greater
     # 99 not known or not detectable
     def get_signal_quality(self) -> float:
-        '''Gets the current signal quality from the SIM7600G-H 4G module'''
+        '''Get the current signal quality of the 4G modem.'''
         try:
             signal_quality = self.send_at_command('AT+CSQ')
             signal_quality = signal_quality[8:10]
@@ -50,14 +50,14 @@ class SIM7600X:
 
     @staticmethod     
     def decode_position(position: str, round_to: int = 5) -> float:
-        '''Decode the GPS position from the SIM7600G-H 4G module to a latitude or longitude value'''
+        '''Decode the GPS position to a latitude or longitude value.'''
         position = position.split('.')
         degrees = position[0][:-2]
         minutes = position[0][-2:] + '.' + position[1]
         return round(float(degrees) + float(minutes)/60, round_to)
 
     def get_gps_position(self, max_attempts=7, delay=5):
-        '''Gets the current GPS position from the SIM7600G-H 4G module'''
+        '''Get the current GPS position and time.'''
         current_attempt = 0
 
         while current_attempt < max_attempts:
@@ -88,15 +88,16 @@ class SIM7600X:
                 height = float(gps_data_cleaned[6])
 
                 date_str = gps_data_cleaned[4] + gps_data_cleaned[5]
-                date = datetime.strptime(date_str, ' %d%m%y %H%M%S.%f')
+                date = datetime.strptime(date_str, '%d%m%y%H%M%S.%f')
 
+                logging.info("GPS date: %s", date)
                 logging.info("GPS position: LAT %s, LON %s, HEIGHT %s", lat, lon, height)
                 return lat, lon, height, date
 
         return None
 
     def start_gps_session(self):
-        '''Starts a GPS session on the SIM7600G-H 4G module'''
+        '''Start the GPS session.'''
         try:
             logging.info("Starting GPS session.")
             self.send_at_command('AT+CGPS=1,1')
@@ -104,7 +105,7 @@ class SIM7600X:
             logging.error("Could not start GPS session: %s", str(e))
 
     def stop_gps_session(self):
-        '''Stops a GPS session on the SIM7600G-H 4G module'''
+        '''Stops the GPS session.'''
         try:
             logging.info("Stopping GPS session.")
             self.send_at_command('AT+CGPS=0')
