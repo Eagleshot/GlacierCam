@@ -11,7 +11,7 @@ import requests
 import yaml
 from settings import Settings
 from fileserver import FileServer
-# import logging # TODO
+import logging # TODO
 
 # Login status
 if "userIsLoggedIn" not in st.session_state:
@@ -59,6 +59,7 @@ fileserver.change_directory(FTP_FOLDER)
 fileserver.change_directory("save") # TODO
 files = fileserver.list_files()
 fileserver.change_directory("..") # TODO
+LOG_FILENAMEs = fileserver.list_files() # TODO
 
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
@@ -265,173 +266,169 @@ st.divider()
 # Weather widget
 ##############################################
 
-# # Overwrite latitude and longitude if available
+# TODO Overwrite latitude and longitude if available 
 # if settings.get("location_overwrite"):
 #     latitude = settings.get("latitude")
 #     longitude = settings.get("longitude")
 #     heigth = settings.get("heigth")
 
-# dfMap = df[(df['latitude'] != "-") & (df['longitude'] != "-")]
+dfMap = df[(df['latitude'].notnull()) & (df['longitude'].notnull())]
 
-# @st.cache_data(show_spinner=False, ttl=300)
-# def get_weather_data(latitude: float, longitude: float) -> dict:
-#     '''Get weather data from OpenWeatherMap.'''
-#     # Get weather data from OpenWeatherMap
-#     BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
-#     complete_url = f"{BASE_URL}appid={st.secrets['OPENWEATHER_API_KEY']}&lat={latitude}&lon={longitude}&units=metric&lang=de"
-#     response = requests.get(complete_url, timeout=5)
+# TODO Remove with next update
+dfMap = dfMap[(dfMap['latitude'] != "-") & (dfMap['longitude'] != "-")]
 
-#     # Convert the response to json
-#     weather_data = response.json()
+@st.cache_data(show_spinner=False, ttl=300)
+def get_weather_data(latitude: float, longitude: float) -> dict:
+    '''Get weather data from OpenWeatherMap.'''
+    # Get weather data from OpenWeatherMap
+    BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
+    complete_url = f"{BASE_URL}appid={st.secrets['OPENWEATHER_API_KEY']}&lat={latitude}&lon={longitude}&units=metric&lang=de"
+    response = requests.get(complete_url, timeout=5)
+    return response.json()
 
-#     return weather_data
+# Check if OpenWeather API key is set and location is available
+if st.secrets["OPENWEATHER_API_KEY"] != "" and len(dfMap) > 0:
 
-# # Check if OpenWeather API key is set and location is available
-# if st.secrets["OPENWEATHER_API_KEY"] != "" and not dfMap.empty:
+    latitude = round(float(dfMap['latitude'].iloc[-1]), 5)
+    longitude = round(float(dfMap['longitude'].iloc[-1]), 5)
 
-#     latitude = float(dfMap['latitude'].iloc[-1])
-#     longitude = float(dfMap['longitude'].iloc[-1])
+    # Get weather data from OpenWeatherMap
+    weather_data = get_weather_data(latitude, longitude)
 
-#     # Get weather data from OpenWeatherMap
-#     weather_data = get_weather_data(latitude, longitude)
+    # Check if the data is available
+    if weather_data["cod"] == 200:
 
-#     if weather_data["cod"] == 200:
+        # Convert temperature to celsius
+        current_temperature = int(weather_data["main"]["temp"])
+        current_pressure = weather_data["main"]["pressure"]
+        current_humidity = weather_data["main"]["humidity"]
 
-#         # Convert temperature to celsius
-#         current_temperature = int(weather_data["main"]["temp"])
-#         current_pressure = weather_data["main"]["pressure"]
-#         current_humidity = weather_data["main"]["humidity"]
+        # Wind speed and direction
+        wind_speed = round(weather_data["wind"]["speed"], 1)
+        wind_direction = weather_data["wind"]["deg"]
 
-#         # Wind speed and direction
-#         wind_speed = round(weather_data["wind"]["speed"], 1)
-#         wind_direction = weather_data["wind"]["deg"]
+        # Convert wind direction to text
+        directions = ["N", "NW", "W", "SW", "S", "SE", "E", "NE", "N"]
+        WIND_DIRECTION_TEXT = directions[int((wind_direction + 22.5) % 360 // 45)]
 
-#         # Convert wind direction to text
-#         directions = ["N", "NW", "W", "SW", "S", "SE", "E", "NE", "N"]
-#         WIND_DIRECTION_TEXT = directions[int((wind_direction + 22.5) % 360 // 45)]
+        # Get the icon from OpenWeatherMap
+        icon = weather_data["weather"][0]["icon"]
+        icon_url = f"http://openweathermap.org/img/wn/{icon}@4x.png"
 
-#         # Get the icon from OpenWeatherMap
-#         icon = weather_data["weather"][0]["icon"]
-#         icon_url = f"http://openweathermap.org/img/wn/{icon}@4x.png"
+        # Download the icon
+        icon_data = BytesIO()
+        icon_response = requests.get(icon_url, timeout=5)
+        icon_data.write(icon_response.content)
+        icon_image = Image.open(icon_data)
 
-#         # Download the icon
-#         icon_data = BytesIO()
-#         icon_response = requests.get(icon_url, timeout=5)
-#         icon_data.write(icon_response.content)
-#         icon_image = Image.open(icon_data)
+        # Cut off all invisible pixels
+        icon_image = icon_image.crop(icon_image.getbbox())
 
-#         # Cut off all invisible pixels
-#         icon_image = icon_image.crop(icon_image.getbbox())
+        # Description
+        weather_description = weather_data["weather"][0]["description"]
 
-#         # Description
-#         weather_description = weather_data["weather"][0]["description"]
+        # Visibility
+        visibility = weather_data["visibility"]
 
-#         # Visibility
-#         visibility = weather_data["visibility"]
+        if visibility < 1000:
+            visibility = f"{visibility} m"
+        else:
+            visibility = f"{int(visibility/1000)} km"
 
-#         if visibility < 1000:
-#             visibility = f"{visibility} m"
-#         else:
-#             visibility = f"{int(visibility/1000)} km"
+        col1, col2 = st.columns([1.5, 1])
 
-#         col1, col2 = st.columns([1.5, 1])
+        with col1:
+            st.header("Wetter", anchor=False)
+            # st.caption(f"{name}, {country}")
+            st.text("")
+            st.markdown(f"### :grey[Temperatur: {current_temperature} °C]")
 
-#         with col1:
-#             st.header("Wetter", anchor=False)
-#             # st.caption(f"{name}, {country}")
-#             st.text("")
-#             st.markdown(f"### :grey[Temperatur: {current_temperature} °C]")
+        with col2:
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.image(icon_image, caption=weather_description)
 
-#         with col2:
-#             st.text("")
-#             st.text("")
-#             st.text("")
-#             st.text("")
-#             st.image(icon_image, caption=weather_description)
-#         st.text("")
+        st.text("")
 
-#         col1, col2, col3, col4 = st.columns(4, gap="medium")
-#         col1.metric("Wind", f"{wind_speed} m/s",
-#                     delta=WIND_DIRECTION_TEXT, delta_color="off")
-#         col2.metric("Luftdruck", f"{current_pressure} hPa")
-#         col3.metric("Luftfeuchtigkeit", f"{current_humidity} %")
-#         col4.metric("Sichtweite", f"{visibility}")
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
+        col1.metric("Wind", f"{wind_speed} m/s",
+                    delta=WIND_DIRECTION_TEXT, delta_color="off")
+        col2.metric("Luftdruck", f"{current_pressure} hPa")
+        col3.metric("Luftfeuchtigkeit", f"{current_humidity} %")
+        col4.metric("Sichtweite", f"{visibility}")
 
-#         st.text("")
-#         st.markdown("Daten von [OpenWeatherMap](https://openweathermap.org).")
+        st.text("")
+        st.markdown("Daten von [OpenWeatherMap](https://openweathermap.org).")
 
-#         st.divider()
+        st.divider()
 
 ##############################################
 # Sunrise and sunset
 ##############################################
+if len(dfMap) > 0:
+    sun = Sun(latitude, longitude)
+    sunrise = sun.get_sunrise_time()
+    sunrise = sunrise.astimezone(timezone)
+    sunrise = sunrise.strftime('%H:%M Uhr')
 
-# try:
-#     if not dfMap.empty:
-#         sun = Sun(latitude, longitude)
-#         sunrise = sun.get_sunrise_time()
-#         sunrise = sunrise.astimezone(timezone)
-#         sunrise = sunrise.strftime('%H:%M Uhr')
+    sunset = sun.get_sunset_time()
+    sunset = sunset.astimezone(timezone)
+    sunset = sunset.strftime('%H:%M Uhr')
 
-#         sunset = sun.get_sunset_time()
-#         sunset = sunset.astimezone(timezone)
-#         sunset = sunset.strftime('%H:%M Uhr')
+    st.header("Sonnenauf- und Untergang", anchor=False)
+    st.text("")
 
-#         st.header("Sonnenauf- und Untergang", anchor=False)
-#         st.text("")
+    col1, col2, col3 = st.columns([0.5, 1, 1])
+    col2.image("https://openweathermap.org/img/wn/01d@2x.png")
+    col2.metric("Sonnenaufgang", sunrise)
+    col3.image("https://openweathermap.org/img/wn/01n@2x.png")
+    col3.metric("Sonnenuntergang", sunset)
 
-#         col1, col2, col3 = st.columns([0.5, 1, 1])
-#         col2.image("https://openweathermap.org/img/wn/01d@2x.png")
-#         col2.metric("Sonnenaufgang", sunrise)
-#         col3.image("https://openweathermap.org/img/wn/01n@2x.png")
-#         col3.metric("Sonnenuntergang", sunset)
-
-#         st.divider()
-
-# except SunTimeException as e:
-#     print(f"Error with SunTime: {e}")
+    st.divider()
 
 ##############################################
 # Charts
 ##############################################
 
-def plot_chart(chart_title: str, df: pd.DataFrame, x: str, y: str, unit: str = ""):
+def plot_chart(chart_title: str, df: pd.DataFrame, x: str, y: str, x_label: str = None, y_label: str = None, unit: str = ""):
     '''Create an Altair chart.'''
     st.header(chart_title, anchor=False)
     st.write(f"Letzte Messung: {str(df[y].iloc[-1])} {unit}")
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X(f'{x}:T', axis=alt.Axis(
-            title=f'{x}', labelAngle=-45)),
-        y=alt.Y(f'{y}:Q', axis=alt.Axis(title=f'{y}')),
+            title=f'{x_label}', labelAngle=-45)),
+        y=alt.Y(f'{y}:Q', axis=alt.Axis(title=f'{y_label}')),
     ).interactive()
     st.altair_chart(chart, use_container_width=True)
 
-plot_chart("Batterie", df, 'timestamp', 'battery_voltage', "V") # Battery Voltage
-plot_chart("Interne Spannung", df, 'timestamp', 'internal_voltage', "V") # Internal voltage
-plot_chart("Temperatur", df, 'timestamp', 'temperature', "°C") # Temperature
-plot_chart("Sigalqualität", df, 'timestamp', 'signal_quality') # Signal quality
+plot_chart("Batterie", df, 'timestamp', 'battery_voltage', "Zeit", "Batteriespannung (V)")
+plot_chart("Interne Spannung", df, 'timestamp', 'internal_voltage', "Zeit", "Interne Spannung (V)")
+plot_chart("Temperatur", df, 'timestamp', 'temperature', "Zeit", "Temperatur (°C)")
+plot_chart("Sigalqualität", df, 'timestamp', 'signal_quality', "Zeit", "Signalqualität")
 # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
 
 ##############################################
 # Map
 ##############################################
+if not dfMap.empty:
+    st.divider()
+    st.header("Standort", anchor=False)
+    st.map(pd.DataFrame({'lat': [latitude], 'lon': [longitude]}))
 
-# if not dfMap.empty:
+    # Print coordinates
+    st.write(
+        f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['height'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
 
-#     st.header("Standort", anchor=False)
-#     st.map(pd.DataFrame({'lat': [latitude], 'lon': [longitude]}))
+    # Print timestamp
+    if settings.get("location_overwrite"):
+        st.markdown(f"Letztes Standortupdate: {df['timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
 
-#     # Print coordinates
-#     st.write(
-#         f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['heigth'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
+    st.divider()
+    st.write("")
+    st.write("")
 
-#     # Print timestamp
-#     if settings.get("location_overwrite"):
-#         st.markdown(f"Letztes Standortupdate: {df['timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
-
-# # Add a linebreak
-# st.write("")
-# st.write("")
 
 ##############################################
 # Settings and diagnostics
@@ -492,21 +489,18 @@ if True: # st.session_state.userIsLoggedIn:
         st.write(":red[Danger Zone]")
         shutdown = st.toggle("Shutdown", value=settings.get("shutdown"), help="Kamera nach Bildaufnahme ausschalten. Wird diese Option deaktiviert, schaltet sich die Kamera erst verspätet aus und der Stromverbrauch ist erhöht.")
 
-        # Save the settings
-        col1, col2 = st.columns([5,1])
-        if col2.button("Speichern", key="saveCameraSettings"):
-            # TODO: Save settings
-            st.write("Diese Funktion ist noch nicht verfügbar.")
-
         # Validate the settings
         valid_settings = settings.is_valid()
 
-        if valid_settings:
-            st.success("Die Einstellungen sind gültig.")
-        else:
+        if not valid_settings:
             st.error("Die Einstellungen sind ungültig. Bitte überprüfen Sie die Einstellungen.")
-            # st.toast("Die Einstellungen sind ungültig. Bitte überprüfen Sie die Einstellungen.")
             # settings.save_to_file("improved_settings.yaml")
+
+
+        # Save the settings
+        col1, col2 = st.columns([5, 1])
+        if col2.button("Speichern", key="saveCameraSettings"): #TODO
+            st.write("Diese Funktion ist noch nicht verfügbar.")
 
     with st.expander("Webeinstellungen"):
         st.write("Diese Funktion ist noch nicht verfügbar.")
@@ -523,8 +517,7 @@ if True: # st.session_state.userIsLoggedIn:
 
         # Save the settings
         col1, col2 = st.columns([5,1])
-        if col2.button("Speichern"):
-            # TODO: Save settings
+        if col2.button("Speichern"): # TODO
             st.write("Diese Funktion ist noch nicht verfügbar.", key="saveWebSettings")
 
     # Display the dataframe
@@ -533,7 +526,7 @@ if True: # st.session_state.userIsLoggedIn:
         st.dataframe(df)
 
         # Check if wittyPiDiagnostics.txt exists
-        if "wittyPiDiagnostics.txt" in files:
+        if "wittyPiDiagnostics.txt" in LOG_FILENAMEs:
 
             # Retrieve the file data
             fileserver.download_file("wittyPiDiagnostics.txt")
@@ -554,22 +547,23 @@ if True: # st.session_state.userIsLoggedIn:
                     help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
                 )
 
-        # Check if wittyPiSchedule.txt exists
-        if "wittyPiSchedule.txt" in files:
+        LOG_FILENAME = "log.txt"
+
+        if LOG_FILENAME in LOG_FILENAMEs:
 
             # Retrieve the file data
-            fileserver.download_file("wittyPiSchedule.txt")
+            fileserver.download_file(LOG_FILENAME)
 
             # Get last modification date
-            last_modified = fileserver.get_file_last_modified_date("wittyPiSchedule.txt")
+            last_modified = fileserver.get_file_last_modified_date(LOG_FILENAME)
             last_modified = timezone.localize(last_modified) # Convert date to local timezone
 
-            with open('wittyPiSchedule.txt', encoding='utf-8') as file:
-                # Download wittyPiSchedule.txt
+            with open(LOG_FILENAME, encoding='utf-8') as file:
+                # Download wittyPiDiagnostics.txt
                 st.download_button(
-                    label="WittyPi Schedule herunterladen 📝",
+                    label="Logdateien herunterladen 📝",
                     data=file,
-                    file_name="wittyPiSchedule.txt",
+                    file_name=LOG_FILENAME,
                     mime="text/plain",
                     use_container_width=True,
                     help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"

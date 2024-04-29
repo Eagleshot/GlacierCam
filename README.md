@@ -1,4 +1,6 @@
 # GlacierCam
+GlacierCam is an open source timelapse camera system, powered by Raspberry Pi. This repository is currently under active development and will be updated soon.
+
 ## Features at a glance
 ### Camera
 * Standardized CSI camera connector
@@ -8,10 +10,12 @@
 * Possible: Ability to add up to 4 cameras on one system
 
 ### Connectivity
-* 4G, WiFi, Bluetooth, Ethernet (with adapter)
-* Offline time synchronization with GPS
-* Offline backup, possibility to have multiple internet sources for backup
-* Possible to add long range data transmission (e.g. LoRa, Satellite, directional antenna)
+* 4G, WiFi, Bluetooth and Ethernet (with adapter)
+* Offline time synchronization with built-in GPS
+* Offline operation/fallback possible
+* Possibility to have multiple internet sources for redundancy
+* Full data ownership with your own server (e.g. FTP)
+* Can easily be modified/upgraded in the future (e.g. 5G, Satellite internet, directional antennas)
 
 ### Energy
 * Low power consumption (ca. 0.05 Wh / wake cycle)
@@ -19,16 +23,22 @@
 * Input: 5 V DC (USB-C) or 6 - 30 DC
 * Programmable schedule (e.g. every 30 minutes from 8:00 to 20:00)
 * Monitoring of battery level, internal temperature and voltage
-* External 12V battery and solar panel possible
-* Planned: Automatic schedule dependent on battery level and sunrise/sunset
-* Planned: Energy consumption optimization trough soft- and hardware
-* Possible to trigger externally (e.g. with radar)
+* External 12V battery and solar panel possible (e.g. 2 W solar panel)
+* Automatic schedule dependent on battery level and sunrise/sunset
+* Possible to trigger recording externally (e.g. with radar)
+
+# Enviroment
+* Has extensively been tested in harsh enviroment conditions (snow, rain, cold temperatures etc.)
+* Fits in small IP67 case
+* 3D-printed case insert available
 
 ### Additional sensors and data processing
+* Can accomodate a wide variety of additional sensors
 * I2C, UART, SPI, USB, Bluetooth etc. available for additional sensors
 * GPS and Temperature sensor built in
-* Possible: Image processing on device
-* Possible: Different Raspberry Pi for more processing power and more I/O or external accelerators
+* Image processing on device possible, supports edge TPUs for ML inference
+* Supports different Raspberry Pi models, depending on compute and I/O requirements
+* Timestamp with internal RTC (±2s/year), time synchronization via GPS or internet
 
 ### Webserver (optional)
 * Data visualization
@@ -38,23 +48,20 @@
 -> Modular for expansion and/or future upgrades
 
 # Components
-* [Raspberry Pi Zero 2 W](https://www.pi-shop.ch/raspberry-pi-zero-2-w) - CHF 19.90
-* [Witty Pi 4](https://www.pi-shop.ch/witty-pi-4-realtime-clock-and-power-management-for-raspberry-pi) - CHF 32.90
-* [Waveshare SIM7600G-H 4G HAT (B)](https://www.pi-shop.ch/sim7600g-h-4g-hat-b-for-raspberry-pi) - CHF 82.90
-* [SandDisk max endurance 64GB](https://www.digitec.ch/en/s1/product/sandisk-max-endurance-microsd-64-gb-u3-uhs-i-memory-card-12705313?ip=sandisk+max+endurance) - CHF 20.10
-* [Dörr 39mm UV Filter](https://www.digitec.ch/en/s1/product/doerr-lens-filter-digiline-hd-slim-39-mm-39-mm-uv-filter-filters-photography-13034018) - 8.70 CHF
-* [Pi Zero Kamerakabel 150mm](https://www.pi-shop.ch/raspberry-pi-zero-kamera-kabel-300mm) - CHF 9.90
-
-* [Kunststoffgehäuse](https://www.distrelec.ch/de/kunststoffgehaeuse-82x80x55mm-dunkelgrau-abs-ip67-rnd-components-rnd-455-01032/p/30128636) - CHF 20.61
-* [Druckausgleichsmembran](https://www.distrelec.ch/de/druckausgleichsstopfen-m12-12-2mm-ip67-ip69k-polyamid-grau-gore-associates-gmbh-pmf100321-grey/p/15015938?queryFromSuggest=true&itemList=suggested_search) - CHF 11.20
-* [Dörr 2W Solarpanel](https://www.digitec.ch/en/s1/product/doerr-li-1500-12v6v-204446-solar-panel-wildlife-cameras-35520370) - CHF 68.-
-
-= Zwischentotal: CHF 274.21
-
-* [Raspberry Pi Kamera V2](https://www.pi-shop.ch/raspberry-pi-kamera-module-v2) - CHF 22.90
-oder
-* [Raspberry Pi HQ Kamera](https://www.pi-shop.ch/hq-camera) - CHF 60.90
-* [Raspberry Pi 6mm Lens](https://www.pi-shop.ch/official-raspberry-pi-6mm-wide-angle-lens) - CHF 29.90
+| Component                                      | Price   |
+| ---------------------------------------------- | ------- |
+| [Raspberry Pi Zero 2 W](https://www.pi-shop.ch/raspberry-pi-zero-2-w) | CHF 19.90 |
+| [Witty Pi 4](https://www.pi-shop.ch/witty-pi-4-realtime-clock-and-power-management-for-raspberry-pi) | CHF 32.90 |
+| [Waveshare SIM7600G-H 4G HAT (B)](https://www.pi-shop.ch/sim7600g-h-4g-hat-b-for-raspberry-pi) | CHF 82.90 |
+| [SandDisk max endurance 64GB](https://www.digitec.ch/en/s1/product/sandisk-max-endurance-microsd-64-gb-u3-uhs-i-memory-card-12705313?ip=sandisk+max+endurance) | CHF 20.10 |
+| [Dörr 39mm UV Filter](https://www.digitec.ch/en/s1/product/doerr-lens-filter-digiline-hd-slim-39-mm-39-mm-uv-filter-filters-photography-13034018) | CHF 8.70 |
+| [Pi Zero Kamerakabel 150mm](https://www.pi-shop.ch/raspberry-pi-zero-kamera-kabel-300mm) | CHF 9.90 |
+| [Kunststoffgehäuse](https://www.distrelec.ch/de/kunststoffgehaeuse-82x80x55mm-dunkelgrau-abs-ip67-rnd-components-rnd-455-01032/p/30128636) | CHF 20.61 |
+| [Druckausgleichsmembran](https://www.distrelec.ch/de/druckausgleichsstopfen-m12-12-2mm-ip67-ip69k-polyamid-grau-gore-associates-gmbh-pmf100321-grey/p/15015938?queryFromSuggest=true&itemList=suggested_search) | CHF 11.20 |
+| [Dörr 2W Solarpanel](https://www.digitec.ch/en/s1/product/doerr-li-1500-12v6v-204446-solar-panel-wildlife-cameras-35520370) | CHF 68.00 |
+| [Raspberry Pi Kamera V2](https://www.pi-shop.ch/raspberry-pi-kamera-module-v2) | CHF 22.90 |
+| [Raspberry Pi HQ Kamera](https://www.pi-shop.ch/hq-camera) | CHF 60.90 |
+| [Raspberry Pi 6mm Lens](https://www.pi-shop.ch/official-raspberry-pi-6mm-wide-angle-lens) | CHF 29.90 |
 
 = CHF 297.11 bzw. 365.01
 
@@ -79,9 +86,6 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 # Fusion 360 TODOs
 - [x] add cable releve for antenna cabels
 - [x] See pictures on signal [16.0424]
-
-
--> get sample images for image processing
 
 ## Hardware
 - [X] Upgrade to Witty Pi 4 (non mini)

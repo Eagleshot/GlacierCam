@@ -232,7 +232,7 @@ class WittyPi4:
         # 2037 is the maximum year for WittyPi
         formatted_start_date = self.START_DATE.strftime("%Y-%m-%d")
         formatted_start_time = f"{self.start_time.hour:02d}:{self.start_time.minute:02d}"
-        
+
         schedule = f"BEGIN\t{formatted_start_date} {formatted_start_time}:00\nEND\t2037-12-31 23:59:59\n"
 
         num_repetitions_per_day = self.calculate_num_repetitions_per_day()
