@@ -76,68 +76,40 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScript.sh | sudo sh
 ```
-
-# Next TODOs
-- [ ] Modularization -> graphics
-- [ ] Advanced scheduling (start and end date)
+# TODOs
+## V1.0
+- [ ] Update settings validation
+- [ ] Move data to seperate class and add tests
+- [ ] Update Witty Pi 4 firmware
 - [ ] Finish 3D-printed case
-- [ ] Publish Witty Pi software
+- [ ] Configure Esp32 as backup
+- [ ] Implement software update possibility
+- [ ] Add log level setting
+- [ ] Limit log filesize
+- [ ] Check whole code
 
-# Fusion 360 TODOs
-- [x] add cable releve for antenna cabels
-- [x] See pictures on signal [16.0424]
+- [ ] Maybe: Advanced scheduling (start and end date)
 
-## Hardware
-- [X] Upgrade to Witty Pi 4 (non mini)
-- [X] Upgrade to Raspberry Pi Zero 2 W
-- [X] Test camera focus with plexiglass
-- [ ] Create 3D printed internal case
-- [ ] Create additional cameras for testing
-
-## Software
-- [ ] Automatically set camera to reboot when power is on again
-- [ ] Add log level settings
-- [X] Improved settings validation
-- [x] Code review by Philip
-- [x] Improve the format of saved data -> e.g. use .yaml instead of a csv file so additional data can easily be added or different data versions can be used in future software
+## V2.0
+- [ ] Improved time drift detection (maybe with GPS)
 - [ ] Enable watchdog
 - [ ] Add hooks for data processing (e.g. `image_processing()`) that are called by the program at a specific time in the program and can be modified by the user
-- [X] Move SIM7600G-H 4G code to separate file/library for easier readability and add tests
-- [X] Move WittyPi code to separate file/library for easier readability and add tests
-- [ ] Move file handling code to separate file/library for easier readability and add tests
-- [ ] Software update possibility
+- [ ] Modify firmware to be able to easily add new sensors (including CSV/webserver adaption)
 - [ ] Work with read only filesystem and USB drive
 - [ ] Manage max. number of images on USB drive and add an upload limit
-- [X] Update to Raspberry Pi OS bookworm (maybe) -> Not feasible
-- [X] General code and boot speed improvements 
-- [X] Change camera name to be configurable in settings
-- [X] Fix bug with wrong timezone for start time
-- [X] Set location manually for sunrise and sunset
 - [ ] Get startup reason from witty pi
-- [X] Move to dedicated logging facility
-- [X] Log file handling with witty pi log files
-- [ ] Limit log filesize
 - https://www.youtube.com/watch?v=pxuXaaT1u3k
 - https://stackoverflow.com/questions/24505145/how-to-limit-log-file-size-in-python
 
-## Energy and Scheduling
-- [X] Take sunrise and sunset into account for scheduling
-- [X] Take battery level into account for scheduling
-- [ ] Advanced scheduling (start and end date)
-- [ ] Time drift detection (maybe with GPS)
-- [X] New energy measurement -> optimize Solar panel and battery size
-
-## Connectivity and Sensors
+## Connectivity
 - [ ] Simpler WiFi setup
-- [ ] Long range data transmission (LoRa/Satellite/directional antenna)
-- [ ] Modify firmware to be able to easily add new sensors (including CSV/webserver adaption)
+- [ ] Check long range data transmission options (LoRa/Satellite/directional antenna)
 
 ## Webserver
 - [ ] Add settings page (after login)
 - [ ] Add settings validation
 - [ ] Error notifications
 - [ ] Implement logging on webserver
-- [X] Webserver without streamlit -> FTP app
 - [ ] Implement image processing
 - [ ] Add image comparison of different timestamps
 - [ ] Generate timelapse from images
@@ -146,10 +118,12 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 - [ ] Active camera monitoring -> E-Mail message (camera didnt start, battery low, other error message, etc.)
 
 ## General
-- [ ] Extend documentation + improve installation script
+- [ ] Finish documentation + improve installation script
     * Add instruction: camera needs to be set to UTC time -> Should be done by installation script
     * Add instruction: default camera state needs to be set to "on"
     * Add instruction: Only works with raspberry pi os bullseye
+- [ ] Update project website
+- [ ] Media articles
 - [ ] Open source the project
 
 # In the media
@@ -157,5 +131,3 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 * [Nau](https://www.nau.ch/ort/chur/fh-graubunden-photonics-absolvent-gewinnt-ruag-innovation-award-66625517)
 * [LinkedIn](https://www.linkedin.com/posts/ruag-ag_news-fh-graub%C3%BCnden-activity-7117803653880569858-ut_M)
 * [myScience](https://www.myscience.ch/de/news/wire/photonics_bachelorarbeit_wird_praemiert-2023-fhgr)
-## TODO
-
