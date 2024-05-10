@@ -20,7 +20,7 @@ class WittyPi4:
     round_start_end_time = False
 
     START_DATE = datetime(2020, 1, 1)
-    END_DATE = datetime(2037, 12, 31)
+    END_DATE = datetime(2037, 12, 31, 23, 59, 59)
     MAX_DURATION_MINUTES = 4 # Maximum time Raspberry Pi is allowed to run
 
     def __init__(self):
@@ -134,36 +134,31 @@ class WittyPi4:
             if 2.0 <= voltage <= 25.0 or voltage == 0:
                 if voltage != self.get_low_voltage_threshold():
                     low_voltage_threshold = self.run_command(f"set_low_voltage_threshold {int(voltage*10)}")
-                    logging.info("Set low voltage threshold to: %s V", voltage)
-                    return low_voltage_threshold
-                logging.info("Low voltage threshold already set to: %s V", voltage)
+                    logging.info("Set low voltage threshold to: %s V", low_voltage_threshold)
+                else:
+                    logging.info("Low voltage threshold already set to: %s V", voltage)
             else:
                 logging.error("Voltage must be between 2.0 and 25.0 V (or 0 to disable).")
 
-            return voltage
-
         except Exception as e:
             logging.error("Could not set low voltage threshold: %s", str(e))
-            return 0.0
 
-    def set_recovery_voltage_threshold(self, voltage: float) -> float:
+    def set_recovery_voltage_threshold(self, voltage: float) -> None:
         '''Sets the recovery voltage threshold from the Witty Pi 4'''
         # TODO Compare to low voltage threshold
         try:
             if 2.0 <= voltage <= 25.0 or voltage == 0:
                 if voltage != self.get_recovery_voltage_threshold():
                     recovery_voltage_threshold = self.run_command(f"set_recovery_voltage_threshold {int(voltage*10)}")
-                    logging.info("Set recovery voltage threshold to: %s V", voltage)
-                    return recovery_voltage_threshold
-                logging.info("Recovery voltage threshold already set to: %s V", voltage)
+                    logging.info("Set recovery voltage threshold to: %s V", recovery_voltage_threshold)
+                else:
+                    logging.info("Recovery voltage threshold already set to: %s V", voltage)
             else:
                 logging.error("Voltage must be between 2.0 and 25.0 V (or 0 to disable).")
 
-            return voltage
-
         except Exception as e:
             logging.error("Could not set recovery voltage threshold: %s", str(e))
-            return 0.0
+
 
     def set_start_time(self, start_time: time) -> None:
         '''Set the start time for the schedule'''
@@ -235,9 +230,11 @@ class WittyPi4:
 
         # 2037 is the maximum year for WittyPi
         formatted_start_date = self.START_DATE.strftime("%Y-%m-%d")
-        formatted_start_time = f"{self.start_time.hour:02d}:{self.start_time.minute:02d}"
+        formatted_start_time = f"{self.start_time.hour:02d}:{self.start_time.minute:02d}:00"
+        formatted_end_date = self.END_DATE.strftime("%Y-%m-%d")
+        formatted_end_time = f"{self.END_DATE.hour:02d}:{self.END_DATE.minute:02d}:{self.END_DATE.second:02d}"
 
-        schedule = f"BEGIN\t{formatted_start_date} {formatted_start_time}:00\nEND\t2037-12-31 23:59:59\n"
+        schedule = f"BEGIN\t{formatted_start_date} {formatted_start_time}\nEND\t{formatted_end_date} {formatted_end_time}\n"
 
         num_repetitions_per_day = self.calculate_num_repetitions_per_day()
 
