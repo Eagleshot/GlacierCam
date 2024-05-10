@@ -55,8 +55,8 @@ def test_setting_and_getting_values():
     settings.set('resolution', [1920, 1080])
     assert settings.get('resolution') == [1920, 1080]
 
-    settings.set('intervalMinutes', 50)
-    assert settings.get('intervalMinutes') == 50
+    settings.set('endTimeHour', 20)
+    assert settings.get('endTimeHour') == 20
 
 def test_invalid_setting_type():
     """Test setting an invalid type for a setting and assert that it is reset to the default value"""
@@ -65,14 +65,14 @@ def test_invalid_setting_type():
     assert not settings.set('cameraName', 123)
     assert settings.get('cameraName') == 'GlacierCam'
 
-    assert not settings.set('lensPosition', 'invalid')
-    assert settings.get('lensPosition') == -1.0
+    assert not settings.set('enableGPS', 'invalid')
+    assert settings.get('enableGPS') is False
 
 def test_setting_outside_range():
     """Test setting a value outside the specified range for a setting and assert that it is reset to the default value"""
     settings = Settings()
-    assert not settings.set('intervalMinutes', 0)
-    assert settings.get('intervalMinutes') == 30
+    assert not settings.set('lowVoltageThreshold', 30.1)
+    assert settings.get('lowVoltageThreshold') == 0.0
 
     assert not settings.set('startTimeHour', 25)
     assert settings.get('startTimeHour') == 8

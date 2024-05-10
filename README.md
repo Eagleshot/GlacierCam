@@ -78,7 +78,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 ```
 # TODOs
 ## V1.0
-- [ ] Update settings validation
+- [X] Update settings validation
 - [ ] Move data to seperate class and add tests
 - [ ] Update Witty Pi 4 firmware
 - [ ] Finish 3D-printed case

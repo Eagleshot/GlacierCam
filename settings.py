@@ -22,7 +22,7 @@ class Settings:
         'locationOverwrite': {'type': bool, 'default': False},
         'latitude': {'type': float, 'min': -90, 'max': 90, 'default': 0.0},
         'longitude': {'type': float, 'min': -180, 'max': 180, 'default': 0.0},
-        # 'logLevel': {'type': str, 'valid_values': ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], 'default': 'INFO'},
+        'logLevel': {'type': str, 'valid_values': ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], 'default': 'INFO'},
         'uploadExtendedDiagnostics': {'type': bool, 'default': False},
         'lowVoltageThreshold': {'type': float, 'min': 0.0, 'max': 30.0, 'default': 0.0},
         'recoveryVoltageThreshold': {'type': float, 'min': 0.0, 'max': 30.0, 'default': 0.0},

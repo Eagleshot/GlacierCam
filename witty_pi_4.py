@@ -201,8 +201,8 @@ class WittyPi4:
 
         if self.MAX_DURATION_MINUTES < minutes <= 59:
             self.interval_length_minutes = minutes
-        elif minutes == 0 and self.interval_length_hours > 0:
-            self.interval_length_minutes = 0
+        elif self.interval_length_hours > 0 and 0 <= minutes <= 59:
+            self.interval_length_minutes = minutes
         else:
             logging.error("Invalid interval length (minutes): %s", minutes)
 
