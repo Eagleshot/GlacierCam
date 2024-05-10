@@ -44,7 +44,7 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logging.basicConfig(level=LOG_LEVEL, handlers=[file_handler, stream_handler])
 
-# Read config.yaml file from SD card
+# Read config file from SD card
 try:
     with open(f"{FILE_PATH}config.yaml", 'r', encoding='utf-8') as file:
         config = safe_load(file)
@@ -114,38 +114,35 @@ except Exception as e:
     logging.warning("Could not synchronize time with network: %s", str(e))
 
 ###########################
-# Schedule script
+# Generate schedule
 ###########################
 
 try:
     battery_voltage = wittyPi.get_battery_voltage()
     data["battery_voltage"] = battery_voltage
 
-    battery_voltage_half = settings.get("battery_voltage_half")
-    battery_voltage_quarter = (battery_voltage_half-settings.get("low_voltage_threshold"))*0.5
+    battery_voltage_half = settings.get("batteryVoltageHalf")
+    battery_voltage_quarter = (battery_voltage_half-settings.get("lowVoltageThreshold"))*0.5
 
-    if battery_voltage_quarter < battery_voltage < battery_voltage_half: # Battery voltage between 50% and 25%
-        settings.set("intervalMinutes", int(settings.get("intervalMinutes")*2))
+    # Battery voltage between 50% and 25%
+    if battery_voltage_quarter < battery_voltage < battery_voltage_half:
+        settings.set("intervalMinutes", int(settings.get("intervalMinutes")*2)) # TODO
         logging.warning("Battery voltage <50%.")
-    elif battery_voltage < battery_voltage_quarter: # Battery voltage <25%
-        # Set end time to start time
-        settings.set("repetitionsPerday", 1)
-        logging.warning("Battery voltage <25%.")
+    elif battery_voltage <= battery_voltage_quarter: # Battery voltage <=25%
+        settings.set("repetitionsPerday", 1) # TODO
+        logging.warning("Battery voltage <=25%.")
 
 except Exception as e:
     logging.warning("Could not get battery voltage: %s", str(e))
 
-###########################
-# Generate schedule
-###########################
 try:
-    wittyPi.set_interval_length(settings.get("intervalMinutes"))
+    wittyPi.set_interval_length(settings.get("intervalMinutes"), settings.get("intervalHours"))
 
-    if settings.get("enableSunriseSunset"): # TODO
+    if settings.get("enableSunriseSunset"): #TODO
         wittyPi.set_start_end_time_sunrise(settings.get("latitude"), settings.get("longitude"))
     else:
         wittyPi.set_start_time(time(settings.get("startTimeHour"), settings.get("startTimeMinute")))
-        # wittyPi.set_end_time(time(settings.get("endTimeHour"), settings.get("endTimeMinute"))) # TODO
+        wittyPi.set_end_time(time(settings.get("endTimeHour"), settings.get("endTimeMinute")))
 
     wittyPi.generate_schedule()
 except Exception as e:
@@ -197,22 +194,11 @@ try:
 except Exception as e:
     logging.critical("Could not setup camera: %s", str(e))
 
-# Focus settings
-# try:
-#     if settings.get("lensPosition") > -1:
-#         camera.set_controls({"AfMode": controls.AfModeEnum.Manual, "LensPosition": settings.get("lensPosition")})
-#     else:
-#         camera.set_controls({"AfMode": controls.AfModeEnum.Auto})
-# except Exception as e:
-#     logging.warning("Could not set lens position: %s", str(e))
-
 ###########################
 # Capture image
 ###########################
 try:
-    image_filename = f'{TIMESTAMP_FILENAME}.jpg'
-    if settings.get("cameraName") != "":
-        image_filename = f'{TIMESTAMP_FILENAME}_{settings.get("cameraName")}.jpg'
+    image_filename = f'{TIMESTAMP_FILENAME}_{settings.get("cameraName")}.jpg'
 except Exception as e:
     logging.warning("Could not set custom camera name: %s", str(e))
 
@@ -235,8 +221,7 @@ except Exception as e:
 
 try:
     if CONNECTED_TO_SERVER:
-        # Upload all images
-        for file in listdir(FILE_PATH):
+        for file in listdir(FILE_PATH): # Upload all images
             if file.endswith(".jpg"):
                 fileserver.upload_file(file, FILE_PATH)
 
@@ -249,18 +234,8 @@ except Exception as e:
 # Set voltage thresholds
 ###########################
 try:
-    # If settings low voltage threshold exists
-    if settings.get("low_voltage_threshold"):
-        wittyPi.set_low_voltage_threshold(settings.get("low_voltage_threshold"))
-
-    # If settings recovery voltage threshold exists
-    if settings.get("recovery_voltage_threshold"):
-        # Recovery voltage threshold must be equal or greater than low voltage threshold # TODO
-        if settings.get("recovery_voltage_threshold") < settings.get("low_voltage_threshold"):
-            settings.set("recovery_voltage_threshold", settings.get("low_voltage_threshold"))
-
-        wittyPi.set_recovery_voltage_threshold(settings.get("recovery_voltage_threshold"))
-
+    wittyPi.set_low_voltage_threshold(settings.get("lowVoltageThreshold"))
+    wittyPi.set_recovery_voltage_threshold(settings.get("recoveryVoltageThreshold"))
 except Exception as e:
     logging.warning("Could not set voltage thresholds: %s", str(e))
 
@@ -329,8 +304,7 @@ try:
     if CONNECTED_TO_SERVER:
         fileserver.append_file("log.txt", FILE_PATH)
 
-    # Upload WittyPi diagnostics
-    if settings.get("uploadWittyPiDiagnostics") and CONNECTED_TO_SERVER:
+    if settings.get("uploadExtendedDiagnostics") and CONNECTED_TO_SERVER:
         fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/")
         fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/")
 except Exception as e:

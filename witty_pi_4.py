@@ -129,6 +129,7 @@ class WittyPi4:
 
     def set_low_voltage_threshold(self, voltage: float) -> float:
         '''Sets the low voltage threshold from the Witty Pi 4'''
+        # TODO: Compare with recovery voltage threshold
         try:
             if 2.0 <= voltage <= 25.0 or voltage == 0:
                 if voltage != self.get_low_voltage_threshold():
@@ -147,6 +148,7 @@ class WittyPi4:
 
     def set_recovery_voltage_threshold(self, voltage: float) -> float:
         '''Sets the recovery voltage threshold from the Witty Pi 4'''
+        # TODO Compare to low voltage threshold
         try:
             if 2.0 <= voltage <= 25.0 or voltage == 0:
                 if voltage != self.get_recovery_voltage_threshold():
@@ -197,8 +199,10 @@ class WittyPi4:
         else:
             logging.error("Invalid interval length (hours): %s", hours)
 
-        if self.MAX_DURATION_MINUTES < minutes < 59 or self.interval_length_hours > 0:
+        if self.MAX_DURATION_MINUTES < minutes <= 59:
             self.interval_length_minutes = minutes
+        elif minutes == 0 and self.interval_length_hours > 0:
+            self.interval_length_minutes = 0
         else:
             logging.error("Invalid interval length (minutes): %s", minutes)
 
