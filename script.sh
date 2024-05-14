@@ -27,7 +27,7 @@ sudo apt-get install -y $PACKAGES
 sudo apt-get autoremove -y
 
 # Install required Python packages
-sudo pip3 install pyserial pyyaml suntime
+sudo pip3 install pyserial pyyaml suntime==1.3.2
 
 echo ''
 echo '================================================================================'
@@ -130,22 +130,16 @@ sudo ufw enable
 # TODO: Disable UWI after installation - see https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
 
 # Install WittyPi Software
+# UWI installation is disabled in this script, because it's not needed
 # See: https://www.uugear.com/product/witty-pi-4-mini/
 # cd /home/pi
-# wget https://www.uugear.com/repo/WittyPi4/install.sh
+# wget https://raw.githubusercontent.com/Eagleshot/Witty-Pi-4/main/Software/install.sh
 # sudo sh install.sh
 
 # TODO: Add the updatescript to automatically update the software
 
 # Add main.py to automatically run before wittyPi script
 # echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
-
-# TODO Remove UWI
-# See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-mini-disable-the-uwi-service/
-# sudo update-rc.d uwi remove
-# sudo rm /etc/init.d/uwi
-# sudo rm -r ~/uwi
-
 
 echo ''
 echo '================================================================================'
