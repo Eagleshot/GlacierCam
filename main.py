@@ -37,12 +37,11 @@ def get_cpu_serial():
 FILE_PATH = "/home/pi/"  # Path where files are saved
 
 # Error logging
-LOG_LEVEL = logging.WARNING
 file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-logging.basicConfig(level=LOG_LEVEL, handlers=[file_handler, stream_handler])
+logging.basicConfig(level=logging.WARNING, handlers=[file_handler, stream_handler])
 
 # Read config file from SD card
 try:
@@ -100,6 +99,12 @@ try:
     settings = Settings(f"{FILE_PATH}settings.yaml")
 except Exception as e:
     logging.critical("Could not open settings.yaml: %s", str(e))
+
+# Set log level according to settings
+try:
+    logging.getLogger().setLevel(settings.get("logLevel"))
+except Exception as e:
+    logging.warning("Could not change log level: %s", str(e))
 
 ###########################
 # Time synchronization
