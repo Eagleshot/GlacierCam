@@ -13,6 +13,8 @@ from witty_pi_4 import WittyPi4
 from fileserver import FileServer
 from settings import Settings
 
+VERSION = "1.0.0.alpha1"
+
 ###########################
 # Configuration and filenames
 ###########################
@@ -54,7 +56,7 @@ CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
 TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
 TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
 
-data = {'timestamp': TIMESTAMP_CSV}
+data = {'timestamp': TIMESTAMP_CSV, 'version': VERSION}
 
 ###########################
 # Connect to fileserver

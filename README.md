@@ -80,12 +80,13 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 ## V1.0
 - [X] Update settings validation
 - [ ] Move data to seperate class and add tests
-- [ ] Update Witty Pi 4 firmware
-- [ ] Finish 3D-printed case
+- [X] Add the version to data -> TODO documentation
+- [X] Finish 3D-printed case
 - [ ] Configure Esp32 as backup
 - [ ] Implement software update possibility
-- [ ] Add log level setting
+- [X] Add log level setting
 - [ ] Limit log filesize
+- [ ] Update Witty Pi 4 firmware -> See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-not-starting/
 - [ ] Check whole code
 
 - [ ] Maybe: Advanced scheduling (start and end date)

@@ -24,7 +24,7 @@ latitude: 0.0
 longitude: 0.0
 
 # Diagnostics data
-logLevel: "INFO"
+logLevel: "WARNING" # 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'
 uploadExtendedDiagnostics: false
 
 # Battery settings
