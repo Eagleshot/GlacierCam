@@ -83,7 +83,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 - [X] Add the version to data -> TODO documentation
 - [X] Finish 3D-printed case
 - [ ] Configure Esp32 as backup
-- [ ] Implement software update possibility
+- [X] Implement software update possibility
 - [X] Add log level setting
 - [ ] Limit log filesize
 - [ ] Update Witty Pi 4 firmware -> See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-not-starting/
@@ -121,7 +121,6 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 ## General
 - [ ] Finish documentation + improve installation script
     * Add instruction: camera needs to be set to UTC time -> Should be done by installation script
-    * Add instruction: default camera state needs to be set to "on"
     * Add instruction: Only works with raspberry pi os bullseye
 - [ ] Update project website
 - [ ] Media articles

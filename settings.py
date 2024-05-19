@@ -30,74 +30,56 @@ class Settings:
         'shutdown': {'type': bool, 'default': True},
     }
 
+    settings = {}
+    valid_settings = True
+
+
     def __init__(self, settings_filename: str = "settings.yaml") -> None:
-
-        self.valid_settings = True
-
+        '''Load the settings from a YAML file and validate them.'''
         try:
             with open(settings_filename, encoding='utf-8') as file:
-                self.settings = safe_load(file)
+                self.settings = safe_load(file) or {}
         except Exception as e:
             logging.error('Error loading settings: %s', e)
-            self.settings = {}
             self.valid_settings = False
 
-        self.validate()
+        self.__validate()
 
-    def validate(self) -> bool:
-        '''Load the settings and validate them'''
+    def __validate(self) -> bool:
+        '''Check if the settings are valid.'''
         for setting, validation in self.settings_to_check.items():
 
-            # Check if setting exists
-            if setting not in self.settings:
-                self.settings[setting] = validation['default']
-                logging.warning('Setting %s not found. Using default value: %s', setting, self.settings[setting])
-                self.valid_settings = False
+            value = self.settings.get(setting)
 
-            # Check if setting is of the correct type
-            if not isinstance(self.settings[setting], validation['type']):
+            # Check if setting is correct
+            if setting not in self.settings or \
+                not isinstance(value, validation['type']) or \
+                ('min' in validation and value < validation['min']) or \
+                ('max' in validation and value > validation['max']) or \
+                ('valid_values' in validation and value not in validation['valid_values']):
+                logging.warning('Setting %s is not a valid value. Using default value: %s', setting, value)
                 self.settings[setting] = validation['default']
-                logging.warning('Setting %s is not of type %s. Using default value: %s', setting, validation['type'], self.settings[setting])
-                self.valid_settings = False
-
-            # Check if setting is within valid range
-            if 'min' in validation and self.settings[setting] < validation['min']:
-                self.settings[setting] = validation['default']
-                logging.warning('Setting %s is less than %s. Using default value: %s', setting, validation['min'], self.settings[setting])
-                self.valid_settings = False
-
-            if 'max' in validation and self.settings[setting] > validation['max']:
-                self.settings[setting] = validation['default']
-                logging.warning('Setting %s is greater than %s. Using default value: %s', setting, validation['max'], self.settings[setting])
-                self.valid_settings = False
-
-            if 'valid_values' in validation and self.settings[setting] not in validation['valid_values']:
-                self.settings[setting] = validation['default']
-                logging.warning('Setting %s is not a valid value. Using default value: %s', setting, self.settings[setting])
                 self.valid_settings = False
 
         return self.valid_settings
 
     def get(self, key: str):
-        '''Return the settings'''
-        if key in self.settings:
-            return self.settings[key]
-
-        return None
+        '''Return a setting.'''
+        return self.settings.get(key)
 
     def set(self, key: str, value) -> bool:
-        '''Set the settings'''
-        if key in self.settings:
+        '''Set the settings.'''
+        if key in self.settings_to_check:
             self.settings[key] = value
-            self.valid_settings = self.validate()
+            return self.__validate()
 
-        return self.valid_settings
+        return False
 
     def is_valid(self) -> bool:
-        '''Return if the settings are valid'''
+        '''Return if the settings are valid.'''
         return self.valid_settings
 
-    def save_to_file(self, settings_filename: str = "settings.yaml"):
-        '''Save the settings to a file'''
+    def save_to_file(self, settings_filename: str = "settings.yaml") -> None:
+        '''Save the settings to a YAML file.'''
         with open(settings_filename, 'w', encoding='utf-8') as file:
             dump(self.settings, file)
