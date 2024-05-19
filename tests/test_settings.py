@@ -58,6 +58,9 @@ def test_setting_and_getting_values():
     settings.set('endTimeHour', 20)
     assert settings.get('endTimeHour') == 20
 
+    assert not settings.set('invalidSetting', 'Invalid')
+    assert settings.get('invalidSetting') is None
+
 def test_invalid_setting_type():
     """Test setting an invalid type for a setting and assert that it is reset to the default value"""
     settings = Settings()

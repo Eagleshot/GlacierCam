@@ -57,8 +57,9 @@ class Settings:
                 ('min' in validation and value < validation['min']) or \
                 ('max' in validation and value > validation['max']) or \
                 ('valid_values' in validation and value not in validation['valid_values']):
-                logging.warning('Setting %s is not a valid value. Using default value: %s', setting, value)
-                self.settings[setting] = validation['default']
+                default_value = validation.get('default')
+                logging.warning('Setting %s is not a valid value. Using default value: %s', setting, default_value)
+                self.settings[setting] = default_value
                 self.valid_settings = False
 
         return self.valid_settings

@@ -107,7 +107,6 @@ except Exception as e:
 ###########################
 # Time synchronization
 ###########################
-
 try:
     wittyPi = WittyPi4()
 
@@ -123,7 +122,6 @@ data['timestamp'] = TIMESTAMP_CSV
 ###########################
 # Generate schedule
 ###########################
-
 try:
     battery_voltage = wittyPi.get_battery_voltage()
     data["battery_voltage"] = battery_voltage
@@ -167,8 +165,6 @@ except Exception as e:
 ##########################
 # SIM7600G-H 4G module
 ###########################
-
-# See Waveshare documentation
 try:
     sim7600 = SIM7600X()
 except Exception as e:
@@ -225,7 +221,6 @@ except Exception as e:
 ###########################
 # Upload image(s) to file server
 ###########################
-
 try:
     if CONNECTED_TO_SERVER:
         for file in listdir(FILE_PATH): # Upload all images
@@ -264,7 +259,6 @@ try:
     if settings.get("enableGPS"):
         data["latitude"], data["longitude"], data["height"], _ = sim7600.get_gps_position()
         sim7600.stop_gps_session()
-
 except Exception as e:
     logging.warning("Could not get GPS coordinates: %s", str(e))
 
@@ -290,7 +284,6 @@ try:
                 remove(diagnostics_filepath)
         except Exception as e:
             logging.warning("Could not open diagnostics file: %s", str(e))
-
 
         # Upload diagnostics to server
         byte_stream = BytesIO()
