@@ -36,7 +36,9 @@ def get_cpu_serial():
 
     return cpuserial
 
+CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
 FILE_PATH = "/home/pi/"  # Path where files are saved
+data = {'version': VERSION}
 
 # Error logging
 file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
@@ -51,12 +53,6 @@ try:
         config = safe_load(file)
 except Exception as e:
     logging.critical("Could not open config.yaml: %s", str(e))
-
-CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
-TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
-TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
-
-data = {'timestamp': TIMESTAMP_CSV, 'version': VERSION}
 
 ###########################
 # Connect to fileserver
@@ -119,6 +115,10 @@ try:
         wittyPi.sync_time_with_network()
 except Exception as e:
     logging.warning("Could not synchronize time with network: %s", str(e))
+
+TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
+TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
+data['timestamp'] = TIMESTAMP_CSV
 
 ###########################
 # Generate schedule
