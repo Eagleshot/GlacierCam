@@ -34,18 +34,16 @@ st.set_page_config(
 )
 
 # Change the camera selection
-with st.sidebar:
-
-    # Select the camera if multiple cameras are available
-    if len(st.secrets["FTP_FOLDER"]) > 1:
+if len(st.secrets["FTP_FOLDER"]) > 1:
+    with st.sidebar: 
         st.header("Kamera auswählen")
         FTP_FOLDER = st.selectbox(
             "Bitte wählen Sie eine Kamera aus:",
             options=st.secrets["FTP_FOLDER"],
             index=0,
         )
-    else:
-        FTP_FOLDER = st.secrets["FTP_FOLDER"][0]
+else:
+    FTP_FOLDER = st.secrets["FTP_FOLDER"][0]
 
 # Connect to the file server
 FTP_HOST = st.secrets["FTP_HOST"]
@@ -71,30 +69,20 @@ settings = Settings()
 # Camera name
 cameraname = settings.get("cameraName")
 st.title(cameraname, anchor=False)
-
-# Placeholder for the image
-imagePlaceholder = st.empty()
+img_placeholder = st.empty()
 
 # Download diagnostics file
-try:
-    fileserver.download_file("diagnostics.csv")
-    df = pd.read_csv('diagnostics.csv', encoding='utf-8')
+fileserver.download_file("diagnostics.yaml")
 
-    # Rename the columns
-    column_names = ['timestamp', 'next_startup_time', 'battery_voltage', 'internal_voltage', 'internal_current', 'temperature', 'signal_quality', 'latitude', 'longitude', 'heigth']
-    df.columns = column_names
-except Exception as e:
-    fileserver.download_file("diagnostics.yaml")
+with open("diagnostics.yaml", 'r', encoding='utf-8') as file:
+    data = yaml.safe_load(file)
 
-    with open("diagnostics.yaml", 'r', encoding='utf-8') as file:
-        data = yaml.safe_load(file)
-
-    # Convert the data into a Pandas DataFrame
-    df = pd.DataFrame(data)
-
-# Convert the timestamp to datetime
-df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%MZ')
-
+# Convert the data into a Pandas DataFrame
+df = pd.DataFrame(data)
+if 'timestamp' in df.columns:
+    df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%MZ')
+elif df.empty:
+    st.info("No data available at the moment.", icon="📊")
 ##############################################
 # Sidebar
 ##############################################
@@ -102,30 +90,31 @@ df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%MZ')
 with st.sidebar:
 
     # Zeitraum auswählen
-    st.header("Zeitraum auswählen")
-    with st.expander("Zeitraum auswählen"):
+    if 'timestamp' in df.columns:
+        st.header("Zeitraum auswählen")
+        with st.expander("Zeitraum auswählen"):
 
-        # Get the start and end date
-        start_date = st.date_input("Startdatum", df['timestamp'].iloc[0])
-        end_date = st.date_input("Enddatum", df['timestamp'].iloc[-1])
+            # Get start and end date
+            start_date = st.date_input("Startdatum", df['timestamp'].iloc[0])
+            end_date = st.date_input("Enddatum", df['timestamp'].iloc[-1])
 
-        # Get the start and end time
-        start_time = st.time_input(
-            "Startzeit", datetime.strptime("00:00", "%H:%M").time())
-        end_time = st.time_input(
-            "Endzeit", datetime.strptime("23:59", "%H:%M").time())
+            # Get start and end time
+            start_time = st.time_input(
+                "Startzeit", datetime.strptime("00:00", "%H:%M").time())
+            end_time = st.time_input(
+                "Endzeit", datetime.strptime("23:59", "%H:%M").time())
 
-        # Combine the start and end date and time
-        start_dateTime = datetime.combine(start_date, start_time)
-        end_dateTime = datetime.combine(end_date, end_time)
+            # Combine the start and end date and time
+            start_dateTime = datetime.combine(start_date, start_time)
+            end_dateTime = datetime.combine(end_date, end_time)
 
-        # Check if the start date is before the end date
-        if start_dateTime >= end_dateTime:
-            st.error("Das Enddatum muss nach dem Startdatum liegen.")
-        else:
-            # Filter the dataframe
-            df = df[(df['timestamp'] >= start_dateTime)
-                    & (df['timestamp'] <= end_dateTime)]
+            # Check if the start date is before the end date
+            if start_dateTime >= end_dateTime:
+                st.error("Das Enddatum muss nach dem Startdatum liegen.")
+            else:
+                # Filter the dataframe
+                df = df[(df['timestamp'] >= start_dateTime)
+                        & (df['timestamp'] <= end_dateTime)]
 
     # Zeitzone auswählen
     # TODO: Automatic timezone detection
@@ -165,7 +154,7 @@ if len(imgFiles) > 1:
 elif len(imgFiles) == 1:
     selected_file = imgFiles[0]
 else:
-    st.write("Keine Bilder vorhanden.")
+    img_placeholder.info("No images available at the moment.", icon="📷")
 
 # Get the image file from the FTP server
 if len(files) > 0:
@@ -174,7 +163,7 @@ if len(files) > 0:
     fileserver.change_directory("..") # TODO
 
     # Display the image with the corresponding timestamp
-    imagePlaceholder.image(Image.open(image_data), use_column_width=True)
+    img_placeholder.image(Image.open(image_data), use_column_width=True)
 
     # Download button for image
     st.download_button(
@@ -185,12 +174,11 @@ if len(files) > 0:
         use_container_width=True
     )
 
-st.text("")
+    st.text("")
 
 ##############################################
 # Overview of the last measurements
 ##############################################
-
 try:
     timestampSelectedImage = datetime.strptime(
         selected_file[0:13], '%d%m%Y_%H%M')
@@ -201,64 +189,65 @@ except:
     index = -1
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Batterie", f"{df['battery_voltage'].iloc[index]} V")
-col2.metric("Interne Spannung", f"{df['internal_voltage'].iloc[index]} V")
-col3.metric("Temperatur", f"{df['temperature'].iloc[index]} °C")
-col4.metric("Signalqualität", df['signal_quality'].iloc[index])
-
-st.write("")
+if 'battery_voltage' in df.columns:
+    col1.metric("Batterie", f"{df['battery_voltage'].iloc[index]} V")
+if 'internal_voltage' in df.columns:
+    col2.metric("Interne Spannung", f"{df['internal_voltage'].iloc[index]} V")
+if 'temperature' in df.columns:
+    col3.metric("Temperatur", f"{df['temperature'].iloc[index]} °C")
+if 'signal_quality' in df.columns:
+    col4.metric("Signalqualität", df['signal_quality'].iloc[index])
 
 ##############################################
 # Next and last startup
 ##############################################
 
 # Last startup relative to now
-lastStartup = df['timestamp'].iloc[-1]
-now = datetime.now(timezoneUTC).replace(tzinfo=None)
-timeDifference = now - lastStartup.replace(tzinfo=None)
+if 'timestamp' in df.columns:
+    st.write("")
+    lastStartup = df['timestamp'].iloc[-1]
+    now = datetime.now(timezoneUTC).replace(tzinfo=None)
+    timeDifference = now - lastStartup.replace(tzinfo=None)
 
-# Write difference in hours and minutes
-next_last_startup_text = "Letzter Start vor "
+    # Write difference in hours and minutes
+    next_last_startup_text = "Letzter Start vor "
 
-# Days
-if timeDifference.days > 1:
-    next_last_startup_text += f"{timeDifference.days} Tagen, "
-elif timeDifference.days == 1:
-    next_last_startup_text += "1 Tag, "
+    # Days
+    if timeDifference.days > 1:
+        next_last_startup_text += f"{timeDifference.days} Tagen, "
+    elif timeDifference.days == 1:
+        next_last_startup_text += "1 Tag, "
 
-# Hours
-if timeDifference.seconds//3600 > 0:
-    next_last_startup_text += f"{timeDifference.seconds//3600} Stunden und "
-
-# Minutes
-if (timeDifference.seconds//60) % 60 > 1:
-    next_last_startup_text += f"{(timeDifference.seconds//60) % 60} Minuten"
-else:
-    next_last_startup_text += "weniger als eine Minute"
-
-# Print next startup relative to now
-next_startup_time = df['next_startup_time'].iloc[-1]
-try:
-    next_startup_time = datetime.strptime(next_startup_time, '%Y-%m-%d %H:%M:%SZ')
-except:
-    next_startup_time = datetime(1970, 1, 1, 0, 0)
-next_startup_time = next_startup_time + pd.Timedelta(minutes=1)
-
-# Check if next startup is in the future
-if next_startup_time < now:
-    next_last_startup_text += "."
-else:
-    timeDifference = next_startup_time - now
-    next_last_startup_text += " - nächster Start in "
-
+    # Hours
     if timeDifference.seconds//3600 > 0:
-        next_last_startup_text += f"{timeDifference.seconds//3600} Stunden und {(timeDifference.seconds//60) % 60} Minuten."
-    elif (timeDifference.seconds//60) % 60 > 1:
-        next_last_startup_text += f"{(timeDifference.seconds//60) % 60} Minuten."
-    else:
-        next_last_startup_text += "weniger als einer Minute."
+        next_last_startup_text += f"{timeDifference.seconds//3600} Stunden und "
 
-st.write(next_last_startup_text)
+    # Minutes
+    if (timeDifference.seconds//60) % 60 > 1:
+        next_last_startup_text += f"{(timeDifference.seconds//60) % 60} Minuten"
+    else:
+        next_last_startup_text += "weniger als eine Minute"
+
+    # Print next startup relative to now
+    next_startup_time = df['next_startup_time'].iloc[-1]
+    next_startup_time = datetime.strptime(next_startup_time, '%Y-%m-%d %H:%M:%SZ') or datetime(1970, 1, 1, 0, 0)
+    next_startup_time = next_startup_time + pd.Timedelta(minutes=1)
+
+    # Check if next startup is in the future
+    if next_startup_time < now:
+        next_last_startup_text += "."
+    else:
+        timeDifference = next_startup_time - now
+        next_last_startup_text += " - nächster Start in "
+
+        if timeDifference.seconds//3600 > 0:
+            next_last_startup_text += f"{timeDifference.seconds//3600} Stunden und {(timeDifference.seconds//60) % 60} Minuten."
+        elif (timeDifference.seconds//60) % 60 > 1:
+            next_last_startup_text += f"{(timeDifference.seconds//60) % 60} Minuten."
+        else:
+            next_last_startup_text += "weniger als einer Minute."
+
+    st.write(next_last_startup_text)
 
 st.divider()
 
@@ -266,16 +255,20 @@ st.divider()
 # Weather widget
 ##############################################
 
-# TODO Overwrite latitude and longitude if available 
-# if settings.get("location_overwrite"):
-#     latitude = settings.get("latitude")
-#     longitude = settings.get("longitude")
-#     heigth = settings.get("heigth")
+dfMap = pd.DataFrame()
 
-dfMap = df[(df['latitude'].notnull()) & (df['longitude'].notnull())]
+if settings.get("location_overwrite"):
+    latitude = settings.get("latitude")
+    longitude = settings.get("longitude")
 
-# TODO Remove with next update
-dfMap = dfMap[(dfMap['latitude'] != "-") & (dfMap['longitude'] != "-")]
+elif 'latitude' in df.columns and 'longitude' in df.columns:
+    # Get the last entry of df latitude that is not null
+    last_latitude = df['latitude'].iloc[::-1].dropna().iloc[0]
+
+    dfMap = df[(df['latitude'].notnull()) & (df['longitude'].notnull())]
+
+    latitude = dfMap['latitude'].iloc[-1]
+    longitude = dfMap['longitude'].iloc[-1]
 
 @st.cache_data(show_spinner=False, ttl=300)
 def get_weather_data(latitude: float, longitude: float) -> dict:
@@ -289,14 +282,13 @@ def get_weather_data(latitude: float, longitude: float) -> dict:
 # Check if OpenWeather API key is set and location is available
 if st.secrets["OPENWEATHER_API_KEY"] != "" and len(dfMap) > 0:
 
-    latitude = round(float(dfMap['latitude'].iloc[-1]), 5)
-    longitude = round(float(dfMap['longitude'].iloc[-1]), 5)
+    latitude = round(latitude, 5)
+    longitude = round(longitude, 5)
 
     # Get weather data from OpenWeatherMap
     weather_data = get_weather_data(latitude, longitude)
 
-    # Check if the data is available
-    if weather_data["cod"] == 200:
+    if weather_data["cod"] == 200: # Check if response is valid
 
         # Convert temperature to celsius
         current_temperature = int(weather_data["main"]["temp"])
@@ -394,14 +386,15 @@ if len(dfMap) > 0:
 
 def plot_chart(chart_title: str, df: pd.DataFrame, x: str, y: str, x_label: str = None, y_label: str = None, unit: str = ""):
     '''Create an Altair chart.'''
-    st.header(chart_title, anchor=False)
-    st.write(f"Letzte Messung: {str(df[y].iloc[-1])} {unit}")
-    chart = alt.Chart(df).mark_line().encode(
-        x=alt.X(f'{x}:T', axis=alt.Axis(
-            title=f'{x_label}', labelAngle=-45)),
-        y=alt.Y(f'{y}:Q', axis=alt.Axis(title=f'{y_label}')),
-    ).interactive()
-    st.altair_chart(chart, use_container_width=True)
+    if x in df.columns and y in df.columns:
+        st.header(chart_title, anchor=False)
+        st.write(f"Letzte Messung: {str(df[y].iloc[-1])} {unit}")
+        chart = alt.Chart(df).mark_line().encode(
+            x=alt.X(f'{x}:T', axis=alt.Axis(
+                title=f'{x_label}', labelAngle=-45)),
+            y=alt.Y(f'{y}:Q', axis=alt.Axis(title=f'{y_label}')),
+        ).interactive()
+        st.altair_chart(chart, use_container_width=True)
 
 plot_chart("Batterie", df, 'timestamp', 'battery_voltage', "Zeit", "Batteriespannung (V)")
 plot_chart("Interne Spannung", df, 'timestamp', 'internal_voltage', "Zeit", "Interne Spannung (V)")
@@ -523,7 +516,10 @@ if True: # st.session_state.userIsLoggedIn:
     # Display the dataframe
     with st.expander("Diagnosedaten"):
 
-        st.dataframe(df)
+        if not df.empty:
+            st.dataframe(df)
+        else:
+            st.info("No data available at the moment.", icon="📊")
 
         # Check if wittyPiDiagnostics.txt exists
         if "wittyPiDiagnostics.txt" in LOG_FILENAMEs:
