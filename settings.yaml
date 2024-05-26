@@ -33,4 +33,4 @@ recoveryVoltageThreshold: 0.0 # Camera will restart if voltage rises above this 
 batteryVoltageHalf: 12.0 # Battery voltage at 50% capacity
 
 # DANGER ZONE
-shutdown: false # Enable or disable shutdown after program has run
+shutdown: true # Enable or disable shutdown after program has run

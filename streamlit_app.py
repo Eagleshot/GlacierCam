@@ -181,7 +181,7 @@ if len(imgFiles) > 0:
 # Overview of the last measurements
 ##############################################
 if 'selected_file' in locals() or 'selected_file' in globals():
-    timestampSelectedImage = datetime.strptime(selected_file[0:13], '%d%m%Y_%H%M')
+    timestampSelectedImage = datetime.strptime(selected_file[0:13], '%Y%m%d_%H%M')
     df['timestamp'] = df['timestamp'].dt.floor('min')  # Remove seconds from timestamp
     index = df[df['timestamp'] == timestampSelectedImage].index[0]
 else:
@@ -383,22 +383,23 @@ if len(dfMap) > 0:
 # Charts
 ##############################################
 
-def plot_chart(chart_title: str, x: str, y: str, x_label: str = None, y_label: str = None, unit: str = ""):
+def plot_chart(chart_title: str, y: str, unit: str = None):
     '''Create an Altair chart.'''
-    if x in df.columns and y in df.columns:
+    y_label = f"{chart_title} ({unit})" if unit else chart_title
+    if "timestamp" in df.columns and y in df.columns:
         st.header(chart_title, anchor=False)
-        st.write(f"Letzte Messung: {str(df[y].iloc[-1])} {unit}")
+        st.write(f"Last measurement: {str(df[y].iloc[-1])} {unit}")
         chart = alt.Chart(df).mark_line().encode(
-            x=alt.X(f'{x}:T', axis=alt.Axis(
-                title=f'{x_label}', labelAngle=-45)),
+            x=alt.X(f'{"timestamp"}:T', axis=alt.Axis(
+                title="Time", labelAngle=-45)),
             y=alt.Y(f'{y}:Q', axis=alt.Axis(title=f'{y_label}')),
         ).interactive()
         st.altair_chart(chart, use_container_width=True)
 
-plot_chart("Batterie", 'timestamp', 'battery_voltage', "Zeit", "Batteriespannung (V)")
-plot_chart("Interne Spannung", 'timestamp', 'internal_voltage', "Zeit", "Interne Spannung (V)")
-plot_chart("Temperatur", 'timestamp', 'temperature', "Zeit", "Temperatur (°C)")
-plot_chart("Sigalqualität", 'timestamp', 'signal_quality', "Zeit", "Signalqualität")
+plot_chart("Battery Voltage", 'battery_voltage', "V")
+plot_chart("Internal Voltage", 'internal_voltage', "V")
+plot_chart("Temperature", 'temperature', "°C")
+plot_chart("Signal Quality", 'signal_quality')
 # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
 
 ##############################################
@@ -505,6 +506,20 @@ with st.expander("Measurements"):
     else:
         st.info("No data available at the moment.", icon="📊")
 
+    if "version" in df.columns:
+        st.write(f"Firmware version: {df['version'].iloc[-1]}")
+
+# Display error messages
+with st.expander("Fehlermeldungen"):
+    st.write("Diese Funktion ist noch nicht verfügbar.")
+    # if not dfError.empty:
+    #     # Display error message and timestamp as text in reverse order
+    #     for index, row in dfError[::-1].iterrows():
+    #         st.write(row['timestamp'].strftime(
+    #             "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
+    # else:
+    #     st.write("Keine Fehlermeldungen vorhanden 🥳.")
+
     # Check if wittyPiDiagnostics.txt exists
     if "wittyPiDiagnostics.txt" in LOG_FILENAMEs:
 
@@ -547,16 +562,5 @@ with st.expander("Measurements"):
                 use_container_width=True,
                 help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
             )
-
-# Display the errors
-with st.expander("Fehlermeldungen"):
-    st.write("Diese Funktion ist noch nicht verfügbar.")
-    # if not dfError.empty:
-    #     # Display error message and timestamp as text in reverse order
-    #     for index, row in dfError[::-1].iterrows():
-    #         st.write(row['timestamp'].strftime(
-    #             "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
-    # else:
-    #     st.write("Keine Fehlermeldungen vorhanden 🥳.")
 
 # fileserver.quit()
