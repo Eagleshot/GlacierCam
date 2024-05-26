@@ -13,7 +13,7 @@ from fileserver import FileServer
 from settings import Settings
 from data import Data
 
-VERSION = "1.0.0.alpha1"
+VERSION = "1.0.0.alpha2"
 
 ###########################
 # Configuration and filenames
@@ -78,11 +78,8 @@ except Exception as e:
 ###########################
 # Settings
 ###########################
-
-# Try to download settings from server
 try:
     if CONNECTED_TO_SERVER:
-
         file_list = fileserver.list_files()
 
         # Check if settings file exists
@@ -94,14 +91,12 @@ try:
 except Exception as e:
     logging.critical("Could not download settings file from FTP server: %s", str(e))
 
-# Read settings file
-try:
+try: # Read settings file
     settings = Settings(f"{FILE_PATH}settings.yaml")
 except Exception as e:
     logging.critical("Could not open settings.yaml: %s", str(e))
 
-# Set log level according to settings
-try:
+try: # Set log level according to settings
     logging.getLogger().setLevel(settings.get("logLevel"))
 except Exception as e:
     logging.warning("Could not change log level: %s", str(e))
@@ -285,6 +280,7 @@ except Exception as e:
 try:
     if CONNECTED_TO_SERVER:
         fileserver.append_file("log.txt", FILE_PATH)
+        remove(f"{FILE_PATH}log.txt")
 
     if settings.get("uploadExtendedDiagnostics") and CONNECTED_TO_SERVER:
         fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/")
