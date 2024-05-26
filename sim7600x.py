@@ -5,9 +5,8 @@ import logging
 import serial
 
 class SIM7600X:
-    '''Class for the SIM7600X 4G module'''
+    '''Class for the SIM7600X 4G module.'''
     def __init__(self, port: str = '/dev/ttyUSB2', baudrate: int = 115200, timeout: int = 5):
-        '''Initialize SIM7600X.'''
         try:
             self.ser = serial.Serial(port, baudrate, timeout=timeout) # USB connection
             self.ser.flushInput()

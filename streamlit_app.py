@@ -1,21 +1,18 @@
 """Webserver for the Eagleshot GlacierCam - https://github.com/Eagleshot/GlacierCam"""
 from io import BytesIO
 from datetime import datetime
+import hmac
 from PIL import Image
 import streamlit as st
 import pandas as pd
 import altair as alt
 import pytz
-from suntime import Sun, SunTimeException
+from suntime import Sun
 import requests
 import yaml
 from settings import Settings
 from fileserver import FileServer
 import logging # TODO
-
-# Login status
-if "userIsLoggedIn" not in st.session_state:
-    st.session_state.userIsLoggedIn = False
 
 timezone = pytz.timezone('Europe/Zurich')
 timezoneUTC = pytz.timezone('UTC')
@@ -35,7 +32,7 @@ st.set_page_config(
 
 # Change the camera selection
 if len(st.secrets["FTP_FOLDER"]) > 1:
-    with st.sidebar: 
+    with st.sidebar:
         st.header("Kamera auswählen")
         FTP_FOLDER = st.selectbox(
             "Bitte wählen Sie eine Kamera aus:",
@@ -83,10 +80,10 @@ if 'timestamp' in df.columns:
     df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%MZ')
 elif df.empty:
     st.info("No data available at the moment.", icon="📊")
+
 ##############################################
 # Sidebar
 ##############################################
-
 with st.sidebar:
 
     # Zeitraum auswählen
@@ -126,15 +123,19 @@ with st.sidebar:
     )
     timezone = pytz.timezone(timezone_selection)
 
-    # Login
+    # Login status
     # TODO Improve security (e.g. multiple login attempts)
+    st.session_state["userIsLoggedIn"] = False
+
+    def enter_password(password: str) -> str:
+        '''Check if the entered password is correct.'''
+        if hmac.compare_digest(st.session_state["password"], st.secrets["FTP_PASSWORD"]):
+            st.session_state["userIsLoggedIn"] = True
+            del st.session_state["password"] # Don't store the password
+
     st.header("Login")
     password = st.text_input("Bitte loggen Sie sich ein um die Einstellungen anzupassen.",
-                                placeholder="Passwort eingeben", type="password")
-    if password == st.secrets["FTP_PASSWORD"]:
-
-        st.success("Erfolgreich eingeloggt.")
-        st.session_state.userIsLoggedIn = True
+                                placeholder="Please Enter Password", type="password", on_change=enter_password)
 
 # Select slider if multiple images are available
 if len(imgFiles) > 1:
@@ -157,7 +158,7 @@ else:
     img_placeholder.info("No images available at the moment.", icon="📷")
 
 # Get the image file from the FTP server
-if len(files) > 0:
+if len(imgFiles) > 0:
     fileserver.change_directory("save") # TODO
     image_data = fileserver.get_file_as_bytes(selected_file)
     fileserver.change_directory("..") # TODO
@@ -179,13 +180,11 @@ if len(files) > 0:
 ##############################################
 # Overview of the last measurements
 ##############################################
-try:
-    timestampSelectedImage = datetime.strptime(
-        selected_file[0:13], '%d%m%Y_%H%M')
-    df['timestamp'] = df['timestamp'].dt.floor(
-        'min')  # Remove seconds from timestamp
+if 'selected_file' in locals() or 'selected_file' in globals():
+    timestampSelectedImage = datetime.strptime(selected_file[0:13], '%d%m%Y_%H%M')
+    df['timestamp'] = df['timestamp'].dt.floor('min')  # Remove seconds from timestamp
     index = df[df['timestamp'] == timestampSelectedImage].index[0]
-except:
+else:
     index = -1
 
 col1, col2, col3, col4 = st.columns(4)
@@ -384,7 +383,7 @@ if len(dfMap) > 0:
 # Charts
 ##############################################
 
-def plot_chart(chart_title: str, df: pd.DataFrame, x: str, y: str, x_label: str = None, y_label: str = None, unit: str = ""):
+def plot_chart(chart_title: str, x: str, y: str, x_label: str = None, y_label: str = None, unit: str = ""):
     '''Create an Altair chart.'''
     if x in df.columns and y in df.columns:
         st.header(chart_title, anchor=False)
@@ -396,10 +395,10 @@ def plot_chart(chart_title: str, df: pd.DataFrame, x: str, y: str, x_label: str 
         ).interactive()
         st.altair_chart(chart, use_container_width=True)
 
-plot_chart("Batterie", df, 'timestamp', 'battery_voltage', "Zeit", "Batteriespannung (V)")
-plot_chart("Interne Spannung", df, 'timestamp', 'internal_voltage', "Zeit", "Interne Spannung (V)")
-plot_chart("Temperatur", df, 'timestamp', 'temperature', "Zeit", "Temperatur (°C)")
-plot_chart("Sigalqualität", df, 'timestamp', 'signal_quality', "Zeit", "Signalqualität")
+plot_chart("Batterie", 'timestamp', 'battery_voltage', "Zeit", "Batteriespannung (V)")
+plot_chart("Interne Spannung", 'timestamp', 'internal_voltage', "Zeit", "Interne Spannung (V)")
+plot_chart("Temperatur", 'timestamp', 'temperature', "Zeit", "Temperatur (°C)")
+plot_chart("Sigalqualität", 'timestamp', 'signal_quality', "Zeit", "Signalqualität")
 # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf
 
 ##############################################
@@ -412,10 +411,10 @@ if not dfMap.empty:
 
     # Print coordinates
     st.write(
-        f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['height'].iloc[-1]} m. ü. M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
+        f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['height'].iloc[-1]} m.ü.M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
 
     # Print timestamp
-    if settings.get("location_overwrite"):
+    if not settings.get("location_overwrite"):
         st.markdown(f"Letztes Standortupdate: {df['timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
 
     st.divider()
@@ -429,26 +428,11 @@ if not dfMap.empty:
 
 # Read settings.yaml and display it
 # TODO Settings (incl. validation)
-if True: # st.session_state.userIsLoggedIn:
+if st.session_state["userIsLoggedIn"]:
     with st.expander("Kameraeinstellungen"):
 
         st.write("Kamera")
-
-        autofocus_ON = False
-        # if settings.get("lensPosition") == -1:
-        #     autofocus_ON = True
-
-        col1, col2 = st.columns([3,1])
-
-        # Focus range slider from 0m to inf
-        col2.write("")
-        col2.write("")
-        autofocus_ON = col2.toggle(
-            "Autofokus", value=autofocus_ON, help="Aktiviert den automatischen Autofokus der Kamera oder kann deaktiviert werden um den Fokus manuell zwischen 0.1m und ∞ einzustellen.")
-
-        focus = col1.slider(
-            "Manueller Fokus", min_value=0, max_value=100, value=0, step=1, disabled=autofocus_ON, format="%d m")
-
+        
         # Resolution
         # TODO
         resolution = st.selectbox(
@@ -513,69 +497,66 @@ if True: # st.session_state.userIsLoggedIn:
         if col2.button("Speichern"): # TODO
             st.write("Diese Funktion ist noch nicht verfügbar.", key="saveWebSettings")
 
-    # Display the dataframe
-    with st.expander("Diagnosedaten"):
+# Display the dataframe
+with st.expander("Measurements"):
 
-        if not df.empty:
-            st.dataframe(df)
-        else:
-            st.info("No data available at the moment.", icon="📊")
+    if not df.empty:
+        st.dataframe(df)
+    else:
+        st.info("No data available at the moment.", icon="📊")
 
-        # Check if wittyPiDiagnostics.txt exists
-        if "wittyPiDiagnostics.txt" in LOG_FILENAMEs:
+    # Check if wittyPiDiagnostics.txt exists
+    if "wittyPiDiagnostics.txt" in LOG_FILENAMEs:
 
-            # Retrieve the file data
-            fileserver.download_file("wittyPiDiagnostics.txt")
+        # Retrieve the file data
+        fileserver.download_file("wittyPiDiagnostics.txt")
 
-            # Get last modification date
-            last_modified = fileserver.get_file_last_modified_date("wittyPiDiagnostics.txt")
-            last_modified = timezone.localize(last_modified) # Convert date to local timezone
+        # Get last modification date
+        last_modified = fileserver.get_file_last_modified_date("wittyPiDiagnostics.txt")
+        last_modified = timezone.localize(last_modified) # Convert date to local timezone
 
+        with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
+            # Download wittyPiDiagnostics.txt
+            st.download_button(
+                label="WittyPi Diagnostics herunterladen 📝",
+                data=file,
+                file_name="wittyPiDiagnostics.txt",
+                mime="text/plain",
+                use_container_width=True,
+                help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
+            )
 
-            with open('wittyPiDiagnostics.txt', encoding='utf-8') as file:
-                # Download wittyPiDiagnostics.txt
-                st.download_button(
-                    label="WittyPi Diagnostics herunterladen 📝",
-                    data=file,
-                    file_name="wittyPiDiagnostics.txt",
-                    mime="text/plain",
-                    use_container_width=True,
-                    help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
-                )
+    LOG_FILENAME = "log.txt"
 
-        LOG_FILENAME = "log.txt"
+    if LOG_FILENAME in LOG_FILENAMEs:
 
-        if LOG_FILENAME in LOG_FILENAMEs:
+        # Retrieve the file data
+        fileserver.download_file(LOG_FILENAME)
 
-            # Retrieve the file data
-            fileserver.download_file(LOG_FILENAME)
+        # Get last modification date
+        last_modified = fileserver.get_file_last_modified_date(LOG_FILENAME)
+        last_modified = timezone.localize(last_modified) # Convert date to local timezone
 
-            # Get last modification date
-            last_modified = fileserver.get_file_last_modified_date(LOG_FILENAME)
-            last_modified = timezone.localize(last_modified) # Convert date to local timezone
+        with open(LOG_FILENAME, encoding='utf-8') as file:
+            # Download wittyPiDiagnostics.txt
+            st.download_button(
+                label="Logdateien herunterladen 📝",
+                data=file,
+                file_name=LOG_FILENAME,
+                mime="text/plain",
+                use_container_width=True,
+                help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
+            )
 
-            with open(LOG_FILENAME, encoding='utf-8') as file:
-                # Download wittyPiDiagnostics.txt
-                st.download_button(
-                    label="Logdateien herunterladen 📝",
-                    data=file,
-                    file_name=LOG_FILENAME,
-                    mime="text/plain",
-                    use_container_width=True,
-                    help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
-                )
+# Display the errors
+with st.expander("Fehlermeldungen"):
+    st.write("Diese Funktion ist noch nicht verfügbar.")
+    # if not dfError.empty:
+    #     # Display error message and timestamp as text in reverse order
+    #     for index, row in dfError[::-1].iterrows():
+    #         st.write(row['timestamp'].strftime(
+    #             "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
+    # else:
+    #     st.write("Keine Fehlermeldungen vorhanden 🥳.")
 
-    # Display the errors
-    # with st.expander("Fehlermeldungen"):
-        # Display the errors (not nan)
-        # dfError = df[df['Error'].notna()]
-
-        # if not dfError.empty:
-        #     # Display error message and timestamp as text in reverse order
-        #     for index, row in dfError[::-1].iterrows():
-        #         st.write(row['timestamp'].strftime(
-        #             "%d.%m.%Y %H:%M:%S Uhr"), ": ", row['Error'])
-        # else:
-        #     st.write("Keine Fehlermeldungen vorhanden 🥳.")
-
-    fileserver.quit()
+# fileserver.quit()
