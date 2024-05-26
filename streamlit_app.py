@@ -386,9 +386,10 @@ if len(dfMap) > 0:
 def plot_chart(chart_title: str, y: str, unit: str = None):
     '''Create an Altair chart.'''
     y_label = f"{chart_title} ({unit})" if unit else chart_title
+    subtitle = f"Last measurement: {df[y].iloc[-1]:.2f} {unit}" if unit else f"Last measurement: {df[y].iloc[-1]}"
     if "timestamp" in df.columns and y in df.columns:
         st.header(chart_title, anchor=False)
-        st.write(f"Last measurement: {str(df[y].iloc[-1])} {unit}")
+        st.write(subtitle)
         chart = alt.Chart(df).mark_line().encode(
             x=alt.X(f'{"timestamp"}:T', axis=alt.Axis(
                 title="Time", labelAngle=-45)),
