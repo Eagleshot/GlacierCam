@@ -1,17 +1,17 @@
 '''GlacierCam firmware - see https://github.com/Eagleshot/GlacierCam for more information'''
 
-from io import BytesIO
-from os import system, remove, listdir, path
+from os import system, remove, listdir
 from datetime import datetime, time
 import logging
 from logging.handlers import RotatingFileHandler
 from picamera2 import Picamera2
 from libcamera import controls
-from yaml import safe_load, safe_dump
+from yaml import safe_load
 from sim7600x import SIM7600X
 from witty_pi_4 import WittyPi4
 from fileserver import FileServer
 from settings import Settings
+from data import Data
 
 VERSION = "1.0.0.alpha1"
 
@@ -38,7 +38,9 @@ def get_cpu_serial():
 
 CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
 FILE_PATH = "/home/pi/"  # Path where files are saved
-data = {'version': VERSION}
+data = Data()
+data.add('version', VERSION)
+
 
 # Error logging
 file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
@@ -117,14 +119,14 @@ except Exception as e:
 
 TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
 TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
-data['timestamp'] = TIMESTAMP_CSV
+data.add('timestamp', TIMESTAMP_CSV)
 
 ###########################
 # Generate schedule
 ###########################
 try:
     battery_voltage = wittyPi.get_battery_voltage()
-    data["battery_voltage"] = battery_voltage
+    data.add('battery_voltage', battery_voltage)
 
     battery_voltage_half = settings.get("batteryVoltageHalf")
     battery_voltage_quarter = (battery_voltage_half-settings.get("lowVoltageThreshold"))*0.5
@@ -158,7 +160,7 @@ except Exception as e:
 ###########################
 try:
     next_startup_time = wittyPi.apply_schedule()
-    data['next_startup_time'] = f"{next_startup_time}Z"
+    data.add('next_startup_time', f"{next_startup_time}Z")
 except Exception as e:
     logging.critical("Could not apply schedule: %s", str(e))
 
@@ -202,17 +204,10 @@ except Exception as e:
 ###########################
 try:
     image_filename = f'{TIMESTAMP_FILENAME}_{settings.get("cameraName")}.jpg'
-except Exception as e:
-    logging.warning("Could not set custom camera name: %s", str(e))
-
-try:
     camera.start_and_capture_file(FILE_PATH + image_filename, capture_mode=cameraConfig, delay=2, show_preview=False)
 except Exception as e:
     logging.critical("Could not start camera and capture image: %s", str(e))
 
-###########################
-# Stop camera
-###########################
 try:
     camera.stop()
 except Exception as e:
@@ -245,10 +240,10 @@ except Exception as e:
 # Get readings
 ###########################
 try:
-    data["temperature"] = wittyPi.get_temperature()
-    data["internal_voltage"] = wittyPi.get_internal_voltage()
-    # data["internal_current"] = wittyPi.get_internal_current()
-    data["signal_quality"] = sim7600.get_signal_quality()
+    data.add('temperature', wittyPi.get_temperature())
+    data.add('internal_voltage', wittyPi.get_internal_voltage())
+    # data.add('internal_current', wittyPi.get_internal_current())
+    data.add('signal_quality', sim7600.get_signal_quality())
 except Exception as e:
     logging.warning("Could not get readings: %s", str(e))
 
@@ -257,8 +252,11 @@ except Exception as e:
 ###########################
 try:
     if settings.get("enableGPS"):
-        data["latitude"], data["longitude"], data["height"], _ = sim7600.get_gps_position()
+        latitude, longitude, height, _ = sim7600.get_gps_position()
         sim7600.stop_gps_session()
+        data.add('latitude', latitude)
+        data.add('longitude', longitude)
+        data.add('height', height)
 except Exception as e:
     logging.warning("Could not get GPS coordinates: %s", str(e))
 
@@ -273,27 +271,11 @@ try:
 
     # Check if is connected to file server
     if CONNECTED_TO_SERVER:
-        try:
-            # Check if local diagnostics file exists
-            if path.exists(diagnostics_filepath):
-                with open(diagnostics_filepath, 'r', encoding='utf-8') as yaml_file:
-                    read_data = safe_load(yaml_file)
-
-                data = read_data + [data]
-
-                remove(diagnostics_filepath)
-        except Exception as e:
-            logging.warning("Could not open diagnostics file: %s", str(e))
-
-        # Upload diagnostics to server
-        byte_stream = BytesIO()
-        safe_dump([data], stream=byte_stream, default_flow_style=False, encoding='utf-8')
-        byte_stream.seek(0)  # Set the position to the beginning of the BytesIO object
-        fileserver.append_file_from_bytes(DIAGNOSTICS_FILENAME, byte_stream)
+        data.load_diagnostics()
+        fileserver.append_file_from_bytes(DIAGNOSTICS_FILENAME, data.get_data_as_bytes())
     else:
         # Append new measurement to local YAML file
-        with open(diagnostics_filepath, 'a', encoding='utf-8') as yaml_file:
-            safe_dump([data], yaml_file, default_flow_style=False)
+        data.append_diagnostics_to_file()
 except Exception as e:
     logging.warning("Could not append new measurements to log: %s", str(e))
 

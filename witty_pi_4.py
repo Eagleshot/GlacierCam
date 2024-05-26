@@ -308,6 +308,7 @@ class WittyPi4:
 
 if __name__ == "__main__":
 
+    # TODO
     logging.basicConfig(level=logging.DEBUG)
 
     witty_pi_4 = WittyPi4()

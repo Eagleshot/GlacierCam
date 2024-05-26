@@ -3,3 +3,4 @@ wget -O /home/pi/sim7600x.py https://raw.githubusercontent.com/Eagleshot/Glacier
 wget -O /home/pi/witty_pi_4.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/witty_pi_4.py
 wget -O /home/pi/settings.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.py
 wget -O /home/pi/fileserver.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/fileserver.py
+wget -O /home/pi/data.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/data.py

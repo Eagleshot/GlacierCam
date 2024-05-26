@@ -66,20 +66,13 @@ sudo chmod 777 /home/pi/main.py # Execution permissions
 
 # Download modules
 wget -O /home/pi/sim7600x.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/sim7600x.py
-
-# Download witty_pi_4.py
 wget -O /home/pi/witty_pi_4.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/witty_pi_4.py
-
-# Download settings.py
 wget -O /home/pi/settings.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.py
-
-# Download fileserver.py
 wget -O /home/pi/fileserver.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/fileserver.py
+wget -O /home/pi/data.py https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/data.py
 
-# Download config.yaml
+# Download config and settings
 wget -O /home/pi/config.yaml https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/config.yaml
-
-# Download settings.yaml
 wget -O /home/pi/settings.yaml https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/settings.yaml
 
 echo ''

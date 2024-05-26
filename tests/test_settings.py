@@ -1,8 +1,6 @@
 import os
-from sys import path
 import tempfile
 from yaml import safe_load, dump
-path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import Settings
 
 def test_load_and_validate_valid_file():
