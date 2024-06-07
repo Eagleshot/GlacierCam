@@ -1,12 +1,13 @@
-'''A python module for interacting with the Witty Pi 4 board'''
+'''A python module for interacting with the Witty Pi 4 board.'''
 from subprocess import check_output, STDOUT
 from datetime import time, datetime
+from time import sleep
 from os import path
 import logging
 import suntime
 
 class WittyPi4:
-    '''A class for interacting with the Witty Pi 4 board'''
+    '''A class for interacting with the Witty Pi 4 board.'''
 
     # Setup
     WITTYPI_DIRECTORY = "/home/pi/wittypi"
@@ -24,7 +25,7 @@ class WittyPi4:
     MAX_DURATION_MINUTES = 4 # Maximum time Raspberry Pi is allowed to run
 
     def __init__(self):
-        logging.info("Initializing Witty Pi 4 interface")
+        logging.info("Initializing Witty Pi 4 interface.")
 
     # Get WittyPi readings
     # See: https://www.baeldung.com/linux/run-function-in-script
@@ -39,7 +40,7 @@ class WittyPi4:
         return "ERROR"
 
     def sync_time_with_network(self) -> None:
-        '''Sync Witty Pi 4 clock with network time'''
+        '''Sync the RTC with network time.'''
         # See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-how-to-synchronise-time-with-internet-on-boot/
         try:
             output = self.run_command("net_to_system && system_to_rtc")
@@ -48,7 +49,7 @@ class WittyPi4:
             logging.error("Could not synchronize time with network: %s", str(e))
 
     def get_temperature(self) -> float:
-        '''Gets the current temperature reading from the Witty Pi 4 in °C'''
+        '''Gets the current temperature reading in °C.'''
         try:
             temperature = self.run_command("get_temperature")
             temperature = temperature.split("/", maxsplit = 1)[0] # Remove the Farenheit reading
@@ -61,7 +62,7 @@ class WittyPi4:
             return -273.15
 
     def get_battery_voltage(self) -> float:
-        '''Gets the battery voltage reading from the Witty Pi 4 in V'''
+        '''Gets the battery voltage reading in V.'''
         try:
             battery_voltage = self.run_command("get_input_voltage")
             battery_voltage = float(battery_voltage) # Remove V
@@ -72,7 +73,7 @@ class WittyPi4:
             return 0.0
 
     def get_internal_voltage(self) -> float:
-        '''Gets the internal (5V) voltage from the Witty Pi 4 in V'''
+        '''Gets the internal (5V) voltage in V.'''
         try:
             internal_voltage = self.run_command("get_output_voltage")
             internal_voltage = float(internal_voltage)
@@ -83,7 +84,7 @@ class WittyPi4:
             return 0.0
 
     def get_internal_current(self) -> float:
-        '''Gets the internal (5V) current reading from the Witty Pi 4 in A'''
+        '''Gets the internal (5V) current reading in A.'''
         try:
             internal_current = self.run_command("get_output_current")
             internal_current = float(internal_current)
@@ -119,7 +120,7 @@ class WittyPi4:
         return self.get_voltage_threshold("get_recovery_voltage_threshold")
 
     def set_low_voltage_threshold(self, voltage: float) -> float:
-        '''Sets the low voltage threshold from the Witty Pi 4'''
+        '''Set the low voltage threshold in V.'''
         # TODO: Compare with recovery voltage threshold
         try:
             if 2.0 <= voltage <= 25.0 or voltage == 0:
@@ -135,7 +136,7 @@ class WittyPi4:
             logging.error("Could not set low voltage threshold: %s", str(e))
 
     def set_recovery_voltage_threshold(self, voltage: float) -> None:
-        '''Sets the recovery voltage threshold from the Witty Pi 4'''
+        '''Set the recovery voltage threshold in V.'''
         # TODO Compare to low voltage threshold
         try:
             if 2.0 <= voltage <= 25.0 or voltage == 0:
@@ -151,14 +152,14 @@ class WittyPi4:
             logging.error("Could not set recovery voltage threshold: %s", str(e))
 
     def set_start_time(self, start_time: time) -> None:
-        '''Set the start time for the schedule'''
+        '''Set the start time for the schedule.'''
         if start_time < time(23 - self.interval_length_hours, 59 - self.interval_length_minutes):
             self.start_time = start_time
         else:
             logging.error("Invalid start time: %s", start_time)
 
     def set_end_time(self, end_time: time) -> None:
-        '''Set the end time for the schedule'''
+        '''Set the end time for the schedule.'''
         self.end_time = end_time
 
     def set_start_end_time_sunrise(self, latitude: float, longitude: float) -> None:
@@ -178,7 +179,7 @@ class WittyPi4:
         self.round_start_end_time = True # Round to nearest interval
 
     def set_interval_length(self, minutes: int, hours: int = 0) -> None:
-        '''Set the interval length for the schedule with basic validity checks'''
+        '''Set the interval length for the schedule with basic validity checks.'''
         if 0 <= hours < 24:
             self.interval_length_hours = hours
         else:
@@ -272,9 +273,9 @@ class WittyPi4:
             with open(self.SCHEDULE_FILE_PATH, "w", encoding='utf-8') as f:
                 f.write(schedule)
 
-    def apply_schedule(self, max_retries: int = 5) -> str:
+    def apply_schedule(self) -> str:
         '''Apply schedule to Witty Pi 4'''
-        for retry in range(max_retries):
+        for retry in range(5):
             try:
                 # Apply new schedule
                 command = f"cd {self.WITTYPI_DIRECTORY} && sudo ./runScript.sh"
@@ -284,14 +285,15 @@ class WittyPi4:
                 if "Schedule next startup at:" in output[1]:
                     logging.info("%s", output[0])
                     logging.info("%s", output[1])
-                    next_startup_time = output[1][-19:]
-                    return next_startup_time
+                    return output[1][-19:] # Next startup time
 
                 logging.warning("Failed to apply schedule: %s", output[0])
                 self.sync_time_with_network()
 
             except Exception as e:
                 logging.error("Failed to apply schedule: %s (%s)", str(e), retry)
+
+            sleep(2**retry) # Exponential backoff
 
         # Return error if max retries reached
         return "-"

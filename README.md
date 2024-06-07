@@ -79,13 +79,13 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 # TODOs
 ## V1.0
 - [X] Update settings validation
-- [ ] Move data to seperate class and add tests
+- [X] Move data to seperate class and add tests
 - [X] Add the version to data -> TODO documentation
 - [X] Finish 3D-printed case
-- [ ] Configure Esp32 as backup
 - [X] Implement software update possibility
 - [X] Add log level setting
 - [ ] Limit log filesize
+- [ ] Add capacitor to all Witty Pi 4s
 - [ ] Update Witty Pi 4 firmware -> See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-not-starting/
 - [ ] Check whole code
 
