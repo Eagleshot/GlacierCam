@@ -13,7 +13,7 @@ from fileserver import FileServer
 from settings import Settings
 from data import Data
 
-VERSION = "1.0.0.alpha2"
+VERSION = "1.0.0.alpha3"
 
 ###########################
 # Configuration and filenames

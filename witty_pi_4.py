@@ -36,7 +36,7 @@ class WittyPi4:
             return output.strip()
         except Exception as e:
             logging.error("Could not run Witty Pi 4 command: %s", str(e))
-            return "ERROR"
+        return "ERROR"
 
     def sync_time_with_network(self) -> None:
         '''Sync Witty Pi 4 clock with network time'''
@@ -93,39 +93,30 @@ class WittyPi4:
             logging.error("Could not get Raspberry Pi current: %s", str(e))
             return 0.0
 
-    def get_low_voltage_threshold(self) -> float:
-        '''Gets the low threshold from the Witty Pi 4'''
+    def get_voltage_threshold(self, command: str) -> float:
+        '''General method to get a voltage threshold'''
         try:
-            low_voltage_threshold = self.run_command("get_low_voltage_threshold")
+            threshold = self.run_command(command)
 
-            if low_voltage_threshold == "disabled":
-                logging.info("Low voltage threshold: disabled")
+            if threshold == "disabled":
+                logging.info("%s: disabled", command)
                 return 0.0
 
-            low_voltage_threshold = float(low_voltage_threshold[:-1])
-            logging.info("Low voltage threshold: %s V", low_voltage_threshold)
-            return low_voltage_threshold
+            threshold = float(threshold[:-1])
+            logging.info("%s: %s V", command, threshold)
+            return threshold
 
         except Exception as e:
-            logging.error("Could not get low voltage threshold: %s", str(e))
-            return 0.0
+            logging.error("Could not get %s: %s", command, str(e))
+            return 0.0 
+
+    def get_low_voltage_threshold(self) -> float:
+        '''Gets the low threshold in V.'''
+        return self.get_voltage_threshold("get_low_voltage_threshold")
 
     def get_recovery_voltage_threshold(self) -> float:
-        '''Gets the recovery threshold from the Witty Pi 4'''
-        try:
-            recovery_voltage_threshold = self.run_command("get_recovery_voltage_threshold")
-
-            if recovery_voltage_threshold == "disabled":
-                logging.info("Recovery voltage threshold: disabled")
-                return 0.0
-
-            recovery_voltage_threshold = float(recovery_voltage_threshold[:-1])
-            logging.info("Recovery voltage threshold: %s V", recovery_voltage_threshold)
-            return recovery_voltage_threshold
-
-        except Exception as e:
-            logging.error("Could not get recovery voltage threshold: %s", str(e))
-            return 0.0
+        '''Gets the recovery threshold in V.'''
+        return self.get_voltage_threshold("get_recovery_voltage_threshold")
 
     def set_low_voltage_threshold(self, voltage: float) -> float:
         '''Sets the low voltage threshold from the Witty Pi 4'''
@@ -158,7 +149,6 @@ class WittyPi4:
 
         except Exception as e:
             logging.error("Could not set recovery voltage threshold: %s", str(e))
-
 
     def set_start_time(self, start_time: time) -> None:
         '''Set the start time for the schedule'''
@@ -307,10 +297,7 @@ class WittyPi4:
         return "-"
 
 if __name__ == "__main__":
-
-    # TODO
     logging.basicConfig(level=logging.DEBUG)
-
     witty_pi_4 = WittyPi4()
     witty_pi_4.sync_time_with_network()
     witty_pi_4.get_temperature()
@@ -319,7 +306,8 @@ if __name__ == "__main__":
     witty_pi_4.get_internal_current()
     witty_pi_4.get_low_voltage_threshold()
     witty_pi_4.get_recovery_voltage_threshold()
-    witty_pi_4.set_low_voltage_threshold(3.5)
-    witty_pi_4.set_recovery_voltage_threshold(3.7)
-    witty_pi_4.generate_schedule(8, 0, 30, 8)
+    witty_pi_4.set_start_time(time(8, 0))
+    witty_pi_4.set_end_time(time(20, 0))
+    witty_pi_4.set_interval_length(30)
+    witty_pi_4.generate_schedule()
     witty_pi_4.apply_schedule()
