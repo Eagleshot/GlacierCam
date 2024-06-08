@@ -13,19 +13,19 @@ class WittyPi4:
     WITTYPI_DIRECTORY = "/home/pi/wittypi"
     SCHEDULE_FILE_PATH = f"{WITTYPI_DIRECTORY}/schedule.wpi"
 
-    # Default schedule settings
-    start_time = time(8, 0)
-    end_time = time(20, 0)
-    interval_length_minutes = 30
-    interval_length_hours = 0
-    round_start_end_time = False
-
-    START_DATE = datetime(2020, 1, 1)
-    END_DATE = datetime(2037, 12, 31, 23, 59, 59)
-    MAX_DURATION_MINUTES = 4 # Maximum time Raspberry Pi is allowed to run
-
     def __init__(self):
-        logging.info("Initializing Witty Pi 4 interface.")
+        # Default schedule settings
+        self.start_time = time(8, 0)
+        self.end_time = time(20, 0)
+        self.interval_length_minutes = 30
+        self.interval_length_hours = 0
+        self.round_start_end_time = False
+
+        self.START_DATE = datetime(2020, 1, 1)
+        self.END_DATE = datetime(2037, 12, 31, 23, 59, 59)
+        self.MAX_DURATION_MINUTES = 4 # Maximum time Raspberry Pi is allowed to run
+
+    MAX_RETRIES = 5
 
     # Get WittyPi readings
     # See: https://www.baeldung.com/linux/run-function-in-script
@@ -275,7 +275,7 @@ class WittyPi4:
 
     def apply_schedule(self) -> str:
         '''Apply schedule to Witty Pi 4'''
-        for retry in range(5):
+        for retry in range(self.MAX_RETRIES):
             try:
                 # Apply new schedule
                 command = f"cd {self.WITTYPI_DIRECTORY} && sudo ./runScript.sh"

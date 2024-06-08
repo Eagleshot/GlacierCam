@@ -41,7 +41,6 @@ FILE_PATH = "/home/pi/"  # Path where files are saved
 data = Data()
 data.add('version', VERSION)
 
-
 # Error logging
 file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
@@ -59,13 +58,11 @@ except Exception as e:
 ###########################
 # Connect to fileserver
 ###########################
-
-fileserver = FileServer(config["ftpServerAddress"], config["username"], config["password"])
-CONNECTED_TO_SERVER = fileserver.connected()
-
-# Go to custom directory on fileserver if specified
 try:
-    # Custom directory
+    fileserver = FileServer(config["ftpServerAddress"], config["username"], config["password"])
+    CONNECTED_TO_SERVER = fileserver.connected()
+
+    # Go to custom fileserver directory if specified
     if config["ftpDirectory"] != "" and CONNECTED_TO_SERVER:
         fileserver.change_directory(config["ftpDirectory"], True)
 
@@ -112,9 +109,12 @@ try:
 except Exception as e:
     logging.warning("Could not synchronize time with network: %s", str(e))
 
-TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
-TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
-data.add('timestamp', TIMESTAMP_CSV)
+try:
+    TIMESTAMP_CSV = datetime.today().strftime('%Y-%m-%d %H:%MZ') # UTC-Time
+    TIMESTAMP_FILENAME = datetime.today().strftime('%Y%m%d_%H%MZ') # UTC-Time
+    data.add('timestamp', TIMESTAMP_CSV)
+except Exception as e:
+    logging.warning("Could not get timestamp: %s", str(e))
 
 ###########################
 # Generate schedule

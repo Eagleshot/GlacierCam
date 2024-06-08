@@ -30,12 +30,11 @@ class Settings:
         'shutdown': {'type': bool, 'default': True},
     }
 
-    settings = {}
-    valid_settings = True
-
-
     def __init__(self, settings_filename: str = "settings.yaml") -> None:
         '''Load the settings from a YAML file and validate them.'''
+        self.settings = {}
+        self.valid_settings = True
+
         try:
             with open(settings_filename, encoding='utf-8') as file:
                 self.settings = safe_load(file) or {}

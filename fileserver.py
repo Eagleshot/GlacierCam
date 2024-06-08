@@ -7,11 +7,12 @@ import logging
 
 class FileServer:
     """A class to connect to a file server and perform operations such as downloading and uploading files."""
-    MAX_RETRIES = 5
-    RETRY_INTERVAL = 5  # Seconds
-
+    
     def __init__(self, host: str, username: str, password: str) -> None:
         """Initialize and connect to the file server."""
+        self.MAX_RETRIES = 5
+        self.RETRY_INTERVAL = 5  # Seconds
+
         self.ftp = None
         self.connected_to_server = self.connect_to_server(host, username, password)
 
@@ -121,3 +122,49 @@ class FileServer:
             logging.info("File server connection closed.")
         except Exception as e:
             logging.error("Failed to close file server connection: %s", str(e))
+
+
+if __name__ == "__main__":
+
+    HOST = "444024-1.web.fhgr.ch"
+    USERNAME = "444024_1_1"
+    PASSWORD = "e5tlZOhT=EoB"
+
+    logging.basicConfig(level=logging.INFO)
+    file_server = FileServer(HOST, USERNAME, PASSWORD)
+
+    print(f"Connected to file server: {file_server.connected()}")
+
+    file_server.change_directory("private")
+
+
+    import yaml
+    import random
+
+    generated_data = {
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'next_startup_time': datetime.now().timestamp() + random.randint(60, 3600),  # Random future timestamp
+        'battery_voltage': round(random.uniform(3.0, 4.2), 2),  # Example voltage range
+        'internal_voltage': round(random.uniform(1.0, 1.5), 2),
+        'internal_current': round(random.uniform(0.0, 5.0), 2),
+        'temperature': round(random.uniform(-20, 40), 1),  # Example temperature range
+        'signal_quality': random.randint(0, 100),
+        'latitude': round(random.uniform(-90, 90), 6),
+        'longitude': round(random.uniform(-180, 180), 6),
+        'height': round(random.uniform(0, 10000), 2)  # Example height in meters
+    }
+
+    # Append the new data to the YAML file in the file server with append_file_from_bytes
+    byte_stream = BytesIO()
+    yaml.safe_dump([generated_data], stream=byte_stream,  default_flow_style=False, encoding='utf-8')
+    byte_stream.seek(0)  # Set the position to the beginning of the BytesIO object
+    
+    file_server.append_file_from_bytes("data.yaml", byte_stream)
+
+    #     file_server.download_file("example.txt", "local/")
+    #     file_server.upload_file("example.txt", "local/")
+    #     file_server.quit()
+    # else:
+    #     logging.error("Could not connect to file server.")
+
+    file_server.quit()
