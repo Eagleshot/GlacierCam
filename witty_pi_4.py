@@ -192,6 +192,20 @@ class WittyPi4:
         else:
             logging.error("Invalid interval length (minutes): %s", minutes)
 
+    def double_interval_length(self) -> None:
+        '''Double the interval length for the schedule.'''
+        minutes = self.interval_length_minutes * 2
+        hours = self.interval_length_hours * 2
+        if minutes > 59:
+            minutes = minutes % 60
+            hours += 1
+
+        self.set_interval_length(minutes, hours)
+
+    def single_startup_interval(self) -> None:
+        '''Set the schedule to start only once per day.'''
+        self.set_end_time(self.start_time)
+
     def round_time_to_nearest_interval(self, time: time) -> time:
         '''Round datetime up to the nearest interval (e.g. 15 minutes)'''
         return time.replace(minute=(time.minute // self.interval_length_minutes) * self.interval_length_minutes)

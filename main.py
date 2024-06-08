@@ -13,7 +13,7 @@ from fileserver import FileServer
 from settings import Settings
 from data import Data
 
-VERSION = "1.0.0.alpha3"
+VERSION = "1.0.0.beta1"
 
 ###########################
 # Configuration and filenames
@@ -120,6 +120,17 @@ except Exception as e:
 # Generate schedule
 ###########################
 try:
+    wittyPi.set_interval_length(settings.get("intervalMinutes"), settings.get("intervalHours"))
+
+    if settings.get("enableSunriseSunset"): #TODO
+        wittyPi.set_start_end_time_sunrise(settings.get("latitude"), settings.get("longitude"))
+    else:
+        wittyPi.set_start_time(time(settings.get("startTimeHour"), settings.get("startTimeMinute")))
+        wittyPi.set_end_time(time(settings.get("endTimeHour"), settings.get("endTimeMinute")))
+except Exception as e:
+    logging.warning("Could not set schedule: %s", str(e))
+
+try: # Get battery voltage and adjust schedule
     battery_voltage = wittyPi.get_battery_voltage()
     data.add('battery_voltage', battery_voltage)
 
@@ -128,24 +139,16 @@ try:
 
     # Battery voltage between 50% and 25%
     if battery_voltage_quarter < battery_voltage < battery_voltage_half:
-        settings.set("intervalMinutes", int(settings.get("intervalMinutes")*2)) # TODO
+        wittyPi.double_interval_length()
         logging.warning("Battery voltage <50%.")
     elif battery_voltage <= battery_voltage_quarter: # Battery voltage <=25%
-        settings.set("repetitionsPerday", 1) # TODO
+        wittyPi.single_startup_interval()
         logging.warning("Battery voltage <=25%.")
 
 except Exception as e:
     logging.warning("Could not get battery voltage: %s", str(e))
 
 try:
-    wittyPi.set_interval_length(settings.get("intervalMinutes"), settings.get("intervalHours"))
-
-    if settings.get("enableSunriseSunset"): #TODO
-        wittyPi.set_start_end_time_sunrise(settings.get("latitude"), settings.get("longitude"))
-    else:
-        wittyPi.set_start_time(time(settings.get("startTimeHour"), settings.get("startTimeMinute")))
-        wittyPi.set_end_time(time(settings.get("endTimeHour"), settings.get("endTimeMinute")))
-
     wittyPi.generate_schedule()
 except Exception as e:
     logging.warning("Failed to generate schedule: %s", str(e))
@@ -158,6 +161,17 @@ try:
     data.add('next_startup_time', f"{next_startup_time}Z")
 except Exception as e:
     logging.critical("Could not apply schedule: %s", str(e))
+
+    try: # Try to set default schedule
+        logging.critical("Trying again with default schedule.")
+        wittyPi.set_interval_length(30, 0)
+        wittyPi.set_start_time(time(8, 0))
+        wittyPi.set_end_time(time(20, 0))
+        wittyPi.generate_schedule()
+        next_startup_time = wittyPi.apply_schedule()
+        data.add('next_startup_time', f"{next_startup_time}Z")
+    except Exception as e:
+        logging.critical("Could not set default schedule: %s", str(e))
 
 ##########################
 # SIM7600G-H 4G module

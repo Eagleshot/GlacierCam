@@ -56,6 +56,37 @@ def test_set_interval_length_invalid():
     assert witty_pi.interval_length_minutes == 30
     assert witty_pi.interval_length_hours == 0
 
+def test_double_interval_length():
+    '''Test doubling the interval length.'''
+    witty_pi = WittyPi4()
+    witty_pi.set_interval_length(17)
+    witty_pi.double_interval_length()
+    assert witty_pi.interval_length_minutes == 34
+    assert witty_pi.interval_length_hours == 0
+    witty_pi.double_interval_length()
+    assert witty_pi.interval_length_minutes == 8
+    assert witty_pi.interval_length_hours == 1
+    witty_pi.double_interval_length()
+    assert witty_pi.interval_length_minutes == 16
+    assert witty_pi.interval_length_hours == 2
+    witty_pi.double_interval_length() # 4:32
+    witty_pi.double_interval_length() # 9:4
+    witty_pi.double_interval_length() # 18:8
+    witty_pi.double_interval_length() # 37:16
+    assert witty_pi.interval_length_minutes == 16
+    assert witty_pi.interval_length_hours == 18
+
+def test_single_startup_interval():
+    '''Test setting a single startup interval.'''
+    witty_pi = WittyPi4()
+    witty_pi.set_start_time(time(0, 0))
+    witty_pi.set_end_time(time(15, 28))
+    witty_pi.set_interval_length(15)
+    witty_pi.single_startup_interval()
+    assert witty_pi.start_time == time(0, 0)
+    assert witty_pi.end_time == time(0, 0)
+    assert witty_pi.calculate_num_repetitions_per_day() == 1
+
 def test_round_time_to_nearest_interval():
     """Test the rounding of a time to the nearest interval."""
 
