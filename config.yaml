@@ -1,6 +1,3 @@
-# Name of the camera
-cameraName: "Camera1"
-
 # FTP Server configuration
 ftpServerAddress: "INSERT FTP SERVER ADDRESS HERE"
 username: "INSERT FTP USERNAME HERE"
