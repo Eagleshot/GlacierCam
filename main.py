@@ -13,7 +13,7 @@ from fileserver import FileServer
 from settings import Settings
 from data import Data
 
-VERSION = "1.0.0.beta1"
+VERSION = "1.0.0.beta2"
 
 ###########################
 # Configuration and filenames
@@ -240,8 +240,9 @@ except Exception as e:
 # Set voltage thresholds
 ###########################
 try:
-    wittyPi.set_low_voltage_threshold(settings.get("lowVoltageThreshold"))
-    wittyPi.set_recovery_voltage_threshold(settings.get("recoveryVoltageThreshold"))
+    if settings.get("overwriteVoltageThresholds"):
+        wittyPi.set_low_voltage_threshold(settings.get("lowVoltageThreshold"))
+        wittyPi.set_recovery_voltage_threshold(settings.get("recoveryVoltageThreshold"))
 except Exception as e:
     logging.warning("Could not set voltage thresholds: %s", str(e))
 

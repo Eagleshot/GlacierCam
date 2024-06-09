@@ -24,6 +24,7 @@ class Settings:
         'longitude': {'type': float, 'min': -180.0, 'max': 180.0, 'default': 0.0},
         'logLevel': {'type': str, 'valid_values': ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], 'default': 'INFO'},
         'uploadExtendedDiagnostics': {'type': bool, 'default': False},
+        'overwriteVoltageThresholds': {'type': bool, 'default': False},
         'lowVoltageThreshold': {'type': float, 'min': 0.0, 'max': 30.0, 'default': 0.0},
         'recoveryVoltageThreshold': {'type': float, 'min': 0.0, 'max': 30.0, 'default': 0.0},
         'batteryVoltageHalf' : {'type': float, 'min': 0.0, 'max': 30.0, 'default': 12.0},
