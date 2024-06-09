@@ -13,7 +13,7 @@ from fileserver import FileServer
 from settings import Settings
 from data import Data
 
-VERSION = "1.0.0.beta2"
+VERSION = "1.0.0.beta3"
 
 ###########################
 # Configuration and filenames
@@ -314,6 +314,7 @@ except Exception as e:
 try:
     if settings.get("shutdown") or settings.get("shutdown") is None:
         logging.info("Shutting down now.")
-        system("sudo shutdown -h now")
+        wittyPi.shutdown()
+        # system("sudo shutdown -h now")
 except Exception as e:
     system("sudo shutdown -h now")

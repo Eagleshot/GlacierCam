@@ -311,6 +311,14 @@ class WittyPi4:
 
         # Return error if max retries reached
         return "-"
+    
+    def shutdown(self) -> None:
+        '''Shutdown the Raspberry Pi'''
+        try:
+            logging.info("Shutting down Raspberry Pi.")
+            self.run_command("do_shutdown 4 1") # HALT_PIN = 4, HAS_MCU = 1
+        except Exception as e:
+            logging.error("Could not shutdown Raspberry Pi: %s", str(e))
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
