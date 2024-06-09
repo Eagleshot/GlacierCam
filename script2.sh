@@ -1,7 +1,7 @@
 echo 'Configuring software to run on startup...'
 
 # Automatically run the main.py after startup
-echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
+echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.sh
 
 # Software update possibility
 echo "sleep 25" >> /home/pi/wittypi/afterStartup.sh
