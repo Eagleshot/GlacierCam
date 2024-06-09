@@ -33,5 +33,8 @@ lowVoltageThreshold: 0.0 # Camera will shutdown if voltage drops below this valu
 recoveryVoltageThreshold: 0.0 # Camera will restart if voltage rises above this value
 batteryVoltageHalf: 12.0 # Battery voltage at 50% capacity
 
-# DANGER ZONE
-shutdown: true # Enable or disable shutdown after program has run
+# !!! DANGER ZONE !!!
+# Disable or enable the shutdown after program has run
+# If disabled, the camera will attempt to update and shutdown after 1 minute
+# Use "shutdown -c" to cancel the shutdown for debugging
+shutdown: true
