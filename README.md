@@ -72,10 +72,21 @@ GlacierCam is an open source timelapse camera system, powered by Raspberry Pi. T
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
 ```
-### Update
+### Install Witty Pi Software
 ```bash
-wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScript.sh | sudo sh
+cd /home/pi/
 ```
+```bash
+wget https://raw.githubusercontent.com/Eagleshot/Witty-Pi-4/main/Software/install.sh
+```
+```bash
+sudo sh install.sh
+```
+### Configure Software to run at startup
+```bash
+wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script2.sh | sudo sh
+```
+
 # TODOs
 ## V1.0
 - [X] Update settings validation
@@ -84,20 +95,32 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScri
 - [X] Finish 3D-printed case
 - [X] Implement software update possibility
 - [X] Add log level setting
+- [X] Add capacitor to all Witty Pi 4s
 - [ ] Limit log filesize
-- [ ] Add capacitor to all Witty Pi 4s
+- [ ] Camera focus
 - [ ] Update Witty Pi 4 firmware -> See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-not-starting/
+- [ ] Check all FTP connections
 - [ ] Check whole code
+    - [ ] SIM7600X
+    - [ ] Witty Pi 4
+    - [ ] Settings
+    - [ ] Data
+    - [ ] Fileserver
+    - [ ] Main
+    - [ ] Update
 
-- [ ] Maybe: Advanced scheduling (start and end date)
+* Nachmittag - erste kamera in betrieb + sd karte klonen
 
 ## V2.0
-- [ ] Improved time drift detection (maybe with GPS)
+- [ ] Add one time actions/change detection in settings
+- [ ] Automatic time drift detection (maybe with GPS, dependent on startup reason)
+- [ ] Advanced scheduling (start and end date)
 - [ ] Enable watchdog
 - [ ] Add hooks for data processing (e.g. `image_processing()`) that are called by the program at a specific time in the program and can be modified by the user
 - [ ] Modify firmware to be able to easily add new sensors (including CSV/webserver adaption)
 - [ ] Work with read only filesystem and USB drive
-- [ ] Manage max. number of images on USB drive and add an upload limit
+- [ ] Verify image/file upload
+- [ ] Manage max. number of images on USB drive and add an upload limit (management if disk is full)
 - [ ] Get startup reason from witty pi
 - https://www.youtube.com/watch?v=pxuXaaT1u3k
 - https://stackoverflow.com/questions/24505145/how-to-limit-log-file-size-in-python

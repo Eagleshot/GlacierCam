@@ -128,12 +128,6 @@ sudo ufw enable
 # wget https://raw.githubusercontent.com/Eagleshot/Witty-Pi-4/main/Software/install.sh
 # sudo sh install.sh
 
-# Add main.py to automatically run before wittyPi script
-# echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/afterStartup.sh
-
-# TODO: Add the updatescript to automatically update the software
-# echo "sudo wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScript.sh | sudo sh && sudo shutdown -h 0" >> /home/pi/wittypi/afterStartup.sh
-
 echo ''
 echo '================================================================================'
 echo '|                                                                              |'
