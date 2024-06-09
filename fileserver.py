@@ -3,6 +3,7 @@ from ftplib import FTP
 from io import BytesIO
 from datetime import datetime
 from time import sleep
+from os import remove
 import logging
 
 class FileServer:
@@ -61,22 +62,30 @@ class FileServer:
         except Exception as e:
             logging.error("Failed to download file: %s", str(e))
 
-    def upload_file(self, filename: str, local_file_path: str = "") -> None:
+    def upload_file(self, filename: str, local_file_path: str = "", delete_after_upload = False) -> None:
         """Upload a file to the file server."""
         local_path = f"{local_file_path}{filename}"
         try:
             with open(local_path, 'rb') as local_file:
                 self.ftp.storbinary(f"STOR {filename}", local_file)
             logging.info("Successfully uploaded %s", local_file)
+
+            if delete_after_upload:
+                logging.info("Deleting local file: %s", local_path)
+                remove(local_path)
         except Exception as e:
             logging.error("Failed to upload file: %s", str(e))
 
-    def append_file(self, filename: str, local_file_path: str = "") -> None:
+    def append_file(self, filename: str, local_file_path: str = "", delete_after_upload = False) -> None:
         """Append a file to the file server."""
         local_path = f"{local_file_path}{filename}"
         try:
             with open(local_path, 'rb') as local_file:
                 self.append_file_from_bytes(filename, BytesIO(local_file.read()))
+
+            if delete_after_upload:
+                logging.info("Deleting local file: %s", local_path)
+                remove(local_path)
         except Exception as e:
             logging.error("Failed to append file: %s", str(e))
 

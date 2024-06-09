@@ -1,6 +1,6 @@
 '''GlacierCam firmware - see https://github.com/Eagleshot/GlacierCam for more information'''
 
-from os import system, remove, listdir
+from os import system, listdir
 from datetime import datetime, time
 import logging
 from logging.handlers import RotatingFileHandler
@@ -229,10 +229,7 @@ try:
     if CONNECTED_TO_SERVER:
         for file in listdir(FILE_PATH): # Upload all images
             if file.endswith(".jpg"):
-                fileserver.upload_file(file, FILE_PATH)
-
-                # Delete uploaded image from Raspberry Pi
-                remove(FILE_PATH + file)
+                fileserver.upload_file(file, FILE_PATH, delete_after_upload=True)
 except Exception as e:
     logging.critical("Could not upload image to fileserver: %s", str(e))
 
@@ -294,12 +291,11 @@ except Exception as e:
 ###########################
 try:
     if CONNECTED_TO_SERVER:
-        fileserver.append_file("log.txt", FILE_PATH)
-        remove(f"{FILE_PATH}log.txt")
+        fileserver.append_file("log.txt", FILE_PATH, delete_after_upload=True)
 
     if settings.get("uploadExtendedDiagnostics") and CONNECTED_TO_SERVER:
-        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/")
-        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/")
+        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
+        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
 except Exception as e:
     logging.warning("Could not upload diagnostics data: %s", str(e))
 
