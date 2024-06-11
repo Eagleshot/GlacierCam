@@ -5,48 +5,46 @@ from datetime import datetime, time
 import logging
 from logging.handlers import RotatingFileHandler
 from picamera2 import Picamera2
-from libcamera import controls
 from yaml import safe_load
-from sim7600x import SIM7600X
-from witty_pi_4 import WittyPi4
-from fileserver import FileServer
-from settings import Settings
-from data import Data
-
-VERSION = "1.0.0.beta3"
 
 ###########################
 # Configuration and filenames
 ###########################
+try:
+    VERSION = "1.0.0.beta4"
 
-# Get unique hardware id of Raspberry Pi
-# See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
-# and https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
-def get_cpu_serial():
-    '''Get the unique serial number of Raspberry Pi CPU'''
-    cpuserial = "0000000000000000"
-    try:
-        with open('/proc/cpuinfo', 'r', encoding='utf-8') as f:
-            for cpu_line in f:
-                if cpu_line[0:6] == 'Serial':
-                    cpuserial = cpu_line[10:26]
-                    break
-    except:
-        cpuserial = "ERROR000000000"
+    # Get unique hardware id of Raspberry Pi
+    # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
+    # and https://raspberrypi.stackexchange.com/questions/2086/how-do-i-get-the-serial-number
+    def get_cpu_serial():
+        '''Get the unique serial number of Raspberry Pi CPU'''
+        cpuserial = "0000000000000000"
+        try:
+            with open('/proc/cpuinfo', 'r', encoding='utf-8') as f:
+                for cpu_line in f:
+                    if cpu_line[0:6] == 'Serial':
+                        cpuserial = cpu_line[10:26]
+                        break
+        except:
+            cpuserial = "ERROR000000000"
 
-    return cpuserial
+        return cpuserial
 
-CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
-FILE_PATH = "/home/pi/"  # Path where files are saved
-data = Data()
-data.add('version', VERSION)
+    CAMERA_NAME = get_cpu_serial() # Unique hardware serial number
+    FILE_PATH = "/home/pi/"  # Path where files are saved
 
-# Error logging
-file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
-file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-logging.basicConfig(level=logging.WARNING, handlers=[file_handler, stream_handler])
+    from data import Data
+    data = Data()
+    data.add('version', VERSION)
+
+    # Error logging
+    file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
+    file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.basicConfig(level=logging.WARNING, handlers=[file_handler, stream_handler])
+except Exception as e:
+    logging.critical("Could not setup logging: %s", str(e))
 
 # Read config file from SD card
 try:
@@ -59,6 +57,8 @@ except Exception as e:
 # Connect to fileserver
 ###########################
 try:
+    from fileserver import FileServer
+
     fileserver = FileServer(config["ftpServerAddress"], config["username"], config["password"])
     CONNECTED_TO_SERVER = fileserver.connected()
 
@@ -89,6 +89,7 @@ except Exception as e:
     logging.critical("Could not download settings file from FTP server: %s", str(e))
 
 try: # Read settings file
+    from settings import Settings
     settings = Settings(f"{FILE_PATH}settings.yaml")
 except Exception as e:
     logging.critical("Could not open settings.yaml: %s", str(e))
@@ -102,6 +103,7 @@ except Exception as e:
 # Time synchronization
 ###########################
 try:
+    from witty_pi_4 import WittyPi4
     wittyPi = WittyPi4()
 
     if settings.get("timeSync") and CONNECTED_TO_SERVER:
@@ -122,7 +124,7 @@ except Exception as e:
 try:
     wittyPi.set_interval_length(settings.get("intervalMinutes"), settings.get("intervalHours"))
 
-    if settings.get("enableSunriseSunset"): #TODO
+    if settings.get("enableSunriseSunset"): # TODO
         wittyPi.set_start_end_time_sunrise(settings.get("latitude"), settings.get("longitude"))
     else:
         wittyPi.set_start_time(time(settings.get("startTimeHour"), settings.get("startTimeMinute")))
@@ -177,6 +179,7 @@ except Exception as e:
 # SIM7600G-H 4G module
 ###########################
 try:
+    from sim7600x import SIM7600X
     sim7600 = SIM7600X()
 except Exception as e:
     logging.warning("Could not open serial connection with 4G module: %s", str(e))
