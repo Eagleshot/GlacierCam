@@ -12,7 +12,7 @@ from time import sleep
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.0"
+    VERSION = "1.0.1"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -318,10 +318,10 @@ except Exception as e:
 ###########################
 # Shutdown Raspberry Pi if enabled
 ###########################
-try:
-    if settings.get("shutdown") or settings.get("shutdown") is None:
-        logging.info("Shutting down now.")
-        wittyPi.shutdown()
-        system("sudo shutdown -h now")
-except Exception as e:
-    system("sudo shutdown -h now")
+# try:
+#     if settings.get("shutdown") or settings.get("shutdown") is None:
+#         logging.info("Shutting down now.")
+#         wittyPi.shutdown()
+#         system("sudo shutdown -h now")
+# except Exception as e:
+#     system("sudo shutdown -h now")
