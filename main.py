@@ -12,7 +12,7 @@ from time import sleep
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.1"
+    VERSION = "1.0.2"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -273,6 +273,11 @@ try:
         data.add('height', height)
 except Exception as e:
     logging.warning("Could not get GPS coordinates: %s", str(e))
+
+try:
+    sim7600.close()
+except Exception as e:
+    logging.warning("Could not close serial connection with 4G module: %s", str(e))
 
 ###########################
 # Uploading sensor data

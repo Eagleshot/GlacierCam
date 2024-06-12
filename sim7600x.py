@@ -111,6 +111,13 @@ class SIM7600X:
         except Exception as e:
             logging.error("Could not stop GPS session: %s", str(e))
 
+    def close(self):
+        '''Close the serial connection.'''
+        try:
+            self.ser.close()
+        except Exception as e:
+            logging.error("Could not close serial connection: %s", str(e))
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     sim7600x = SIM7600X()
