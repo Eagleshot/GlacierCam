@@ -8,7 +8,7 @@ echo "sudo /usr/bin/python3 /home/pi/main.py" >> /home/pi/wittypi/beforeScript.s
 TARGET_FILE="/home/pi/wittypi/afterStartup.sh"
 
 cat << 'EOF' >> $TARGET_FILE
-if grep -iq "shutdown: false" /home/pi/wittypi/settings.yaml; then
+if grep -iq "shutdown: false" /home/pi/settings.yaml; then
     echo "Updating software and scheduling shutdown in 1 minute..."
     wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/updateScript.sh | sudo sh
     sudo shutdown -h +1
