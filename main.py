@@ -6,12 +6,13 @@ import logging
 from logging.handlers import RotatingFileHandler
 from picamera2 import Picamera2
 from yaml import safe_load
+from time import sleep
 
 ###########################
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.0.beta4"
+    VERSION = "1.0.0"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -36,7 +37,10 @@ try:
     from data import Data
     data = Data()
     data.add('version', VERSION)
+except Exception as e:
+    logging.critical("Could not setup configuration: %s", str(e))
 
+try:
     # Error logging
     file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
     file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
@@ -44,7 +48,7 @@ try:
     stream_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.basicConfig(level=logging.WARNING, handlers=[file_handler, stream_handler])
 except Exception as e:
-    logging.critical("Could not setup logging: %s", str(e))
+    logging.critical("Could not setup error logging: %s", str(e))
 
 # Read config file from SD card
 try:
@@ -318,6 +322,10 @@ try:
     if settings.get("shutdown") or settings.get("shutdown") is None:
         logging.info("Shutting down now.")
         wittyPi.shutdown()
-        # system("sudo shutdown -h now")
+        system("sudo shutdown -h now")
+
+        # Block until shutdown
+        while True:
+            sleep(1)
 except Exception as e:
     system("sudo shutdown -h now")
