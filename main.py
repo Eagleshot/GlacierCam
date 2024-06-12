@@ -323,9 +323,5 @@ try:
         logging.info("Shutting down now.")
         wittyPi.shutdown()
         system("sudo shutdown -h now")
-
-        # Block until shutdown
-        while True:
-            sleep(1)
 except Exception as e:
     system("sudo shutdown -h now")
