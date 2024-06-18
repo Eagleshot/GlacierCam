@@ -74,14 +74,20 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 ```
 ### Install Witty Pi Software
 ```bash
-cd /home/pi/
-```
-```bash
-wget https://raw.githubusercontent.com/Eagleshot/Witty-Pi-4/main/Software/install.sh
+wget https://www.uugear.com/repo/WittyPi4/install.sh
 ```
 ```bash
 sudo sh install.sh
 ```
+
+Uninstall UWI (UUGear Web Interface)
+```bash
+sudo update-rc.d uwi remove
+sudo rm /etc/init.d/uwi
+sudo rm -r ~/uwi
+```
+
+
 ### Configure Software to run at startup
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script2.sh | sudo sh
@@ -96,20 +102,15 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script2.sh
 - [X] Implement software update possibility
 - [X] Add log level setting
 - [X] Add capacitor to all Witty Pi 4s
-- [ ] Limit log filesize
-- [ ] Camera focus
+- [X] Limit log filesize
+- [X] Verify image/file upload
 - [ ] Update Witty Pi 4 firmware -> See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-not-starting/
 - [ ] Check all FTP connections
-- [ ] Check whole code
-    - [ ] SIM7600X
-    - [ ] Witty Pi 4
-    - [ ] Settings
-    - [ ] Data
-    - [ ] Fileserver
-    - [ ] Main
-    - [ ] Update
+- [ ] Camera focus
 
-* Nachmittag - erste kamera in betrieb + sd karte klonen
+* Montag erste drei Kameras in Betrieb
+* Dienstag Alle Kameras in Betrieb
+* Mittwoch/Donnerstag/Freitag - Alle Kameras testen  
 
 ## V2.0
 - [ ] Add one time actions/change detection in settings
@@ -119,7 +120,6 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script2.sh
 - [ ] Add hooks for data processing (e.g. `image_processing()`) that are called by the program at a specific time in the program and can be modified by the user
 - [ ] Modify firmware to be able to easily add new sensors (including CSV/webserver adaption)
 - [ ] Work with read only filesystem and USB drive
-- [ ] Verify image/file upload
 - [ ] Manage max. number of images on USB drive and add an upload limit (management if disk is full)
 - [ ] Get startup reason from witty pi
 - https://www.youtube.com/watch?v=pxuXaaT1u3k

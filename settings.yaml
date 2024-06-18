@@ -28,10 +28,10 @@ logLevel: "WARNING" # 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'
 uploadExtendedDiagnostics: false
 
 # Battery settings
-overwriteVoltageThresholds: false # Manually overwrite voltage thresholds
-lowVoltageThreshold: 0.0 # Camera will shutdown if voltage drops below this value
-recoveryVoltageThreshold: 0.0 # Camera will restart if voltage rises above this value
-batteryVoltageHalf: 12.0 # Battery voltage at 50% capacity
+overwriteVoltageThresholds: true # Manually overwrite voltage thresholds
+lowVoltageThreshold: 7.5 # Camera will shutdown if voltage drops below this value
+recoveryVoltageThreshold: 7.6 # Camera will restart if voltage rises above this value
+batteryVoltageHalf: 7.9 # Battery voltage at 50% capacity
 
 # !!! DANGER ZONE !!!
 # Disable or enable the shutdown after program has run
