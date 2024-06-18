@@ -261,7 +261,6 @@ dfMap = pd.DataFrame()
 if settings.get("locationOverwrite"):
     latitude = settings.get("latitude")
     longitude = settings.get("longitude")
-
 elif 'latitude' in df.columns and 'longitude' in df.columns:
     # Get the last entry of df latitude that is not null
     last_latitude = df['latitude'].iloc[::-1].dropna().iloc[0]
@@ -281,7 +280,7 @@ def get_weather_data(latitude: float, longitude: float) -> dict:
     return response.json()
 
 # Check if OpenWeather API key is set and location is available
-if st.secrets["OPENWEATHER_API_KEY"] != "" and len(dfMap) > 0:
+if st.secrets["OPENWEATHER_API_KEY"] != "" and (len(dfMap) > 0 or settings.get("locationOverwrite")):
 
     latitude = round(latitude, 5)
     longitude = round(longitude, 5)
@@ -360,7 +359,7 @@ if st.secrets["OPENWEATHER_API_KEY"] != "" and len(dfMap) > 0:
 ##############################################
 # Sunrise and sunset
 ##############################################
-if len(dfMap) > 0:
+if len(dfMap) > 0 or settings.get("locationOverwrite"):
     sun = Sun(latitude, longitude)
     sunrise = sun.get_sunrise_time()
     sunrise = sunrise.astimezone(timezone)
@@ -408,17 +407,22 @@ plot_chart("Signal Quality", 'signal_quality')
 ##############################################
 # Map
 ##############################################
-if not dfMap.empty:
+if not dfMap.empty or settings.get("locationOverwrite"):
     st.divider()
     st.header("Standort", anchor=False)
     st.map(pd.DataFrame({'lat': [latitude], 'lon': [longitude]}))
 
     # Print coordinates
-    st.write(
-        f"Breitengrad: {latitude}, Längengrad: {longitude}, Höhe: {dfMap['height'].iloc[-1]} m.ü.M. - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})")
+    position_string = f"Breitengrad: {latitude}, Längengrad: {longitude}"
+
+    if 'height' in dfMap.columns:
+        position_string += f", Höhe: {dfMap['height'].iloc[-1]} m.ü.M."
+
+    position_string += f" - [Google Maps](https://www.google.com/maps/search/?api=1&query={latitude},{longitude})"
+    st.write(position_string)
 
     # Print timestamp
-    if not settings.get("location_overwrite"):
+    if not settings.get("locationOverwrite"):
         st.markdown(f"Letztes Standortupdate: {df['timestamp'].iloc[-1].strftime('%d.%m.%Y %H:%M Uhr')}")
 
     st.divider()
