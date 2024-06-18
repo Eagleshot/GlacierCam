@@ -30,6 +30,8 @@ st.set_page_config(
     }
 )
 
+st.logo("images/EagleShot_Logo.png", icon_image="images/EagleShot_Logo_Sidebar.png")
+
 # Change the camera selection
 if len(st.secrets["FTP_FOLDER"]) > 1:
     with st.sidebar:
@@ -54,7 +56,7 @@ fileserver.change_directory(FTP_FOLDER)
 fileserver.change_directory("save") # TODO
 files = fileserver.list_files()
 fileserver.change_directory("..") # TODO
-LOG_FILENAMEs = fileserver.list_files() # TODO
+LOG_FILENAMES = fileserver.list_files() # TODO
 
 # Only show the image files
 imgFiles = [file for file in files if file.endswith(".jpg")]
@@ -511,7 +513,25 @@ with st.expander("Measurements"):
 
 # Display error messages
 with st.expander("Fehlermeldungen"):
-    st.write("Diese Funktion ist noch nicht verfügbar.")
+
+    # Log Level
+    logLevel = st.selectbox("Log Level", options=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], index=1, help="Log Level der Fehlermeldungen.")
+
+    LOG_FILENAME = "log.txt"
+
+    if LOG_FILENAME in LOG_FILENAMES:
+        fileserver.download_file(LOG_FILENAME)
+
+        # Show the log file as st code
+        with open(LOG_FILENAME, 'r', encoding='utf-8') as file:
+            log = file.read()
+
+        st.code(log, language="log", line_numbers=True)
+    else:
+        st.info("No log data available.", icon="📊")
+
+        
+
     # if not dfError.empty:
     #     # Display error message and timestamp as text in reverse order
     #     for index, row in dfError[::-1].iterrows():
@@ -521,7 +541,7 @@ with st.expander("Fehlermeldungen"):
     #     st.write("Keine Fehlermeldungen vorhanden 🥳.")
 
     # Check if wittyPiDiagnostics.txt exists
-    if "wittyPiDiagnostics.txt" in LOG_FILENAMEs:
+    if "wittyPiDiagnostics.txt" in LOG_FILENAMES:
 
         # Retrieve the file data
         fileserver.download_file("wittyPiDiagnostics.txt")
@@ -541,9 +561,9 @@ with st.expander("Fehlermeldungen"):
                 help=f"Letzte Änderung: {last_modified.strftime('%d.%m.%Y %H:%M Uhr')}"
             )
 
-    LOG_FILENAME = "log.txt"
+    LOG_FILENAME = "wittyPi.log"
 
-    if LOG_FILENAME in LOG_FILENAMEs:
+    if LOG_FILENAME in LOG_FILENAMES:
 
         # Retrieve the file data
         fileserver.download_file(LOG_FILENAME)
