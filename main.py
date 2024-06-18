@@ -1,18 +1,17 @@
 '''GlacierCam firmware - see https://github.com/Eagleshot/GlacierCam for more information'''
 
-from os import system, listdir
+from os import listdir, system
 from datetime import datetime, time
 import logging
 from logging.handlers import RotatingFileHandler
 from picamera2 import Picamera2
 from yaml import safe_load
-from time import sleep
 
 ###########################
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.2"
+    VERSION = "1.0.3"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -40,8 +39,7 @@ try:
 except Exception as e:
     logging.critical("Could not setup configuration: %s", str(e))
 
-try:
-    # Error logging
+try: # Error logging
     file_handler = RotatingFileHandler(f"{FILE_PATH}log.txt", mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
     file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     stream_handler = logging.StreamHandler()
@@ -50,8 +48,7 @@ try:
 except Exception as e:
     logging.critical("Could not setup error logging: %s", str(e))
 
-# Read config file from SD card
-try:
+try: # Read config file from SD card
     with open(f"{FILE_PATH}config.yaml", 'r', encoding='utf-8') as file:
         config = safe_load(file)
 except Exception as e:
@@ -283,8 +280,7 @@ except Exception as e:
 # Uploading sensor data
 ###########################
 
-# Append new measurements to log or create new log file if none exists
-try:
+try: # Append new measurements to log or create new log file if none exists
     DIAGNOSTICS_FILENAME = "diagnostics.yaml"
     diagnostics_filepath = f"{FILE_PATH}{DIAGNOSTICS_FILENAME}"
 
@@ -323,10 +319,9 @@ except Exception as e:
 ###########################
 # Shutdown Raspberry Pi if enabled
 ###########################
-# try:
-#     if settings.get("shutdown") or settings.get("shutdown") is None:
-#         logging.info("Shutting down now.")
-#         wittyPi.shutdown()
-#         system("sudo shutdown -h now")
-# except Exception as e:
-#     system("sudo shutdown -h now")
+try:
+    if settings.get("shutdown") or settings.get("shutdown") is None:
+        logging.info("Shutting down now.")
+        system("sudo shutdown -h now")
+except Exception as e:
+    system("sudo shutdown -h now")

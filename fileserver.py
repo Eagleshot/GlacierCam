@@ -19,7 +19,6 @@ class FileServer:
 
     def connect_to_server(self, host: str, username: str, password: str) -> bool:
         """Connect to the file server with retries."""
-
         for attempt in range(self.MAX_RETRIES):
             try:
                 self.ftp = FTP(host, username, password, timeout=10)
@@ -82,6 +81,7 @@ class FileServer:
         try:
             with open(local_path, 'rb') as local_file:
                 self.append_file_from_bytes(filename, BytesIO(local_file.read()))
+            logging.info("Successfully appended %s", local_path)
 
             if delete_after_upload:
                 logging.info("Deleting local file: %s", local_path)

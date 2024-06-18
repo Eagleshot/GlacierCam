@@ -1,7 +1,10 @@
 *.toml
-*.yaml
 *.yml
+*.yaml
+!settings.yaml
+!config.yaml
 *.csv
+*.log
 *.txt
 !requirements.txt
 *.pyc

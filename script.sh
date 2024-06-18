@@ -40,17 +40,17 @@ echo ''
 # See: https://core-electronics.com.au/guides/raspberry-pi/raspberry-pi-4g-gps-hat/ (slightly modified to work with the (B) version)
 sudo raspi-config nonint do_serial 2 # Enable serial port communication
 
-# wget "https://www.waveshare.com/w/upload/4/4e/SIM7600X-4G-HAT(B)-Demo.7z" -P /tmp # Download SIm-7600G-H code
-# 7z x /tmp/SIM7600X-4G-HAT\(B\)-Demo.7z -o/home/pi/ # Unzip code
-# mv /home/pi/SIM7600X-4G-HAT\(B\)-Demo /home/pi/SIM7600X-4G-HAT-B-Demo # Rename folder to remove brackets which cause issues
-# sudo chmod 777 -R /home/pi/SIM7600X-4G-HAT-B-Demo # Make code executable
+wget "https://www.waveshare.com/w/upload/4/4e/SIM7600X-4G-HAT(B)-Demo.7z" -P /tmp # Download SIm-7600G-H code
+7z x /tmp/SIM7600X-4G-HAT\(B\)-Demo.7z -o/home/pi/ # Unzip code
+mv /home/pi/SIM7600X-4G-HAT\(B\)-Demo /home/pi/SIM7600X-4G-HAT-B-Demo # Rename folder to remove brackets which cause issues
+sudo chmod 777 -R /home/pi/SIM7600X-4G-HAT-B-Demo # Make code executable
 
 # This part is not needed, because the (B) version does not use the GPIO pins for communication
 # As this also interferes with GPIO 4, it has been disabled
 # sudo sed -i '$i sh /home/pi/SIM7600X-4G-HAT-B-Demo/Raspberry/c/sim7600_4G_hat_init &' /etc/rc.local
 
-# cd /home/pi/SIM7600X-4G-HAT-B-Demo/Raspberry/c/bcm2835
-# chmod +x configure && ./configure && make && sudo make install
+cd /home/pi/SIM7600X-4G-HAT-B-Demo/Raspberry/c/bcm2835
+chmod +x configure && ./configure && make && sudo make install
 
 # TODO Maybe delete no longer deleted install files
 
