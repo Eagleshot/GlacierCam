@@ -12,7 +12,7 @@ class FileServer:
     def __init__(self, host: str, username: str, password: str) -> None:
         """Initialize and connect to the file server."""
         self.MAX_RETRIES = 5
-        self.RETRY_INTERVAL = 5  # Seconds
+        self.RETRY_INTERVAL = 5  # seconds
 
         self.ftp = None
         self.connected_to_server = self.connect_to_server(host, username, password)
@@ -66,7 +66,11 @@ class FileServer:
         local_path = f"{local_file_path}{filename}"
         try:
             with open(local_path, 'rb') as local_file:
-                self.ftp.storbinary(f"STOR {filename}", local_file)
+                response = self.ftp.storbinary(f"STOR {filename}", local_file)
+
+            if not response.startswith('226'):
+                raise Exception(f"Failed to upload file: {response}")
+
             logging.info("Successfully uploaded %s", local_file)
 
             if delete_after_upload:

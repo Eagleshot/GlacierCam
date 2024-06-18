@@ -11,7 +11,7 @@ from yaml import safe_load
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.3"
+    VERSION = "1.0.4"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
