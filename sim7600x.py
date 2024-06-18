@@ -6,7 +6,7 @@ import serial
 
 class SIM7600X:
     '''Class for the SIM7600X 4G module.'''
-    def __init__(self, port: str = '/dev/ttyUSB2', baudrate: int = 115200, timeout: int = 15):
+    def __init__(self, port: str = '/dev/ttyUSB2', baudrate: int = 115200, timeout: int = 10):
         try:
             self.ser = serial.Serial(port, baudrate, timeout=timeout) # USB connection
             self.ser.flushInput()

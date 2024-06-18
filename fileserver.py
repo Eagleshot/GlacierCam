@@ -21,7 +21,7 @@ class FileServer:
         """Connect to the file server with retries."""
         for attempt in range(self.MAX_RETRIES):
             try:
-                self.ftp = FTP(host, username, password, timeout=10)
+                self.ftp = FTP(host, username, password, timeout=15)
                 logging.info("Connected to file server.")
                 return True
             except Exception as e:

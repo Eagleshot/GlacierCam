@@ -27,7 +27,7 @@ echo 'Checking the wake-up watchdog configuration...'
 i2cget -y 0x01 0x08 49
 
 # Check if the config is 10000001 (binary)
-if [ $(i2cget -y 0x01 0x08 49) -eq 0x81 ]; then
+if [ $(i2cget -y 0x01 0x08 49) -eq 129 ]; then
     echo 'The wake-up watchdog is configured correctly.'
 else
     echo 'The wake-up watchdog is not configured correctly.'
