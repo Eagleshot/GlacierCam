@@ -258,7 +258,7 @@ st.divider()
 
 dfMap = pd.DataFrame()
 
-if settings.get("location_overwrite"):
+if settings.get("locationOverwrite"):
     latitude = settings.get("latitude")
     longitude = settings.get("longitude")
 
