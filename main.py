@@ -11,7 +11,7 @@ from yaml import safe_load
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.4"
+    VERSION = "1.0.5"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -138,7 +138,7 @@ try: # Get battery voltage and adjust schedule
     data.add('battery_voltage', battery_voltage)
 
     battery_voltage_half = settings.get("batteryVoltageHalf")
-    battery_voltage_quarter = (battery_voltage_half-settings.get("lowVoltageThreshold"))*0.5
+    battery_voltage_quarter = (battery_voltage_half + settings.get("lowVoltageThreshold")) / 2
 
     # Battery voltage between 50% and 25%
     if battery_voltage_quarter < battery_voltage < battery_voltage_half:
