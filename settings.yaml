@@ -30,7 +30,7 @@ uploadExtendedDiagnostics: false
 # Battery settings
 overwriteVoltageThresholds: true # Manually overwrite voltage thresholds
 lowVoltageThreshold: 7.5 # Camera will shutdown if voltage drops below this value
-recoveryVoltageThreshold: 7.6 # Camera will restart if voltage rises above this value
+recoveryVoltageThreshold: 7.7 # Camera will restart if voltage rises above this value
 batteryVoltageHalf: 7.9 # Battery voltage at 50% capacity
 
 # !!! DANGER ZONE !!!
