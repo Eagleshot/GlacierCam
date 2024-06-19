@@ -399,7 +399,6 @@ def plot_chart(chart_title: str, y: str, unit: str = None):
         st.altair_chart(chart, use_container_width=True)
 
 plot_chart("Battery Voltage", 'battery_voltage', "V")
-plot_chart("Internal Voltage", 'internal_voltage', "V")
 plot_chart("Temperature", 'temperature', "°C")
 plot_chart("Signal Quality", 'signal_quality')
 # See: https://www.waveshare.com/w/upload/5/54/SIM7500_SIM7600_Series_AT_Command_Manual_V1.08.pdf

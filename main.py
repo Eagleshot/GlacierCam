@@ -11,7 +11,7 @@ from yaml import safe_load
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.5"
+    VERSION = "1.0.6"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -252,8 +252,6 @@ except Exception as e:
 ###########################
 try:
     data.add('temperature', wittyPi.get_temperature())
-    data.add('internal_voltage', wittyPi.get_internal_voltage())
-    # data.add('internal_current', wittyPi.get_internal_current())
     data.add('signal_quality', sim7600.get_signal_quality())
 except Exception as e:
     logging.warning("Could not get readings: %s", str(e))
