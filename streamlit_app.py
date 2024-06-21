@@ -192,12 +192,12 @@ else:
 col1, col2, col3, col4 = st.columns(4)
 if 'battery_voltage' in df.columns:
     col1.metric("Batterie", f"{df['battery_voltage'].iloc[index]} V")
-if 'internal_voltage' in df.columns:
-    col2.metric("Interne Spannung", f"{df['internal_voltage'].iloc[index]} V")
 if 'temperature' in df.columns:
-    col3.metric("Temperatur", f"{df['temperature'].iloc[index]} °C")
+    col2.metric("Temperatur", f"{df['temperature'].iloc[index]} °C")
 if 'signal_quality' in df.columns:
-    col4.metric("Signalqualität", df['signal_quality'].iloc[index])
+    col3.metric("Signalqualität", int(df['signal_quality'].iloc[index]))
+if 'version' in df.columns:
+    col4.metric("Firmware", f"{df['version'].iloc[index]}")
 
 ##############################################
 # Next and last startup
@@ -383,7 +383,6 @@ if len(dfMap) > 0 or settings.get("locationOverwrite"):
 ##############################################
 # Charts
 ##############################################
-
 def plot_chart(chart_title: str, y: str, unit: str = None):
     '''Create an Altair chart.'''
     y_label = f"{chart_title} ({unit})" if unit else chart_title
