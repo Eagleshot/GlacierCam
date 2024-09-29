@@ -69,49 +69,38 @@ GlacierCam is an open source timelapse camera system, powered by Raspberry Pi. T
 
 ## Installation
 ### Initial Setup
+Install Pi OS Bullseye/Legacy Lite 64 bit on microSD card and boot the Raspberry Pi.
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
 ```
 ### Install Witty Pi Software
+Update Witty Pi 4 firmware -> See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-not-starting/ and install capacitor.
 ```bash
 wget https://www.uugear.com/repo/WittyPi4/install.sh
 ```
 ```bash
 sudo sh install.sh
 ```
-
-Uninstall UWI (UUGear Web Interface)
+Uninstall UWI (UUGear Web Interface):
 ```bash
 sudo update-rc.d uwi remove
 sudo rm /etc/init.d/uwi
 sudo rm -r ~/uwi
 ```
-
+(Waiting for https://github.com/uugear/Witty-Pi-4/pulls to be merged.)
 
 ### Configure Software to run at startup
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script2.sh | sudo sh
 ```
 
+### Update
+Set guaranteed wake mode and check RTC calibration:
+```bash
+wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script3.sh | sudo sh
+```
+
 # TODOs
-## V1.0
-- [X] Update settings validation
-- [X] Move data to seperate class and add tests
-- [X] Add the version to data -> TODO documentation
-- [X] Finish 3D-printed case
-- [X] Implement software update possibility
-- [X] Add log level setting
-- [X] Add capacitor to all Witty Pi 4s
-- [X] Limit log filesize
-- [X] Verify image/file upload
-- [ ] Update Witty Pi 4 firmware -> See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-not-starting/
-- [ ] Check all FTP connections
-- [ ] Camera focus
-
-* Montag erste drei Kameras in Betrieb
-* Dienstag Alle Kameras in Betrieb
-* Mittwoch/Donnerstag/Freitag - Alle Kameras testen  
-
 ## V2.0
 - [ ] Add one time actions/change detection in settings
 - [ ] Automatic time drift detection (maybe with GPS, dependent on startup reason)
@@ -124,6 +113,8 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script2.sh
 - [ ] Get startup reason from witty pi
 - https://www.youtube.com/watch?v=pxuXaaT1u3k
 - https://stackoverflow.com/questions/24505145/how-to-limit-log-file-size-in-python
+- [ ] Limit log filesize
+- [ ] Verify image/file upload
 
 ## Connectivity
 - [ ] Simpler WiFi setup
