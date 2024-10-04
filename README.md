@@ -1,5 +1,8 @@
 # GlacierCam
-GlacierCam is an open source timelapse camera system, powered by Raspberry Pi. This repository is currently under active development and will be updated soon.
+GlacierCam is an open source timelapse camera system, powered by Raspberry Pi.
+
+> [!IMPORTANT]
+> This repository is currently under active development and the documentation is currently not up to date.
 
 ## Features at a glance
 ### Camera
@@ -60,12 +63,6 @@ GlacierCam is an open source timelapse camera system, powered by Raspberry Pi. T
 | [Druckausgleichsmembran](https://www.distrelec.ch/de/druckausgleichsstopfen-m12-12-2mm-ip67-ip69k-polyamid-grau-gore-associates-gmbh-pmf100321-grey/p/15015938?queryFromSuggest=true&itemList=suggested_search) | CHF 11.20 |
 | [Dörr 2W Solarpanel](https://www.digitec.ch/en/s1/product/doerr-li-1500-12v6v-204446-solar-panel-wildlife-cameras-35520370) | CHF 68.00 |
 | [Raspberry Pi Kamera V2](https://www.pi-shop.ch/raspberry-pi-kamera-module-v2) | CHF 22.90 |
-| [Raspberry Pi HQ Kamera](https://www.pi-shop.ch/hq-camera) | CHF 60.90 |
-| [Raspberry Pi 6mm Lens](https://www.pi-shop.ch/official-raspberry-pi-6mm-wide-angle-lens) | CHF 29.90 |
-
-= CHF 297.11 bzw. 365.01
-
-+ Kleinteile (Kabel, Schrauben, Kondensator, Filament für 3D-Druck, etc.) - ca. CHF 50.-
 
 ## Installation
 ### Initial Setup
@@ -101,6 +98,41 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script3.sh
 ```
 
 # TODOs
+## Custom electronics
+### Power management board
+* Input voltage: 5 - 20/30 V DC (solar or USB-C)
+* Output voltage: 3.3 V (MCU), 5 V (Pi)
+* Battery charger (LiFePO4, Li-Ion, ...?)
+* Maybe: Battery holder (18650?)
+* Voltage monitoring for input and battery, current monitoring probably not necessary
+* Microcontroller: ESP32 (S3 for camera?)
+* Mircocontroller programmable via USB-C(?)
+* Exposed external Pins for interacting with MCU (e.g. trigger wake up, additional sensors, etc.)
+* RTC -> Use external or internal one? -> Test accuracy
+* Protection circuitry (reverse polarity, overvoltage, overcurrent, etc.)
+* Button for manual wake up / activity LED
+* Max. power draw for Pi + camera + 4G module: maybe 5 W / 1 A (potentially more for compute module), typical ~2 W / 0.4 A
+* Max input power ?
+* Connection to Pi (I2C over 40-pin header?)
+
+* Software: watchdog, brownout detection, ...
+
+Examples:
+* https://lifepo4wered.com/lifepo4wered-pi+.html
+* https://www.waveshare.com/power-management-hat.htm
+* https://www.waveshare.com/power-management-hat-b.htm
+* https://www.uugear.com/product/witty-pi-4/
+* https://www.uugear.com/product/witty-pi-4-l3v7/
+
+### Connectivyit / camera
+* Add 4G-module, potentially with GPS
+-> Preferably with m.2 connector for replacability/upgradeability (see e.g. https://www.lilygo.cc/products/t-simcam, https://www.lilygo.cc/products/a-t-pcie?variant=42335922094261)
+
+* Add camera interface for esp32
+* Maybe use compute module and add ethernet
+
+
+
 ## V2.0
 - [ ] Add one time actions/change detection in settings
 - [ ] Automatic time drift detection (maybe with GPS, dependent on startup reason)

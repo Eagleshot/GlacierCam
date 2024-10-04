@@ -115,7 +115,7 @@ with st.sidebar:
                 df = df[(df['timestamp'] >= start_dateTime)
                         & (df['timestamp'] <= end_dateTime)]
 
-    # Zeitzone auswählen
+    # Select timezone
     # TODO: Automatic timezone detection
     st.header("Zeitzone auswählen")
     timezone_selection = st.selectbox(
