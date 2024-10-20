@@ -1,18 +1,18 @@
-# GlacierCam
-GlacierCam is an open source timelapse camera system, powered by Raspberry Pi.
+# GlacierCam 📷⛰️
+GlacierCam is an open source and low cost timelapse camera and environmental monitoring system.
 
 > [!IMPORTANT]
 > This repository is currently under active development and the documentation is currently not up to date.
 
 ## Features at a glance
-### Camera
+### Camera 📷
 * Standardized CSI camera connector
 * 12 MP autofocus camera
 * Big selection regarding resolution, lens and filters
 * Specialty cameras (e.g. thermal, infrared, global shutter, etc.) available
 * Possible: Ability to add up to 4 cameras on one system
 
-### Connectivity
+### Connectivity 🌐
 * 4G, WiFi, Bluetooth and Ethernet (with adapter)
 * Offline time synchronization with built-in GPS
 * Offline operation/fallback possible
@@ -20,7 +20,7 @@ GlacierCam is an open source timelapse camera system, powered by Raspberry Pi.
 * Full data ownership with your own server (e.g. FTP)
 * Can easily be modified/upgraded in the future (e.g. 5G, Satellite internet, directional antennas)
 
-### Energy
+### Energy 🌞
 * Low power consumption (ca. 0.05 Wh / wake cycle)
 * Dedicated power management hardware
 * Input: 5 V DC (USB-C) or 6 - 30 DC
@@ -30,12 +30,12 @@ GlacierCam is an open source timelapse camera system, powered by Raspberry Pi.
 * Automatic schedule dependent on battery level and sunrise/sunset
 * Possible to trigger recording externally (e.g. with radar)
 
-# Enviroment
+# Enviroment 🌍
 * Has extensively been tested in harsh enviroment conditions (snow, rain, cold temperatures etc.)
 * Fits in small IP67 case
 * 3D-printed case insert available
 
-### Additional sensors and data processing
+### Additional sensors and data processing 📊
 * Can accomodate a wide variety of additional sensors
 * I2C, UART, SPI, USB, Bluetooth etc. available for additional sensors
 * GPS and Temperature sensor built in
@@ -43,14 +43,14 @@ GlacierCam is an open source timelapse camera system, powered by Raspberry Pi.
 * Supports different Raspberry Pi models, depending on compute and I/O requirements
 * Timestamp with internal RTC (±2s/year), time synchronization via GPS or internet
 
-### Webserver (optional)
+### Webserver (optional) ☁️
 * Data visualization
 * Local or in the cloud
 * Planned: Image processing on server
 * Planned: Change setting on the webserver
 -> Modular for expansion and/or future upgrades
 
-# Components
+# Components 🛠️
 | Component                                      | Price   |
 | ---------------------------------------------- | ------- |
 | [Raspberry Pi Zero 2 W](https://www.pi-shop.ch/raspberry-pi-zero-2-w) | CHF 19.90 |
@@ -130,8 +130,6 @@ Examples:
 
 * Add camera interface for esp32
 * Maybe use compute module and add ethernet
-
-
 
 ## V2.0
 - [ ] Add one time actions/change detection in settings

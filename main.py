@@ -11,7 +11,7 @@ from yaml import safe_load
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.7"
+    VERSION = "1.0.6"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -184,13 +184,6 @@ try:
     sim7600 = SIM7600X()
 except Exception as e:
     logging.warning("Could not open serial connection with 4G module: %s", str(e))
-
-# Set to 4G only
-try:
-    sim7600.send_at_command("at+cnmp=38")
-    data.add('network_mode', sim7600.send_at_command("at+cnmp?"))
-except Exception as e:
-    logging.warning("Could not set network mode: %s", str(e))
 
 # Enable GPS to read out position later
 try:
