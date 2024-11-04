@@ -30,7 +30,7 @@ GlacierCam is an open source and low cost timelapse camera and environmental mon
 * Automatic schedule dependent on battery level and sunrise/sunset
 * Possible to trigger recording externally (e.g. with radar)
 
-# Enviroment 🌍
+### Enviroment 🌍
 * Has extensively been tested in harsh enviroment conditions (snow, rain, cold temperatures etc.)
 * Fits in small IP67 case
 * 3D-printed case insert available
