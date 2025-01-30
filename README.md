@@ -1,54 +1,69 @@
 # GlacierCam 📷⛰️
-GlacierCam is an open source and low cost timelapse camera and environmental monitoring system.
+GlacierCam is an open and affordable timelapse camera and sensor platform that is designed for harsh environments.
+It offers modular hard- and software and can easily be adapted to different use cases or upgraded in the future.
 
 > [!IMPORTANT]
 > This repository is currently under active development and the documentation is currently not up to date.
 
+> [!TIP]
+> We are currently working on a new version of GlacierCam with custom hardware made for our requirements. Please get in touch if you are interested in a collaboration.
+
 ## Features at a glance
 ### Camera 📷
-* Standardized CSI camera connector
-* 12 MP autofocus camera
-* Big selection regarding resolution, lens and filters
-* Specialty cameras (e.g. thermal, infrared, global shutter, etc.) available
-* Possible: Ability to add up to 4 cameras on one system
+* High resolution camera with industry standard connector (MIPI CSI)
+* Large camera selection available to suit your requirements (including specialty cameras like thermal, infrared, global shutter, etc.)
+* Ability to add multiple cameras (up to 4) on one system
+
+### Sensors 📡
+* Can accomodate virtually any additional sensor (e.g. temperature, humidity, pressure, motion, radar, etc.)
+* Several interfaces available (I2C, UART, SPI, USB, Bluetooth, etc.)
+* Programmable schedule for measurements or via external trigger
+
+### Compute / data processing 📊
+* Hybrid system design with microcontroller and linux-based compute module allows for maximised efficiency while having large computational power on demand
+* Scalable compute, memory and storage, depending on requirements (up to 16 GB RAM, 2+ TB storage)
+* Supports hardware-accelerators for real time edge inference (e.g. image processing)
 
 ### Connectivity 🌐
-* 4G, WiFi, Bluetooth and Ethernet (with adapter)
-* Offline time synchronization with built-in GPS
-* Offline operation/fallback possible
+* 4G, WiFi, Bluetooth and Ethernet connectivity
 * Possibility to have multiple internet sources for redundancy
-* Full data ownership with your own server (e.g. FTP)
-* Can easily be modified/upgraded in the future (e.g. 5G, Satellite internet, directional antennas)
+* Offline operation / fallback possible
+* Offline timekeeping with built-in RTC (±2s/year) and GPS
+* Easy upgradeability for future-proofing (e.g. 5G, satellite internet)
+
+### Remote management (optional) ☁️
+* Change settings remotely
+* Secure over-the-air software updates
+* Full data ownership with your own server
+* Monitoring of system status (battery level, temperature, etc.)
+* Data visualization and analysis on webserver (e.g. image processing)
 
 ### Energy 🌞
-* Low power consumption (ca. 0.05 Wh / wake cycle)
-* Dedicated power management hardware
-* Input: 5 V DC (USB-C) or 6 - 30 DC
-* Programmable schedule (e.g. every 30 minutes from 8:00 to 20:00)
-* Monitoring of battery level, internal temperature and voltage
-* External 12V battery and solar panel possible (e.g. 2 W solar panel)
-* Automatic schedule dependent on battery level and sunrise/sunset
-* Possible to trigger recording externally (e.g. with radar)
+* Low power consumption with dedicated power management hardware optimized for solar / battery operation
+* Programmable schedule for image capture and sensor measurements
+* Intelligent schedule adaption based on battery level and sunrise/sunset
+* Modular, scalable design, depending on requirements (e.g. to power exteral sensors)
 
 ### Enviroment 🌍
 * Has extensively been tested in harsh enviroment conditions (snow, rain, cold temperatures etc.)
-* Fits in small IP67 case
-* 3D-printed case insert available
+* Compact and rugged design (IP67)
 
-### Additional sensors and data processing 📊
-* Can accomodate a wide variety of additional sensors
-* I2C, UART, SPI, USB, Bluetooth etc. available for additional sensors
-* GPS and Temperature sensor built in
-* Image processing on device possible, supports edge TPUs for ML inference
-* Supports different Raspberry Pi models, depending on compute and I/O requirements
-* Timestamp with internal RTC (±2s/year), time synchronization via GPS or internet
+## Applications 🔧
+Thanks to its modular design, GlacierCam can be used in a wide range of applications, depending on your use case. Reliable and proven platform
 
-### Webserver (optional) ☁️
-* Data visualization
-* Local or in the cloud
-* Planned: Image processing on server
-* Planned: Change setting on the webserver
--> Modular for expansion and/or future upgrades
+Here are some examples:
+
+### Scientific Research
+GlacierCam supports remote field research by providing real-time data collection crucial for scientific analysis. Its modular, customizable design allows researchers to add and configure sensors, including cameras, radar, and motion detectors, tailored to specific data needs. GlacierCam’s open architecture makes it future-proof, enabling easy expansion with new sensors. Additionally, its affordability allows for extensive sensor networks without high costs, making it ideal for researchers working in challenging environments to advance their studies.
+
+### Environmental Hazard Monitoring
+Climate change is increasing the frequency of hazards like landslides, rockfalls, and floods. GlacierCam enables low-cost, real-time monitoring of communities and remote infrastructure in high-risk areas. Its modular system integrates a range of sensors—such as cameras, radar, and motion detectors—to deliver comprehensive hazard monitoring. Built with high reliability for rugged environments, GlacierCam minimizes false alarms, reducing the need for human intervention and lowering both costs and risk. By providing timely early warnings, GlacierCam helps protect vulnerable communities and infrastructure with rapid response capabilities.
+
+### Tourism and Outdoor Recreation
+GlacierCam enhances visitor experience by offering live images, real-time weather, and environmental conditions that support safer and better-informed outdoor activities. The system is customizable, allowing businesses to add their own branding for a unique visitor experience. Real-time weather and safety updates enable visitors to plan their activities based on current conditions. This technology serves as an effective marketing tool, attracting and engaging tourists and outdoor enthusiasts by providing valuable, timely information for enjoyable and safe outdoor adventures.
+
+### Agriculture and Forestry
+GlacierCam supports precision agriculture and forestry by providing real-time data on environmental conditions, crop growth, and forest health. Its modular design allows for the integration of various sensors, such as cameras, temperature, and humidity sensors, to monitor crop growth and detect pests and diseases. GlacierCam’s real-time data collection enables farmers and foresters to make informed decisions on irrigation, fertilization, and pest control, optimizing crop yield and forest health. By providing timely data, GlacierCam supports sustainable agriculture and forestry practices, reducing costs and environmental impact.
 
 # Components 🛠️
 | Component                                      | Price   |
@@ -65,6 +80,9 @@ GlacierCam is an open source and low cost timelapse camera and environmental mon
 | [Raspberry Pi Kamera V2](https://www.pi-shop.ch/raspberry-pi-kamera-module-v2) | CHF 22.90 |
 
 ## Installation
+> [!WARNING]
+> The license for the project has not yet been decided on and needs to be checked before using the project.
+
 ### Initial Setup
 Install Pi OS Bullseye/Legacy Lite 64 bit on microSD card and boot the Raspberry Pi.
 ```bash
