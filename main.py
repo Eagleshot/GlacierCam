@@ -11,7 +11,7 @@ from yaml import safe_load
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.7"
+    VERSION = "1.0.8"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -234,17 +234,6 @@ except Exception as e:
     logging.warning("Could not stop camera: %s", str(e))
 
 ###########################
-# Upload image(s) to file server
-###########################
-try:
-    if CONNECTED_TO_SERVER:
-        for file in listdir(FILE_PATH): # Upload all images
-            if file.endswith(".jpg"):
-                fileserver.upload_file(file, FILE_PATH, delete_after_upload=True)
-except Exception as e:
-    logging.critical("Could not upload image to fileserver: %s", str(e))
-
-###########################
 # Set voltage thresholds
 ###########################
 try:
@@ -282,6 +271,19 @@ except Exception as e:
     logging.warning("Could not close serial connection with 4G module: %s", str(e))
 
 ###########################
+# Upload log data
+###########################
+try:
+    if CONNECTED_TO_SERVER:
+        fileserver.append_file("log.txt", FILE_PATH, delete_after_upload=True)
+
+    if settings.get("uploadExtendedDiagnostics") and CONNECTED_TO_SERVER:
+        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
+        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
+except Exception as e:
+    logging.warning("Could not upload diagnostics data: %s", str(e))
+
+###########################
 # Uploading sensor data
 ###########################
 
@@ -300,17 +302,15 @@ except Exception as e:
     logging.warning("Could not append new measurements to log: %s", str(e))
 
 ###########################
-# Upload log data
+# Upload image(s) to file server
 ###########################
 try:
     if CONNECTED_TO_SERVER:
-        fileserver.append_file("log.txt", FILE_PATH, delete_after_upload=True)
-
-    if settings.get("uploadExtendedDiagnostics") and CONNECTED_TO_SERVER:
-        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
-        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
+        for file in listdir(FILE_PATH): # Upload all images
+            if file.endswith(".jpg"):
+                fileserver.upload_file(file, FILE_PATH, delete_after_upload=True)
 except Exception as e:
-    logging.warning("Could not upload diagnostics data: %s", str(e))
+    logging.critical("Could not upload image to fileserver: %s", str(e))
 
 ###########################
 # Quit file server session
