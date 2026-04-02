@@ -2,8 +2,7 @@
 GlacierCam is an open and affordable timelapse camera and sensor platform that is designed for harsh environments.
 It offers modular hard- and software and can easily be adapted to different use cases or upgraded in the future.
 
-> [!IMPORTANT]
-> This repository is currently under active development and the documentation is currently not up to date.
+For more information, please check out our website: [www.eagleshot.ch](https://www.eagleshot.ch)
 
 > [!TIP]
 > We are currently working on a new version of GlacierCam with custom hardware made for our requirements. Please get in touch if you are interested in a collaboration.
@@ -49,22 +48,7 @@ It offers modular hard- and software and can easily be adapted to different use 
 * Compact and rugged design (IP67)
 
 ## Applications 🔧
-Thanks to its modular design, GlacierCam can be used in a wide range of applications, depending on your use case. Reliable and proven platform
-
-Here are some examples:
-
-### Scientific Research
-GlacierCam supports remote field research by providing real-time data collection crucial for scientific analysis. Its modular, customizable design allows researchers to add and configure sensors, including cameras, radar, and motion detectors, tailored to specific data needs. GlacierCam’s open architecture makes it future-proof, enabling easy expansion with new sensors. Additionally, its affordability allows for extensive sensor networks without high costs, making it ideal for researchers working in challenging environments to advance their studies.
-
-### Environmental Hazard Monitoring
-Climate change is increasing the frequency of hazards like landslides, rockfalls, and floods. GlacierCam enables low-cost, real-time monitoring of communities and remote infrastructure in high-risk areas. Its modular system integrates a range of sensors—such as cameras, radar, and motion detectors—to deliver comprehensive hazard monitoring. Built with high reliability for rugged environments, GlacierCam minimizes false alarms, reducing the need for human intervention and lowering both costs and risk. By providing timely early warnings, GlacierCam helps protect vulnerable communities and infrastructure with rapid response capabilities.
-
-### Tourism and Outdoor Recreation
-GlacierCam enhances visitor experience by offering live images, real-time weather, and environmental conditions that support safer and better-informed outdoor activities. The system is customizable, allowing businesses to add their own branding for a unique visitor experience. Real-time weather and safety updates enable visitors to plan their activities based on current conditions. This technology serves as an effective marketing tool, attracting and engaging tourists and outdoor enthusiasts by providing valuable, timely information for enjoyable and safe outdoor adventures.
-
-### Agriculture and Forestry
-GlacierCam supports precision agriculture and forestry by providing real-time data on environmental conditions, crop growth, and forest health. Its modular design allows for the integration of various sensors, such as cameras, temperature, and humidity sensors, to monitor crop growth and detect pests and diseases. GlacierCam’s real-time data collection enables farmers and foresters to make informed decisions on irrigation, fertilization, and pest control, optimizing crop yield and forest health. By providing timely data, GlacierCam supports sustainable agriculture and forestry practices, reducing costs and environmental impact.
-
+Thanks to its modular design, GlacierCam can be used as a reliable and proven platform in a wide range of applications, depending on your use case.
 # Components 🛠️
 | Component                                      | Price   |
 | ---------------------------------------------- | ------- |
@@ -80,11 +64,8 @@ GlacierCam supports precision agriculture and forestry by providing real-time da
 | [Raspberry Pi Kamera V2](https://www.pi-shop.ch/raspberry-pi-kamera-module-v2) | CHF 22.90 |
 
 ## Installation
-> [!WARNING]
-> The license for the project has not yet been decided on and needs to be checked before using the project.
-
 ### Initial Setup
-Install Pi OS Bullseye/Legacy Lite 64 bit on microSD card and boot the Raspberry Pi.
+Install Pi OS Bullseye/Legacy Lite 64 bit on microSD card and boot the Raspberry Pi. Run the following command to install necessary software and configure the system:
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh | sudo sh
 ```
@@ -92,8 +73,7 @@ wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script.sh 
 Update Witty Pi 4 firmware -> See: https://www.uugear.com/forums/technial-support-discussion/witty-pi-4-not-starting/ and install capacitor.
 ```bash
 wget https://www.uugear.com/repo/WittyPi4/install.sh
-```
-```bash
+
 sudo sh install.sh
 ```
 Uninstall UWI (UUGear Web Interface):
@@ -114,82 +94,8 @@ Set guaranteed wake mode and check RTC calibration:
 ```bash
 wget -O - https://raw.githubusercontent.com/Eagleshot/GlacierCam/main/script3.sh | sudo sh
 ```
-
-# TODOs
-## Custom electronics
-### Power management board
-* Input voltage: 5 - 20/30 V DC (solar or USB-C)
-* Output voltage: 3.3 V (MCU), 5 V (Pi)
-* Battery charger (LiFePO4, Li-Ion, ...?)
-* Maybe: Battery holder (18650?)
-* Voltage monitoring for input and battery, current monitoring probably not necessary
-* Microcontroller: ESP32 (S3 for camera?)
-* Mircocontroller programmable via USB-C(?)
-* Exposed external Pins for interacting with MCU (e.g. trigger wake up, additional sensors, etc.)
-* RTC -> Use external or internal one? -> Test accuracy
-* Protection circuitry (reverse polarity, overvoltage, overcurrent, etc.)
-* Button for manual wake up / activity LED
-* Max. power draw for Pi + camera + 4G module: maybe 5 W / 1 A (potentially more for compute module), typical ~2 W / 0.4 A
-* Max input power ?
-* Connection to Pi (I2C over 40-pin header?)
-
-* Software: watchdog, brownout detection, ...
-
-Examples:
-* https://lifepo4wered.com/lifepo4wered-pi+.html
-* https://www.waveshare.com/power-management-hat.htm
-* https://www.waveshare.com/power-management-hat-b.htm
-* https://www.uugear.com/product/witty-pi-4/
-* https://www.uugear.com/product/witty-pi-4-l3v7/
-
-### Connectivyit / camera
-* Add 4G-module, potentially with GPS
--> Preferably with m.2 connector for replacability/upgradeability (see e.g. https://www.lilygo.cc/products/t-simcam, https://www.lilygo.cc/products/a-t-pcie?variant=42335922094261)
-
-* Add camera interface for esp32
-* Maybe use compute module and add ethernet
-
-## V2.0
-- [ ] Add one time actions/change detection in settings
-- [ ] Automatic time drift detection (maybe with GPS, dependent on startup reason)
-- [ ] Advanced scheduling (start and end date)
-- [ ] Enable watchdog
-- [ ] Add hooks for data processing (e.g. `image_processing()`) that are called by the program at a specific time in the program and can be modified by the user
-- [ ] Modify firmware to be able to easily add new sensors (including CSV/webserver adaption)
-- [ ] Work with read only filesystem and USB drive
-- [ ] Manage max. number of images on USB drive and add an upload limit (management if disk is full)
-- [ ] Get startup reason from witty pi
-- https://www.youtube.com/watch?v=pxuXaaT1u3k
-- https://stackoverflow.com/questions/24505145/how-to-limit-log-file-size-in-python
-- [ ] Limit log filesize
-- [ ] Verify image/file upload
-
-## Connectivity
-- [ ] Simpler WiFi setup
-- [ ] Check long range data transmission options (LoRa/Satellite/directional antenna)
-
-## Webserver
-- [ ] Add settings page (after login)
-- [ ] Add settings validation
-- [ ] Error notifications
-- [ ] Implement logging on webserver
-- [ ] Implement image processing
-- [ ] Add image comparison of different timestamps
-- [ ] Generate timelapse from images
-- [ ] Customization (e.g. logo, colors, etc.)
-- [ ] Package webserver as a executable (electron?) - or PWA?
-- [ ] Active camera monitoring -> E-Mail message (camera didnt start, battery low, other error message, etc.)
-
-## General
-- [ ] Finish documentation + improve installation script
-    * Add instruction: camera needs to be set to UTC time -> Should be done by installation script
-    * Add instruction: Only works with raspberry pi os bullseye
-- [ ] Update project website
-- [ ] Media articles
-- [ ] Open source the project
-
-# In the media
-* [FHGR News](https://www.fhgr.ch/news/newsdetail/photonics-absolvent-gewinnt-ruag-innovation-award/)
-* [Nau](https://www.nau.ch/ort/chur/fh-graubunden-photonics-absolvent-gewinnt-ruag-innovation-award-66625517)
-* [LinkedIn](https://www.linkedin.com/posts/ruag-ag_news-fh-graub%C3%BCnden-activity-7117803653880569858-ut_M)
-* [myScience](https://www.myscience.ch/de/news/wire/photonics_bachelorarbeit_wird_praemiert-2023-fhgr)
+## Testing
+This repository uses pytest for testing. To run the tests, use the following command:
+```bash
+pytest
+```

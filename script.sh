@@ -136,7 +136,6 @@ echo '|                         Rebooting in 5 seconds...                       
 echo '|                                                                              |'
 echo '================================================================================'
 echo ''
-# TODO Maybe add some nice ASCII art
 
 # Reboot to apply changes
 sleep 5

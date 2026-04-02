@@ -3,7 +3,7 @@ from ftplib import FTP
 from io import BytesIO
 from datetime import datetime
 from time import sleep
-from os import remove
+from os import remove, path
 import logging
 
 class FileServer:
@@ -71,7 +71,19 @@ class FileServer:
             if not response.startswith('226'):
                 raise Exception(f"Failed to upload file: {response}")
 
-            logging.info("Successfully uploaded %s", local_file)
+            local_size = path.getsize(local_path)
+            try:
+                remote_size = self.ftp.size(filename)
+            except Exception as e:
+                logging.warning("Could not verify uploaded file size for %s: %s", filename, str(e))
+                remote_size = None
+
+            if remote_size is None:
+                logging.warning("Skipping file size verification for %s because the server did not provide a size.", filename)
+            elif remote_size != local_size:
+                raise Exception(f"Size mismatch after upload: local={local_size}, remote={remote_size}")
+
+            logging.info("Successfully uploaded %s", filename)
 
             if delete_after_upload:
                 logging.info("Deleting local file: %s", local_path)
@@ -139,9 +151,9 @@ class FileServer:
 
 if __name__ == "__main__":
 
-    HOST = "444024-1.web.fhgr.ch"
-    USERNAME = "444024_1_1"
-    PASSWORD = "e5tlZOhT=EoB"
+    HOST = ""
+    USERNAME = ""
+    PASSWORD = ""
 
     logging.basicConfig(level=logging.INFO)
     file_server = FileServer(HOST, USERNAME, PASSWORD)

@@ -20,22 +20,22 @@ class SIM7600X:
         sleep(timeout)
         if self.ser.inWaiting():
             sleep(0.01)
-            rec_buff = self.ser.read(self.ser.inWaiting())
-        if back not in rec_buff.decode():
-            logging.error("Error: AT command %s returned %s", command, rec_buff.decode())
+            rec_buff = self.ser.read(self.ser.inWaiting()).decode(errors="replace")
+        if back not in rec_buff:
+            logging.error("Error: AT command %s returned %s", command, rec_buff)
             return ""
 
-        return rec_buff.decode()
+        return rec_buff
 
-    # Get current signal quality
-    # https://www.manualslib.com/download/1593302/Simcom-Sim7000-Series.html
-    # 0 -115 dBm or less
-    # 1 -111 dBm
-    # 2...30 -110... -54 dBm
-    # 31 -52 dBm or greater
-    # 99 not known or not detectable
     def get_signal_quality(self) -> float:
-        '''Get the current signal quality of the 4G modem.'''
+        '''Get the current signal quality of the 4G modem.\n
+            0 -115 dBm or less\n
+            1 -111 dBm\n
+            2...30 -110... -54 dBm\n
+            31 -52 dBm or greater\n
+            99 not known or not detectable\n
+            See https://www.manualslib.com/download/1593302/Simcom-Sim7000-Series.html
+        '''
         try:
             signal_quality = self.send_at_command('AT+CSQ')
             signal_quality = signal_quality[8:10]

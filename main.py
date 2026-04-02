@@ -11,7 +11,7 @@ from yaml import safe_load
 # Configuration and filenames
 ###########################
 try:
-    VERSION = "1.0.8"
+    VERSION = "1.1.0"
 
     # Get unique hardware id of Raspberry Pi
     # See: https://www.raspberrypi.com/documentation/computers/config_txt.html#the-serial-number-filter
@@ -275,18 +275,24 @@ except Exception as e:
 ###########################
 try:
     if CONNECTED_TO_SERVER:
-        fileserver.append_file("log.txt", FILE_PATH, delete_after_upload=True)
+        fileserver.append_file("log.txt", FILE_PATH)
 
-    if settings.get("uploadExtendedDiagnostics") and CONNECTED_TO_SERVER:
-        fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
-        fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
+        # Truncate log file while keeping the handler valid
+        for handler in logging.getLogger().handlers:
+            if isinstance(handler, logging.FileHandler) and handler.baseFilename.endswith("log.txt"):
+                handler.stream.truncate(0)
+                handler.stream.seek(0)
+                break
+
+        if settings.get("uploadExtendedDiagnostics"):
+            fileserver.append_file("wittyPi.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
+            fileserver.append_file("schedule.log", f"{FILE_PATH}wittypi/", delete_after_upload=True)
 except Exception as e:
     logging.warning("Could not upload diagnostics data: %s", str(e))
 
 ###########################
 # Uploading sensor data
 ###########################
-
 try: # Append new measurements to log or create new log file if none exists
     DIAGNOSTICS_FILENAME = "diagnostics.yaml"
     diagnostics_filepath = f"{FILE_PATH}{DIAGNOSTICS_FILENAME}"

@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import MagicMock
 from sim7600x import SIM7600X
 
 @pytest.fixture
@@ -15,9 +14,9 @@ def sim7600x(mock_serial):
 def test_init(mock_serial):
     '''Test the initialization of the SIM7600X class.'''
     sim7600x = SIM7600X()
-    mock_serial.assert_called_with('/dev/ttyUSB2', 115200, timeout=5)
-    sim7600x = SIM7600X('/dev/ttyUSB1', 9600, 10)
-    mock_serial.assert_called_with('/dev/ttyUSB1', 9600, timeout=10)
+    mock_serial.assert_called_with('/dev/ttyUSB2', 115200, timeout=10)
+    sim7600x = SIM7600X('/dev/ttyUSB1', 9600, 15)
+    mock_serial.assert_called_with('/dev/ttyUSB1', 9600, timeout=15)
 
 def test_send_at_command(mock_serial, sim7600x):
     '''Test sending AT command and getting response.'''
